@@ -5,9 +5,9 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import RegisterShop from './pages/RegisterShop'; // Yeni sayfayı import ettik
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
+  return token ? <>{children}</> : <Navigate to="/login" />;
 };
 
 function App() {

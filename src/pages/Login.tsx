@@ -8,7 +8,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setError('');
     try {

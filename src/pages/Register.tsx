@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
+interface RegisterRequestData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password?: string;
+}
+
 export default function Register() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -12,19 +20,19 @@ export default function Register() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     try {
       // Backend DTO yapısı ile birebir eşleşen nesneyi gönderiyoruz
-      await API.post('/shops/register', { 
-        firstName, 
-        lastName, 
-        email, 
-        password, 
-        phone 
-      });
+      await API.post<string>('/auth/register', { 
+  firstName, 
+  lastName, 
+  email, 
+  password, 
+  phone 
+} as RegisterRequestData);
       
       setSuccess('Kullanıcı başarıyla oluşturuldu! Giriş sayfasına yönlendiriliyorsunuz...');
       setTimeout(() => {
@@ -49,7 +57,7 @@ export default function Register() {
           type="text" 
           placeholder="Adınız" 
           value={firstName} 
-          onChange={(e) => setFirstName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
           style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           required
         />
@@ -57,7 +65,7 @@ export default function Register() {
           type="text" 
           placeholder="Soyadınız" 
           value={lastName} 
-          onChange={(e) => setLastName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
           style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           required
         />
@@ -65,7 +73,7 @@ export default function Register() {
           type="email" 
           placeholder="E-posta Adresi" 
           value={email} 
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           required
         />
@@ -73,7 +81,7 @@ export default function Register() {
           type="text" 
           placeholder="Telefon Numarası" 
           value={phone} 
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
           style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           required
         />
@@ -81,7 +89,7 @@ export default function Register() {
           type="password" 
           placeholder="Şifre (En az 6 karakter)" 
           value={password} 
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           required
         />

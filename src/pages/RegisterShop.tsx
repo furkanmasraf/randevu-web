@@ -9,7 +9,7 @@ export default function RegisterShop() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  const handleRegisterShop = async (e) => {
+  const handleRegisterShop = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setError('');
     setSuccess('');

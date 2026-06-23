@@ -2,8 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
+interface Shop {
+  id: number;
+  name: string;
+  address?: string;
+}
+
 export default function Home() {
-  const [shops, setShops] = useState([]);
+  const [shops, setShops] = useState<Shop[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
