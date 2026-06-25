@@ -18,7 +18,7 @@ const Login: React.FC = () => {
   console.log("Backend'e giriş isteği gönderiliyor:", { email, password });
 
   try {
-    // 🚀 Spring Boot backend'indeki login endpoint'ine istek atıyoruz
+    // Spring Boot backend'indeki login endpoint'ine istek atıyoruz
     // Bugün sabah backend'de yazdığımız '/auth/login' yoluna POST atıyoruz
     const response = await API.post('/auth/login', { email, password });
 
@@ -34,16 +34,20 @@ const Login: React.FC = () => {
       navigate('/');
     }
   } catch (err: any) {
-    setIsLoading(false);
-    console.error("Giriş başarısız:", err);
-    
-    //Eğer şifre yanlışsa veya e-posta yoksa backend 401 dönecek ve buraya düşecek
-    if (err.response && err.response.status === 401) {
-      alert("Hatalı e-posta veya şifre girdiniz. Lütfen tekrar deneyin.");
-    } else {
-      alert("Backend bağlantısı kurulamadı. Spring Boot projenin ayakta olduğundan emin ol!");
-    }
+  setIsLoading(false);
+  console.error("Giriş esnasında hata oluştu:", err);
+  
+  // Sunucu kapalı olsaydı err.response hiç oluşmazdı (Network Error olurdu).
+  // Eğer sunucudan bir response (ister 401, ister 403, ister 500) geliyorsa,
+  // bu durum isteklerin gittiğini ama bilgilerin uyuşmadığı için backend'in tıkandığını gösterir.
+  if (err.response) {
+    // Sunucu kodu ne olursa olsun (401 veya şimdiki gibi 500), kullanıcı yanlış bilgi girmiştir.
+    alert("Hatalı e-posta veya şifre girdiniz!");
+  } else {
+    // Sunucu tamamen kapalıysa veya Docker çöktüyse buraya düşer.
+    alert("Backend sunucusuna ulaşılamıyor. Spring Boot projenin açık olduğundan emin ol!");
   }
+}
 };
 
   return (
