@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 // 💡 Sayfa geçişlerini yönetmek için useNavigate hook'unu kullanıyoruz
 import { useNavigate } from 'react-router-dom';
+import API from '../services/api';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -10,24 +11,40 @@ const Login: React.FC = () => {
   // 💡 Yönlendiriciyi tanımlıyoruz
   const navigate = useNavigate();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    setIsLoading(true); // Butonu "Giriş Yapılıyor..." moduna al
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    console.log("Backend'e istek gönderiliyor:", { email, password });
+  console.log("Backend'e giriş isteği gönderiliyor:", { email, password });
 
-    // ⏳ 1.5 saniye sonra başarılı giriş simülasyonu yapıp Home ekranına aktarıyoruz
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log("Giriş başarılı! Yönlendiriliyor...");
+  try {
+    // 🚀 Spring Boot backend'indeki login endpoint'ine istek atıyoruz
+    // Bugün sabah backend'de yazdığımız '/auth/login' yoluna POST atıyoruz
+    const response = await API.post('/auth/login', { email, password });
+
+    // Backend'den dönen cevabın içindeki gerçek JWT token'ını alıyoruz
+    const { token } = response.data;
+
+    if (token) {
+      // 🔑 Gerçek token'ı hafızaya kaydediyoruz, artık sahte bilet yok!
+      localStorage.setItem('token', token);
+      console.log("Giriş başarılı! Gerçek token hafızaya alındı.");
       
-      // 💡 ÖNEMLİ: Home ekranındaki Guard'a takılmamak için tarayıcı hafızasına test token'ı atıyoruz
-      localStorage.setItem('token', 'sahte_test_token_jwt');
-      
-      // 🚀 Kullanıcıyı dükkanların listelendiği ana sayfaya (Home) uçuruyoruz!
-      navigate('/'); 
-    }, 1500);
-  };
+      // Kullanıcıyı dükkan listesine (Home) uçuruyoruz
+      navigate('/');
+    }
+  } catch (err: any) {
+    setIsLoading(false);
+    console.error("Giriş başarısız:", err);
+    
+    //Eğer şifre yanlışsa veya e-posta yoksa backend 401 dönecek ve buraya düşecek
+    if (err.response && err.response.status === 401) {
+      alert("Hatalı e-posta veya şifre girdiniz. Lütfen tekrar deneyin.");
+    } else {
+      alert("Backend bağlantısı kurulamadı. Spring Boot projenin ayakta olduğundan emin ol!");
+    }
+  }
+};
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f9fafb', margin: 0, overflow: 'hidden' }}>
