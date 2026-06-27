@@ -1,163 +1,223 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import API from '../services/api';
+import { useState, useEffect, ChangeEvent } from 'react';
+import axios from 'axios'; // veya kendi yazdığınız api servis dosyası (servislerden api.ts gibi)
 
+// Dükkan veri yapısı için TypeScript tipi (Backend'deki Shop modelinizle eşleşmeli)
 interface Shop {
   id: number;
   name: string;
+  city: string;
+  category: string;
   address?: string;
+  phoneNumber?: string;
 }
 
-export default function Home() {
-  const [shops, setShops] = useState<Shop[]>([]);
-  const navigate = useNavigate();
+const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
+const CATEGORIES = ["Tümü", "Erkek Kuaförü", "Kadın Kuaförü", "Güzellik Salonu"];
 
+export default function Home() {
+  // 1. Durum (State) Yönetimleri
+  const [shops, setShops] = useState<Shop[]>([]); // Backend'den gelen orijinal liste
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('Tümü');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tümü');
+
+  // 2. Sayfa Açıldığında Verileri Backend'den Çekme
   useEffect(() => {
-    API.get('/shops') 
-      .then((response) => {
+    const fetchShops = async () => {
+      try {
+        setLoading(true);
+        // NOT: Buradaki URL'i kendi backend endpoint yapınıza göre düzenleyin (Örn: http://localhost:8080/api/shops)
+        const response = await axios.get('http://localhost:8080/api/shops', {
+          headers: {
+            // Eğer endpoint güvenli her isteğe açıksa burayı silebilirsiniz. 
+            // JWT korumalıysa localStorage'dan token'ı ekliyoruz:
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setShops(response.data);
-      })
-      .catch((err) => {
-        console.error("Dükkanlar yüklenirken hata oluştu:", err);
-      });
+      } catch (error) {
+        console.error("Dükkanlar yüklenirken hata oluştu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShops();
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    localStorage.clear();
+    window.location.href = '/login';
   };
 
+  // 3. Canlı Filtreleme Mantığı
+  const filteredShops = shops.filter((shop) => {
+    const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCity = selectedCity === 'Tümü' || shop.city === selectedCity;
+    const matchesCategory = selectedCategory === 'Tümü' || shop.category === selectedCategory;
+    
+    return matchesSearch && matchesCity && matchesCategory;
+  });
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'sans-serif', margin: 0, padding: '40px 20px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
+      
+      {/* 1. ÜST BAŞLIK ALANI */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        backgroundColor: '#fff', 
+        padding: '24px 32px', 
+        borderRadius: '16px', 
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        marginBottom: '24px'
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, color: '#111827' }}>Mevcut Berberler & Kuaförler</h1>
+          <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: '0.95rem' }}>Size en uygun salonu seçip hemen randevunuzu planlayın.</p>
+        </div>
         
-        {/* 🧭 ÜST BAR: Modern & Minimalist Üst Alan */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          backgroundColor: '#ffffff',
-          padding: '20px 32px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02)',
-          border: '1px solid #f3f4f6',
-          marginBottom: '40px'
-        }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>
-              Mevcut Berberler & Kuaförler
-            </h2>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: '#6b7280' }}>
-              Size en uygun salonu seçip hemen randevunuzu planlayın.
-            </p>
+        <button 
+          onClick={handleLogout}
+          style={{ backgroundColor: '#111827', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem' }}
+        >
+          Çıkış Yap
+        </button>
+      </div>
+
+      {/* 2. ARAMA VE FİLTRELEME ALANI */}
+      <div style={{ 
+        backgroundColor: '#fff', 
+        padding: '20px 32px', 
+        borderRadius: '16px', 
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        marginBottom: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 2, minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Salon Adı</label>
+            <input 
+              type="text"
+              placeholder="Salon adı ile ara..."
+              value={searchQuery}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', outline: 'none', fontSize: '0.95rem' }}
+            />
           </div>
-          
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              onClick={() => navigate('/register-shop')} 
-              style={{ 
-                padding: '12px 20px', 
-                backgroundColor: '#ffffff', 
-                color: '#111827', 
-                border: '1px solid #e5e7eb', 
-                borderRadius: '10px', 
-                cursor: 'pointer', 
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s'
-              }}
+
+          <div style={{ flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Konum</label>
+            <select 
+              value={selectedCity}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedCity(e.target.value)}
+              style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', outline: 'none', fontSize: '0.95rem', backgroundColor: '#fff' }}
             >
-              <span>➕</span> Yeni Dükkan Ekle
-            </button>
-            <button 
-              onClick={handleLogout} 
-              style={{ 
-                padding: '12px 20px', 
-                backgroundColor: '#111827', 
-                color: '#ffffff', 
-                border: 'none', 
-                borderRadius: '10px', 
-                cursor: 'pointer', 
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              Çıkış Yap
-            </button>
+              {CITIES.map(city => <option key={city} value={city}>{city}</option>)}
+            </select>
           </div>
         </div>
 
-        {/* 🗂️ DÜKKAN LİSTELEME IZGARASI */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-          gap: '24px' 
-        }}>
-          {shops.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px dashed #e5e7eb' }}>
-              <p style={{ color: '#9ca3af', fontStyle: 'italic', margin: 0, fontSize: '0.95rem' }}>
-                Henüz kayıtlı dükkan bulunamadı veya backend bağlantısı bekleniyor...
-              </p>
-            </div>
-          ) : (
-            shops.map((shop) => (
-              <div 
-                key={shop.id} 
-                style={{ 
-                  backgroundColor: '#ffffff', 
-                  padding: '24px', 
-                  borderRadius: '16px', 
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -2px rgba(0, 0, 0, 0.02)', 
-                  border: '1px solid #f3f4f6',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  transition: 'transform 0.2s, boxShadow 0.2s'
-                }}
-              >
-                <div>
-                  {/* Salon İkonu / Başlık Alanı */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-                      💇‍♂️
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: '#111827' }}>
-                      {shop.name}
-                    </h3>
-                  </div>
-                  
-                  <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '24px', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: '1.4' }}>
-                    <span>📍</span> {shop.address || 'Adres Belirtilmemiş'}
-                  </p>
-                </div>
-
-                <button 
-                  onClick={() => alert(`${shop.name} için randevu oluşturma sayfasına yönlendiriliyorsunuz...`)}
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px', 
-                    backgroundColor: '#111827', 
-                    color: '#ffffff', 
-                    border: 'none', 
-                    borderRadius: '10px', 
-                    cursor: 'pointer', 
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    transition: 'background-color 0.2s'
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #f3f4f6' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Kategori:</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {CATEGORIES.map(category => {
+              const isSelected = selectedCategory === category;
+              return (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    border: isSelected ? '1px solid #111827' : '1px solid #e5e7eb',
+                    backgroundColor: isSelected ? '#111827' : '#f9fafb',
+                    color: isSelected ? '#fff' : '#4b5563',
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
                   }}
                 >
-                  Randevu Al
+                  {category}
                 </button>
-              </div>
-            ))
-          )}
+              );
+            })}
+          </div>
         </div>
-
       </div>
+
+      {/* 3. DÜKKAN LİSTELEME VE KART ALANI */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>Veriler yükleniyor...</div>
+      ) : filteredShops.length > 0 ? (
+        // Filtrelenmiş dükkanları Grid düzeninde şık kartlar halinde listeliyoruz
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+          {filteredShops.map((shop) => (
+            <div 
+              key={shop.id} 
+              style={{ 
+                backgroundColor: '#fff', 
+                borderRadius: '16px', 
+                padding: '24px', 
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+                border: '1px solid #f3f4f6',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-block', marginBottom: '12px' }}>
+                  {shop.category}
+                </span>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+                  {shop.name}
+                </h3>
+                <p style={{ margin: '0 0 16px 0', fontSize: '0.875rem', color: '#6b7280' }}>
+                  📍 {shop.city} {shop.address ? `- ${shop.address}` : ''}
+                </p>
+              </div>
+
+              <button 
+                onClick={() => alert(`${shop.name} için randevu sayfasına yönlendiriliyorsunuz...`)}
+                style={{ 
+                  width: '100%', 
+                  backgroundColor: '#111827', 
+                  color: '#fff', 
+                  border: 'none', 
+                  padding: '10px 0', 
+                  borderRadius: '8px', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                Randevu Al
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ 
+          backgroundColor: '#fff', 
+          padding: '40px', 
+          borderRadius: '16px', 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          textAlign: 'center',
+          color: '#9ca3af',
+          fontSize: '1rem',
+          fontStyle: 'italic'
+        }}>
+          Arama kriterlerine uygun dükkan bulunamadı...
+        </div>
+      )}
+
     </div>
   );
 }
