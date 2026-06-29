@@ -28,12 +28,16 @@ export default function Home() {
   const [selectedCity, setSelectedCity] = useState<string>('Tümü');
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü');
 
+  // Hafızaya aldığımız kullanıcı bilgilerini dinamik olarak çekiyoruz
+  const firstName = localStorage.getItem('firstName') || 'Kullanıcı';
+  const lastName = localStorage.getItem('lastName') || '';
+
   // 2. Sayfa Açıldığında Verileri Backend'den Çekme
   useEffect(() => {
     const token = localStorage.getItem('token');
     
     if (!token) {
-      window.location.href = '/login';
+      navigate('/login'); // window.location yerine React Router navigate tercih edildi
       return;
     }
 
@@ -55,11 +59,11 @@ export default function Home() {
     };
 
     fetchShops();
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = '/login';
+    navigate('/login'); // Temiz bir çıkış için navigate kullanımı
   };
 
   // 3. Çoklu Filtreleme Mantığı (Arama + Konum + Kategori)
@@ -89,7 +93,7 @@ export default function Home() {
   return (
     <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
       
-      {/* ÜST BAŞLIK ALANI */}
+      {/* ÜST BAŞLIK VE KULLANICI KARŞILAMA ALANI */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -101,16 +105,48 @@ export default function Home() {
         marginBottom: '24px'
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, color: '#111827' }}>Mevcut Berberler & Kuaförler</h1>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, color: '#111827' }}>
+            Hoş Geldiniz, {firstName} {lastName}
+          </h1>
           <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: '0.95rem' }}>Size en uygun salonu seçip hemen randevunuzu planlayın.</p>
         </div>
         
-        <button 
-          onClick={handleLogout}
-          style={{ backgroundColor: '#111827', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem' }}
-        >
-          Çıkış Yap
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {/* 📅 RANDEVULARIM BUTONU */}
+          <button 
+            onClick={() => navigate('/my-appointments')}
+            style={{ 
+              backgroundColor: '#374151', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '12px 24px', 
+              borderRadius: '10px', 
+              fontWeight: 600, 
+              cursor: 'pointer', 
+              fontSize: '0.95rem',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            📅 Randevularım
+          </button>
+
+          {/* 🚪 ÇIKIŞ YAP BUTONU */}
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              backgroundColor: '#ef4444', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '12px 24px', 
+              borderRadius: '10px', 
+              fontWeight: 600, 
+              cursor: 'pointer', 
+              fontSize: '0.95rem' 
+            }}
+          >
+            Çıkış Yap
+          </button>
+        </div>
       </div>
 
       {/* ARAMA VE FİLTRELEME ALANI */}
@@ -209,7 +245,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Buton tıklama olayı dinamik yönlendirme yapacak şekilde güncellendi */}
               <button 
                 onClick={() => navigate(`/book-appointment/${shop.id}`)}
                 style={{ 

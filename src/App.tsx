@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import RegisterShop from './pages/RegisterShop'; 
 import BookAppointment from './pages/BookAppointment'; // Yeni randevu sayfasını import ettik
+import MyAppointments from './pages/MyAppointments';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -25,6 +26,7 @@ function App() {
         <Route path="/book-appointment/:shopId" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
         
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/my-appointments" element={<ProtectedRoute><MyAppointments /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
