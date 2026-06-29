@@ -1,6 +1,6 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Rota geçişi için import eklendi
+import { useNavigate } from 'react-router-dom'; // Rota geçişleri için import eklendi
 
 // Backend'deki güncel ShopDTO veri yapısı ile harfi harfine eşitlendi
 interface Shop {
@@ -12,7 +12,7 @@ interface Shop {
   latitude: number;
   longitude: number;
   subscribed: boolean;
-  category?: string; // İleride backend modeline eklenirse kullanılmak üzere opsiyonel
+  category?: string;
 }
 
 const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
@@ -32,12 +32,19 @@ export default function Home() {
   const firstName = localStorage.getItem('firstName') || 'Kullanıcı';
   const lastName = localStorage.getItem('lastName') || '';
 
-  // 2. Sayfa Açıldığında Verileri Backend'den Çekme
+  // 2. Sayfa Açıldığında Verileri Backend'den Çekme + Rol Kontrolü
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role'); // Hafızadaki rolü çekiyoruz
     
     if (!token) {
-      navigate('/login'); // window.location yerine React Router navigate tercih edildi
+      navigate('/login');
+      return;
+    }
+
+    // BERBER KALKANI: Eğer dükkan sahibi bu sayfayı açmaya çalışırsa paneline geri fırlatıyoruz
+    if (role && role.toUpperCase() === 'BARBER') {
+      navigate('/barber/dashboard');
       return;
     }
 

@@ -1,203 +1,114 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API = axios.create({
-  baseURL: 'http://localhost:8080/api'
-});
-
-const Register: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
+export default function Register() {
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-  e.preventDefault();
-  setIsLoading(true);
+  // 1. Form Durum (State) Yönetimi - 'role' alanını ekledik
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    phoneNumber: '',
+    role: 'CUSTOMER' // Varsayılan olarak Müşteri seçili geliyor
+  });
 
-  // Backend'deki User entity yapına uygun request objesi
-  const registerData = {
-    firstName,
-    lastName,
-    email,
-    phone,
-    password
-    // 💡 İleride buraya varsayılan olarak "CUSTOMER" rolü de eklenebilir
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+
+  // İnput değişikliklerini yakalayan fonksiyon
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  try {
-    // 🚀 Spring Boot backendindeki kayıt endpointine (Security'den muaf tuttuğumuz alana) istek atıyoruz
-    // Not: Endpoint yolun /api/auth/register veya /users olabilir, projene göre düzenleyebilirsin
-    const response = await API.post('/auth/register', registerData); 
+  // 2. Kayıt İstetiğinin Backend'e Gönderilmesi
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-    console.log("Kayıt başarılı! Gelen veri:", response.data);
-    setIsLoading(false);
-    
-    // Kayıt başarılıysa kullanıcıyı giriş ekranına pasla
-    navigate('/login');
-  } catch (err) {
-    setIsLoading(false);
-    console.error("Kayıt esnasında hata oluştu:", err);
-    alert("Kayıt başarısız! Lütfen bilgileri kontrol edin veya backend'in açık olduğundan emin olun.");
-  }
-};
+    try {
+      // Backend'deki register endpoint'ine tüm form verisini (role dahil) fırlatıyoruz
+      await axios.post('http://localhost:8080/api/auth/register', formData);
+      
+      alert('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
+      navigate('/login'); // Başarılıysa giriş ekranına yönlendir
+    } catch (err: any) {
+      console.error('Kayıt hatası:', err);
+      setError(err.response?.data?.message || 'Kayıt olurken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f9fafb', margin: 0, overflow: 'hidden' }}>
-      
-      {/* 🏙️ SOL TARAF: Görsel ve Slogan Alanı (Giriş ekranıyla uyumlu) */}
-      <div style={{
-        flex: 1,
-        backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}></div>
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 48px' }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: 800, color: '#ffffff', margin: '0 0 16px 0', letterSpacing: '1px' }}>
-            Randevu Kuaför
-          </h1>
-          <p style={{ fontSize: '1.25rem', color: '#e5e7eb', fontWeight: 500, margin: 0 }}>
-            Hemen hesabınızı oluşturun, dijital randevu konforunu yaşayın.
-          </p>
-        </div>
-      </div>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', width: '100%', maxWidth: '450px' }}>
+        
+        <h2 style={{ textAlign: 'center', margin: '0 0 8px 0', color: '#111827', fontWeight: 700 }}>Hesap Oluştur</h2>
+        <p style={{ textAlign: 'center', margin: '0 0 24px 0', color: '#6b7280', fontSize: '0.9rem' }}>Hemen kaydolun ve sistemin tadını çıkarın.</p>
 
-      {/* 📝 SAĞ TARAF: Modern Kayıt Formu */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px', justifyContent: 'center', overflowY: 'auto' }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '460px',
-          backgroundColor: '#ffffff',
-          padding: '40px',
-          borderRadius: '16px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #f3f4f6',
-          margin: 'auto 0'
-        }}>
+        {error && <div style={{ backgroundColor: '#fee2e2', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem', fontWeight: 500 }}>{error}</div>}
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          <div style={{ marginBottom: '28px' }}>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
-              Yeni Hesap Oluştur
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
-              Kişisel bilgilerinizi girerek saniyeler içinde kayıt olun.
-            </p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Ad</label>
+              <input type="text" name="firstName" required value={formData.firstName} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Soyad</label>
+              <input type="text" name="lastName" required value={formData.lastName} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            
-            {/* Ad & Soyad Yan Yana (Grid Düzeni) */}
-            {/* 🛠️ Jilet Gibi Hizalanmış Ad & Soyad Alanı */}
-            <div style={{ display: 'flex', gap: '16px', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Adınız</label>
-            <input
-              type="text"
-              required
-              value={firstName}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
-              style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-              placeholder="Ahmet"
-            />
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Soyadınız</label>
-            <input
-              type="text"
-              required
-              value={lastName}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
-              style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-              placeholder="Yılmaz"
-            />
-            </div>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>E-posta</label>
+            <input type="email" name="email" required value={formData.email} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
+          </div>
 
-            {/* E-posta Alanı */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>E-posta Adresi</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none' }}
-                placeholder="name@example.com"
-              />
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Telefon Numarası</label>
+            <input type="tel" name="phoneNumber" placeholder="05551234567" required value={formData.phoneNumber} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
+          </div>
 
-            {/* Telefon Numarası */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Telefon Numarası</label>
-              <input
-                type="tel"
-                required
-                value={phone}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none' }}
-                placeholder="0555 555 5555"
-              />
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Şifre</label>
+            <input type="password" name="password" required value={formData.password} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
+          </div>
 
-            {/* Şifre Alanı */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Şifre</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none' }}
-                placeholder="••••••••"
-              />
-            </div>
-
-            {/* Hesap Oluştur Butonu */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                marginTop: '10px',
-                padding: '14px',
-                borderRadius: '10px',
-                border: 'none',
-                backgroundColor: isLoading ? '#4b5563' : '#111827',
-                color: '#ffffff',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                transition: 'background-color 0.2s'
-              }}
+          {/* 🔑 🚀 YENİ ROL SEÇİM ALANI */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Hesap Türü</label>
+            <select 
+              name="role" 
+              value={formData.role} 
+              onChange={handleChange} 
+              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 500 }}
             >
-              {isLoading ? 'Hesap Oluşturuluyor...' : 'Hesap Oluştur'}
-            </button>
-          </form>
-
-          {/* Giriş Yap Linki */}
-          <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280', marginTop: '24px' }}>
-            Zaten hesabınız var mı?{' '}
-            <a href="/login" style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>
-              Giriş Yap
-            </a>
+              <option value="CUSTOMER">👤 Müşteri (Randevu Almak İstiyorum)</option>
+              <option value="BARBER">💈 Dükkan Sahibi / Berber (Salonumu Yönetmek İstiyorum)</option>
+            </select>
           </div>
 
-        </div>
-      </div>
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{ marginTop: '8px', backgroundColor: '#111827', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', transition: 'background-color 0.2s' }}
+          >
+            {loading ? 'Kaydediliyor...' : 'Kayıt Ol'}
+          </button>
+        </form>
 
+        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.875rem', color: '#4b5563' }}>
+          Zaten hesabınız var mı? <span onClick={() => navigate('/login')} style={{ color: '#111827', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>Giriş Yap</span>
+        </p>
+
+      </div>
     </div>
   );
-};
-
-export default Register;
+}

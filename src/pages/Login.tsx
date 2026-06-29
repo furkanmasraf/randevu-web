@@ -22,19 +22,19 @@ const Login: React.FC = () => {
       const response = await API.post('/auth/login', { email, password });
 
       // Backend artık bir Map döndüğü için içerisinden hem token'ı hem de userId'yi çekiyoruz
-      const { token, userId } = response.data;
+      const { token, userId, role } = response.data;
 
-      if (token) {
-        // 🔑 Gerçek token'ı ve userId'yi hafızaya kaydediyoruz, artık sahte bilet yok!
-        localStorage.setItem('token', token);
-        
-        if (userId) {
-          localStorage.setItem('userId', userId); // 🚀 Randevu formunun dinamik çalışması için hafızaya aldık
-          console.log("Giriş başarılı! Token ve userId hafızaya alındı. ID:", userId);
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('role', role); // Rolü de hafızaya yazıyoruz
+
+        // Role göre yol ayrımı
+        if (role && role.toUpperCase() === 'BARBER') {
+          navigate('/barber/dashboard'); // Dükkan sahibini yönetim paneline uçuruyoruz
+        } else {
+          navigate('/'); // Müşteriyi dükkan listesine gönderiyoruz
         }
-        
-        // Kullanıcıyı dükkan listesine (Home) uçuruyoruz
-        navigate('/');
       }
     } catch (err: any) {
       setIsLoading(false);
