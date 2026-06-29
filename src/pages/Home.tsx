@@ -1,14 +1,17 @@
 import { useState, useEffect, ChangeEvent } from 'react';
-import axios from 'axios'; // veya kendi yazdığınız api servis dosyası (servislerden api.ts gibi)
+import axios from 'axios';
 
-// Dükkan veri yapısı için TypeScript tipi (Backend'deki Shop modelinizle eşleşmeli)
+// Backend'deki güncel ShopDTO veri yapısı ile harfi harfine eşitlendi
 interface Shop {
   id: number;
   name: string;
   city: string;
-  category: string;
-  address?: string;
-  phoneNumber?: string;
+  district: string;
+  addressText: string;
+  latitude: number;
+  longitude: number;
+  subscribed: boolean;
+  category?: string; // İleride backend modeline eklenirse kullanılmak üzere opsiyonel
 }
 
 const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
@@ -16,7 +19,7 @@ const CATEGORIES = ["Tümü", "Erkek Kuaförü", "Kadın Kuaförü", "Güzellik 
 
 export default function Home() {
   // 1. Durum (State) Yönetimleri
-  const [shops, setShops] = useState<Shop[]>([]); // Backend'den gelen orijinal liste
+  const [shops, setShops] = useState<Shop[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('Tümü');
@@ -24,15 +27,20 @@ export default function Home() {
 
   // 2. Sayfa Açıldığında Verileri Backend'den Çekme
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
     const fetchShops = async () => {
       try {
         setLoading(true);
-        // NOT: Buradaki URL'i kendi backend endpoint yapınıza göre düzenleyin (Örn: http://localhost:8080/api/shops)
         const response = await axios.get('http://localhost:8080/api/shops', {
           headers: {
-            // Eğer endpoint güvenli her isteğe açıksa burayı silebilirsiniz. 
-            // JWT korumalıysa localStorage'dan token'ı ekliyoruz:
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
         setShops(response.data);
@@ -51,19 +59,34 @@ export default function Home() {
     window.location.href = '/login';
   };
 
-  // 3. Canlı Filtreleme Mantığı
+  // 3. Çoklu Filtreleme Mantığı (Arama + Konum + Kategori)
   const filteredShops = shops.filter((shop) => {
+    // Şehir Filtresi
+    const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
+
+    // Arama Kutusu Filtresi (Salon Adı)
     const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCity = selectedCity === 'Tümü' || shop.city === selectedCity;
-    const matchesCategory = selectedCategory === 'Tümü' || shop.category === selectedCategory;
-    
-    return matchesSearch && matchesCity && matchesCategory;
+
+    // Kategori Filtresi: Eğer dükkanın adında "erkek", "kadın" veya "güzellik" geçiyorsa buna göre akıllı filtreleme yapar
+    let matchesCategory = true;
+    if (selectedCategory !== 'Tümü') {
+      const shopNameLower = shop.name.toLowerCase();
+      if (selectedCategory === "Erkek Kuaförü") {
+        matchesCategory = shopNameLower.includes("erkek");
+      } else if (selectedCategory === "Kadın Kuaförü") {
+        matchesCategory = shopNameLower.includes("kadın") || shopNameLower.includes("bayan");
+      } else if (selectedCategory === "Güzellik Salonu") {
+        matchesCategory = shopNameLower.includes("güzellik");
+      }
+    }
+
+    return matchesCity && matchesSearch && matchesCategory;
   });
 
   return (
     <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
       
-      {/* 1. ÜST BAŞLIK ALANI */}
+      {/* ÜST BAŞLIK ALANI */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -87,7 +110,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* 2. ARAMA VE FİLTRELEME ALANI */}
+      {/* ARAMA VE FİLTRELEME ALANI */}
       <div style={{ 
         backgroundColor: '#fff', 
         padding: '20px 32px', 
@@ -151,11 +174,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3. DÜKKAN LİSTELEME VE KART ALANI */}
+      {/* DÜKKAN LİSTELEME VE KART ALANI */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>Veriler yükleniyor...</div>
       ) : filteredShops.length > 0 ? (
-        // Filtrelenmiş dükkanları Grid düzeninde şık kartlar halinde listeliyoruz
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
           {filteredShops.map((shop) => (
             <div 
@@ -173,13 +195,14 @@ export default function Home() {
             >
               <div>
                 <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-block', marginBottom: '12px' }}>
-                  {shop.category}
+                  {shop.name.toLowerCase().includes("erkek") ? "Erkek Kuaförü" : shop.name.toLowerCase().includes("kadın") ? "Kadın Kuaförü" : "Güzellik Salonu"}
                 </span>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
                   {shop.name}
                 </h3>
-                <p style={{ margin: '0 0 16px 0', fontSize: '0.875rem', color: '#6b7280' }}>
-                  📍 {shop.city} {shop.address ? `- ${shop.address}` : ''}
+                <p style={{ margin: '0 0 16px 0', fontSize: '0.875rem', color: '#6b7280', lineHeight: '1.4' }}>
+                  📍 {shop.city} / {shop.district} <br />
+                  <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>{shop.addressText}</span>
                 </p>
               </div>
 
@@ -217,7 +240,6 @@ export default function Home() {
           Arama kriterlerine uygun dükkan bulunamadı...
         </div>
       )}
-
     </div>
   );
 }
