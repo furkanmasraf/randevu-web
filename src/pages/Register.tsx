@@ -5,37 +5,42 @@ import axios from 'axios';
 export default function Register() {
   const navigate = useNavigate();
 
-  // 1. Form Durum (State) Yönetimi - 'role' alanını ekledik
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     phoneNumber: '',
-    role: 'CUSTOMER' // Varsayılan olarak Müşteri seçili geliyor
+    role: 'CUSTOMER'
   });
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  // İnput değişikliklerini yakalayan fonksiyon
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 2. Kayıt İstetiğinin Backend'e Gönderilmesi
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    const payload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      phoneNumber: formData.phoneNumber,
+      role: formData.role.toUpperCase()
+    };
+
     try {
-      // Backend'deki register endpoint'ine tüm form verisini (role dahil) fırlatıyoruz
-      await axios.post('http://localhost:8080/api/auth/register', formData);
+      await axios.post('http://localhost:8080/api/auth/register', payload);
       
       alert('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
-      navigate('/login'); // Başarılıysa giriş ekranına yönlendir
+      navigate('/login');
     } catch (err: any) {
       console.error('Kayıt hatası:', err);
       setError(err.response?.data?.message || 'Kayıt olurken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
@@ -81,7 +86,6 @@ export default function Register() {
             <input type="password" name="password" required value={formData.password} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
           </div>
 
-          {/* 🔑 🚀 YENİ ROL SEÇİM ALANI */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Hesap Türü</label>
             <select 
@@ -90,8 +94,8 @@ export default function Register() {
               onChange={handleChange} 
               style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 500 }}
             >
-              <option value="CUSTOMER">👤 Müşteri (Randevu Almak İstiyorum)</option>
-              <option value="BARBER">💈 Dükkan Sahibi / Berber (Salonumu Yönetmek İstiyorum)</option>
+              <option value="CUSTOMER">Müşteri (Randevu Almak İstiyorum)</option>
+              <option value="SHOP_OWNER">Dükkan Sahibi / Berber (Salonumu Yönetmek İstiyorum)</option>
             </select>
           </div>
 

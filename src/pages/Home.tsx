@@ -42,9 +42,9 @@ export default function Home() {
       return;
     }
 
-    // BERBER KALKANI: Eğer dükkan sahibi bu sayfayı açmaya çalışırsa paneline geri fırlatıyoruz
-    if (role && role.toUpperCase() === 'BARBER') {
-      navigate('/barber/dashboard');
+    // SHOP OWNER KALKANI: Eğer dükkan sahibi bu sayfayı açmaya çalışırsa paneline geri fırlatıyoruz
+    if (role && role.toUpperCase() === 'SHOP_OWNER') {
+      navigate('/shop-owner/dashboard');
       return;
     }
 

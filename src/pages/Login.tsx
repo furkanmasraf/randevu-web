@@ -30,8 +30,8 @@ const Login: React.FC = () => {
       localStorage.setItem('role', role); // Rolü de hafızaya yazıyoruz
 
         // Role göre yol ayrımı
-        if (role && role.toUpperCase() === 'BARBER') {
-          navigate('/barber/dashboard'); // Dükkan sahibini yönetim paneline uçuruyoruz
+        if (role && role.toUpperCase() === 'SHOP_OWNER') {
+          navigate('/shop-owner/dashboard'); // Dükkan sahibini yönetim paneline uçuruyoruz
         } else {
           navigate('/'); // Müşteriyi dükkan listesine gönderiyoruz
         }
