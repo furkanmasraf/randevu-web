@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-// 💡 Sayfa geçişlerini yönetmek için useNavigate hook'unu kullanıyoruz
+// Sayfa geçişlerini yönetmek için useNavigate hook'unu kullanıyoruz
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
@@ -8,52 +8,50 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  // 💡 Yönlendiriciyi tanımlıyoruz
+  // Yönlendiriciyi tanımlıyoruz
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-  e.preventDefault();
-  setIsLoading(true);
+    e.preventDefault();
+    setIsLoading(true);
 
-  console.log("Backend'e giriş isteği gönderiliyor:", { email, password });
+    console.log("Backend'e giriş isteği gönderiliyor:", { email, password });
 
-  try {
-    // Spring Boot backend'indeki login endpoint'ine istek atıyoruz
-    // Bugün sabah backend'de yazdığımız '/auth/login' yoluna POST atıyoruz
-    const response = await API.post('/auth/login', { email, password });
+    try {
+      // Spring Boot backend'indeki login endpoint'ine istek atıyoruz
+      const response = await API.post('/auth/login', { email, password });
 
-    // Backend'den dönen cevabın içindeki gerçek JWT token'ını alıyoruz
-    const { token } = response.data;
+      // Backend artık bir Map döndüğü için içerisinden hem token'ı hem de userId'yi çekiyoruz
+      const { token, userId } = response.data;
 
-    if (token) {
-      // 🔑 Gerçek token'ı hafızaya kaydediyoruz, artık sahte bilet yok!
-      localStorage.setItem('token', token);
-      console.log("Giriş başarılı! Gerçek token hafızaya alındı.");
+      if (token) {
+        // 🔑 Gerçek token'ı ve userId'yi hafızaya kaydediyoruz, artık sahte bilet yok!
+        localStorage.setItem('token', token);
+        
+        if (userId) {
+          localStorage.setItem('userId', userId); // 🚀 Randevu formunun dinamik çalışması için hafızaya aldık
+          console.log("Giriş başarılı! Token ve userId hafızaya alındı. ID:", userId);
+        }
+        
+        // Kullanıcıyı dükkan listesine (Home) uçuruyoruz
+        navigate('/');
+      }
+    } catch (err: any) {
+      setIsLoading(false);
+      console.error("Giriş esnasında hata oluştu:", err);
       
-      // Kullanıcıyı dükkan listesine (Home) uçuruyoruz
-      navigate('/');
+      if (err.response) {
+        alert("Hatalı e-posta veya şifre girdiniz!");
+      } else {
+        alert("Backend sunucusuna ulaşılamıyor. Spring Boot projenin açık olduğundan emin ol!");
+      }
     }
-  } catch (err: any) {
-  setIsLoading(false);
-  console.error("Giriş esnasında hata oluştu:", err);
-  
-  // Sunucu kapalı olsaydı err.response hiç oluşmazdı (Network Error olurdu).
-  // Eğer sunucudan bir response (ister 401, ister 403, ister 500) geliyorsa,
-  // bu durum isteklerin gittiğini ama bilgilerin uyuşmadığı için backend'in tıkandığını gösterir.
-  if (err.response) {
-    // Sunucu kodu ne olursa olsun (401 veya şimdiki gibi 500), kullanıcı yanlış bilgi girmiştir.
-    alert("Hatalı e-posta veya şifre girdiniz!");
-  } else {
-    // Sunucu tamamen kapalıysa veya Docker çöktüyse buraya düşer.
-    alert("Backend sunucusuna ulaşılamıyor. Spring Boot projenin açık olduğundan emin ol!");
-  }
-}
-};
+  };
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f9fafb', margin: 0, overflow: 'hidden' }}>
       
-      {/* 🏙️ SOL TARAF: Görsel ve Slogan Alanı */}
+      {/* SOL TARAF: Görsel ve Slogan Alanı */}
       <div style={{
         flex: 1,
         backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80')`,
@@ -75,7 +73,7 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* 📝 SAĞ TARAF: Giriş Formu */}
+      {/* SAĞ TARAF: Giriş Formu */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px', justifyContent: 'center' }}>
         <div style={{
           width: '100%',

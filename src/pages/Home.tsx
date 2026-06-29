@@ -1,5 +1,6 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Rota geçişi için import eklendi
 
 // Backend'deki güncel ShopDTO veri yapısı ile harfi harfine eşitlendi
 interface Shop {
@@ -18,6 +19,8 @@ const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
 const CATEGORIES = ["Tümü", "Erkek Kuaförü", "Kadın Kuaförü", "Güzellik Salonu"];
 
 export default function Home() {
+  const navigate = useNavigate(); // useNavigate hook'u tanımlandı
+
   // 1. Durum (State) Yönetimleri
   const [shops, setShops] = useState<Shop[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);
@@ -206,8 +209,9 @@ export default function Home() {
                 </p>
               </div>
 
+              {/* Buton tıklama olayı dinamik yönlendirme yapacak şekilde güncellendi */}
               <button 
-                onClick={() => alert(`${shop.name} için randevu sayfasına yönlendiriliyorsunuz...`)}
+                onClick={() => navigate(`/book-appointment/${shop.id}`)}
                 style={{ 
                   width: '100%', 
                   backgroundColor: '#111827', 
