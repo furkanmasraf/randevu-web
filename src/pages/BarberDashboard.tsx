@@ -22,13 +22,12 @@ export default function BarberDashboard() {
     const role = localStorage.getItem('role');
     const userId = localStorage.getItem('userId');
 
-    if (!token || role !== 'BARBER') {
+    // Rol kontrolünü SHOP_OWNER olarak güncelledik
+    if (!token || role !== 'SHOP_OWNER') {
       navigate('/login');
       return;
     }
 
-    // NOT: Backend'de berberin kendi dükkanına ait randevuları çeken endpoint'i çağırıyoruz
-    // Örn: /api/appointments/shop/owner/{userId} veya direkt dükkan ID'sine göre
     const fetchShopAppointments = async () => {
       try {
         setLoading(true);
@@ -46,7 +45,6 @@ export default function BarberDashboard() {
     fetchShopAppointments();
   }, [navigate]);
 
-  // Randevu Durumunu Güncelleme (Onay / Ret)
   const updateStatus = async (id: number, newStatus: 'APPROVED' | 'REJECTED') => {
     const token = localStorage.getItem('token');
     try {
@@ -54,7 +52,6 @@ export default function BarberDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Arayüzü anlık güncelle
       setAppointments(prev => 
         prev.map(app => app.id === id ? { ...app, status: newStatus } : app)
       );

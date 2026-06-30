@@ -1,57 +1,52 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
-// Sayfa geçişlerini yönetmek için useNavigate hook'unu kullanıyoruz
-import { useNavigate } from 'react-router-dom';
+import React, { useState, ChangeEvent } from 'react';
+import { Link } from 'react-router-dom';
 import API from '../services/api';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
-  // Yönlendiriciyi tanımlıyoruz
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
+  const handleLoginClick = async (): Promise<void> => {
+    if (!email || !password) {
+      alert("Lütfen e-posta ve şifre alanlarını doldurun.");
+      return;
+    }
+
     setIsLoading(true);
 
-    console.log("Backend'e giriş isteği gönderiliyor:", { email, password });
-
     try {
-      // Spring Boot backend'indeki login endpoint'ine istek atıyoruz
       const response = await API.post('/auth/login', { email, password });
+      let { token, userId, role } = response.data;
 
-      // Backend artık bir Map döndüğü için içerisinden hem token'ı hem de userId'yi çekiyoruz
-      const { token, userId, role } = response.data;
+      if (token) {
+        token = token.replace(/^['"]|['"]$/g, '');
 
-    if (token) {
-      localStorage.setItem('token', token);
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('role', role); // Rolü de hafızaya yazıyoruz
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('role', role); 
 
-        // Role göre yol ayrımı
+        setIsLoading(false);
+
         if (role && role.toUpperCase() === 'SHOP_OWNER') {
-          navigate('/shop-owner/dashboard'); // Dükkan sahibini yönetim paneline uçuruyoruz
+          // React Router yerine doğrudan tarayıcıyı o adrese sürüyoruz
+          window.location.href = '/shop-owner/dashboard'; 
         } else {
-          navigate('/'); // Müşteriyi dükkan listesine gönderiyoruz
+          window.location.href = '/'; 
         }
+      } else {
+        setIsLoading(false);
       }
     } catch (err: any) {
       setIsLoading(false);
       console.error("Giriş esnasında hata oluştu:", err);
-      
-      if (err.response) {
-        alert("Hatalı e-posta veya şifre girdiniz!");
-      } else {
-        alert("Backend sunucusuna ulaşılamıyor. Spring Boot projenin açık olduğundan emin ol!");
-      }
+      alert("Hatalı e-posta veya şifre girdiniz!");
     }
   };
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f9fafb', margin: 0, overflow: 'hidden' }}>
       
-      {/* SOL TARAF: Görsel ve Slogan Alanı */}
       <div style={{
         flex: 1,
         backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80')`,
@@ -73,7 +68,6 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* SAĞ TARAF: Giriş Formu */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px', justifyContent: 'center' }}>
         <div style={{
           width: '100%',
@@ -94,8 +88,7 @@ const Login: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Email Alanı */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>E-posta Adresi</label>
               <input
@@ -108,7 +101,6 @@ const Login: React.FC = () => {
               />
             </div>
 
-            {/* Şifre Alanı */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Şifre</label>
               <input
@@ -121,10 +113,10 @@ const Login: React.FC = () => {
               />
             </div>
 
-            {/* Giriş Butonu */}
             <button
-              type="submit"
+              type="button"
               disabled={isLoading}
+              onClick={handleLoginClick}
               style={{
                 marginTop: '10px',
                 padding: '14px',
@@ -141,12 +133,11 @@ const Login: React.FC = () => {
             >
               {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
             </button>
-          </form>
+          </div>
 
-          {/* Kayıt Linki */}
           <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280', marginTop: '24px' }}>
-            Hesabınız yok mu?{' '}
-            <a href="/register" style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>Hemen Kayıt Olun</a>
+            Hesabınız yok mu? ' '
+            <Link to="/register" style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>Hemen Kayıt Olun</Link>
           </div>
 
         </div>
