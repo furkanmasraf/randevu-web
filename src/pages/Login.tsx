@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
+import axios from 'axios';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -26,12 +27,24 @@ const Login: React.FC = () => {
         localStorage.setItem('userId', userId);
         localStorage.setItem('role', role); 
 
-        setIsLoading(false);
-
         if (role && role.toUpperCase() === 'SHOP_OWNER') {
-          // React Router yerine doğrudan tarayıcıyı o adrese sürüyoruz
-          window.location.href = '/shop-owner/dashboard'; 
+          try {
+            // MÜHENDİSLİK AKIŞI: Bu kullanıcının halihazırda bir dükkanı var mı kontrol et
+            await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            // Dükkan bulundu! Doğrudan dashboard paneline yönlendir.
+            setIsLoading(false);
+            window.location.href = '/shop-owner/dashboard';
+          } catch (shopErr) {
+            // Dükkan bulunamadı! (Backend 404 veya hata döndü). Önce dükkan kayıt formuna yönlendir.
+            console.log("Kullanıcıya ait dükkan bulunamadı, dükkan oluşturma formuna yönlendiriliyor...");
+            setIsLoading(false);
+            window.location.href = '/shop-owner/register-shop';
+          }
         } else {
+          setIsLoading(false);
           window.location.href = '/'; 
         }
       } else {
@@ -136,7 +149,7 @@ const Login: React.FC = () => {
           </div>
 
           <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280', marginTop: '24px' }}>
-            Hesabınız yok mu? ' '
+            Hesabınız yok mu?{' '}
             <Link to="/register" style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>Hemen Kayıt Olun</Link>
           </div>
 

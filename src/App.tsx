@@ -20,6 +20,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
+        <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
 
         {/* Catch-all rotasını da tamamen kapatıyoruz ki tarayıcı hiçbir yere fırlatamasın */}
         {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
