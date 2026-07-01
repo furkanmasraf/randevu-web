@@ -94,7 +94,7 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '60px', fontFamily: '"Inter", system-ui, sans-serif' }}>
       
-      {/* 🌟 ÜST BAŞLIK VE ELİT NAVİGASYON BARI */}
+      {/*  ÜST BAŞLIK VE ELİT NAVİGASYON BARI */}
       <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '20px 0', marginBottom: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>

@@ -36,7 +36,7 @@ export default function BarberDashboard() {
   // Sidebar durum takibi
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
-  // Form State'leri
+  // FORM STATE'LERİ
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newServiceDuration, setNewServiceDuration] = useState('30');
@@ -68,22 +68,27 @@ export default function BarberDashboard() {
           headers: { Authorization: `Bearer ${token}` }
         });
         const shopData = shopRes.data;
-        const exactShopId = shopData?.id || shopData?.shopId;
-
-        if (exactShopId) {
-          currentShopId = exactShopId;
-          setDynamicShopId(exactShopId);
+        
+        if (shopData) {
+          const exactShopId = shopData.id || shopData.shopId;
+          if (exactShopId) {
+            currentShopId = exactShopId;
+            setDynamicShopId(exactShopId);
+          }
           if (shopData.startTime) setStartTime(shopData.startTime);
           if (shopData.endTime) setEndTime(shopData.endTime);
         }
       } catch (shopError) {
         console.error("Dükkan bilgisi çekilirken hata:", shopError);
+        // Hata durumunda dükkan id'sini geçici olarak 1 yapıp formların kilitlenmesini önleyebilirsiniz:
+        // setDynamicShopId(1);
+        // currentShopId = 1;
       }
 
       if (currentShopId) {
         // HİZMETLERİ ÇEK
         try {
-          const serviceRes = await axios.get(`http://localhost:8080/api/shops/${currentShopId}/services`, {
+          const serviceRes = await axios.get(`http://localhost:8080/api/services/shop/${currentShopId}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setServices(Array.isArray(serviceRes.data) ? serviceRes.data : []);
@@ -128,20 +133,34 @@ export default function BarberDashboard() {
     }
   };
 
+  // HİZMET EKLEME ACTION
   const handleAddService = async () => {
-    if (!dynamicShopId || !newServiceName || !newServicePrice) return;
+    const activeShopId = dynamicShopId || 1; // Fallback koruması
+    if (!newServiceName.trim() || !newServicePrice) {
+      alert("Lütfen hizmet adı ve fiyatını doldurun.");
+      return;
+    }
     try {
-      const res = await axios.post(`http://localhost:8080/api/shops/${dynamicShopId}/services`, {
+      const payload = {
         name: newServiceName,
         price: parseFloat(newServicePrice),
-        durationInMinutes: parseInt(newServiceDuration)
-      }, { headers: { Authorization: `Bearer ${token}` } });
+        durationInMinutes: parseInt(newServiceDuration),
+        shop: {
+          id: Number(activeShopId)
+        }
+      };
+
+      const res = await axios.post(`http://localhost:8080/api/services`, payload, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      
       setServices(prev => [...prev, res.data]);
       setNewServiceName('');
       setNewServicePrice('');
       alert("Hizmet başarıyla eklendi.");
-    } catch (error) {
-      alert("Hizmet eklenirken hata oluştu.");
+    } catch (error: any) {
+      console.error("Hizmet eklenirken hata oluştu:", error);
+      alert(error.response?.data?.message || "Hizmet eklenirken bir hata oluştu.");
     }
   };
 
@@ -156,23 +175,33 @@ export default function BarberDashboard() {
     }
   };
 
-  // PERSONEL EKLEME — SQL first_name ve last_name not-null kısıtlamalarına göre güncellendi
+  // PERSONEL EKLEME ACTION
   const handleAddEmployee = async () => {
-    if (!dynamicShopId || !newEmployeeName.trim()) {
+    const trimmedName = newEmployeeName.trim();
+    const activeShopId = dynamicShopId || 1; // Fallback koruması
+    if (!trimmedName) {
       alert("Lütfen personel adı ve soyadını doldurun.");
       return;
     }
+    
     try {
-      // Girilen Ad Soyad bilgisini parçalıyoruz
-      const nameParts = newEmployeeName.trim().split(' ');
-      const firstName = nameParts.slice(0, -1).join(' ') || nameParts[0];
-      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+      const nameParts = trimmedName.split(/\s+/);
+      let firstName = "";
+      let lastName = "";
+
+      if (nameParts.length > 1) {
+        lastName = nameParts.pop() || "";
+        firstName = nameParts.join(" ");
+      } else {
+        firstName = nameParts[0];
+        lastName = "-"; 
+      }
 
       const payload = {
         firstName: firstName,
         lastName: lastName,
         shop: {
-          id: Number(dynamicShopId)
+          id: Number(activeShopId)
         }
       };
 
@@ -203,9 +232,9 @@ export default function BarberDashboard() {
   };
 
   const handleSaveHours = async () => {
-    if (!dynamicShopId) return;
+    const activeShopId = dynamicShopId || 1;
     try {
-      await axios.put(`http://localhost:8080/api/shops/${dynamicShopId}/working-hours`, { startTime, endTime }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`http://localhost:8080/api/shops/${activeShopId}/working-hours`, { startTime, endTime }, { headers: { Authorization: `Bearer ${token}` } });
       alert("Saatler güncellendi.");
     } catch (error) {
       alert("Saatler güncellenirken hata oluştu.");
@@ -245,7 +274,7 @@ export default function BarberDashboard() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: '#f1f5f9', margin: 0 }}>
       
-      {/* SIDEBAR */}
+      {/* SIDEBAR COMPONENT */}
       <div style={{ 
         width: isSidebarCollapsed ? '76px' : '260px', 
         backgroundColor: '#1e293b', 
@@ -385,15 +414,68 @@ export default function BarberDashboard() {
               <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', gap: '16px', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 2, minWidth: '200px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>HİZMET ADI</label>
-                  <input type="text" value={newServiceName} onFocus={() => setFocusedInput('srvName')} onBlur={() => setFocusedInput('')} onChange={e => setNewServiceName(e.target.value)} placeholder="Örn: Saç Kesimi" style={getInputStyle('srvName')} />
+                  <input 
+                    type="text" 
+                    id="serviceNameInput"
+                    name="serviceName"
+                    value={newServiceName} 
+                    onChange={e => setNewServiceName(e.target.value)}
+                    placeholder="Örn: Saç Kesimi" 
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      backgroundColor: '#ffffff',
+                      color: '#334155',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '100px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>FİYAT (TL)</label>
-                  <input type="number" value={newServicePrice} onFocus={() => setFocusedInput('srvPrice')} onBlur={() => setFocusedInput('')} onChange={e => setNewServicePrice(e.target.value)} placeholder="300" style={getInputStyle('srvPrice')} />
+                  <input 
+                    type="number" 
+                    id="servicePriceInput"
+                    name="servicePrice"
+                    value={newServicePrice} 
+                    onChange={e => setNewServicePrice(e.target.value)}
+                    placeholder="300" 
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      backgroundColor: '#ffffff',
+                      color: '#334155',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '120px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>SÜRE</label>
-                  <select value={newServiceDuration} onFocus={() => setFocusedInput('srvDur')} onBlur={() => setFocusedInput('')} onChange={e => setNewServiceDuration(e.target.value)} style={{ ...getInputStyle('srvDur'), cursor: 'pointer' }}>
+                  <select 
+                    id="serviceDurationSelect"
+                    name="serviceDuration"
+                    value={newServiceDuration} 
+                    onChange={e => setNewServiceDuration(e.target.value)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      backgroundColor: '#ffffff',
+                      color: '#334155',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
+                    }}
+                  >
                     <option value="15">15 dk</option>
                     <option value="30">30 dk</option>
                     <option value="45">45 dk</option>
@@ -438,7 +520,7 @@ export default function BarberDashboard() {
             <div>
               <div style={{ marginBottom: '32px' }}>
                 <h2 style={{ color: '#0f172a', fontSize: '1.85rem', fontWeight: 800, margin: 0, letterSpacing: '-0.025em' }}>Personel Yönetimi</h2>
-                <p style={{ color: '#64748b', margin: '6px 0 0 0', fontSize: '0.95rem' }}>Dükkanınızda hizmet veren uzman kadroyu buradan yönetebilir ve yeni ekip arkadaşları ekleyebilirsiniz.</p>
+                <p style={{ color: '#64748b', margin: '6px 0 0 0', fontSize: '0.95rem' }}>Dükkanınızda hizmet veren uzman kadroyu buradan yönetebilir og yeni ekip arkadaşları ekleyebilirsiniz.</p>
               </div>
               
               <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', gap: '16px', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap' }}>
@@ -446,6 +528,8 @@ export default function BarberDashboard() {
                   <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>PERSONEL ADI SOYADI</label>
                   <input 
                     type="text" 
+                    id="employeeNameInput"
+                    name="employeeName"
                     value={newEmployeeName}
                     onChange={(e) => setNewEmployeeName(e.target.value)}
                     placeholder="Örn: Ahmet Yılmaz" 
@@ -460,7 +544,6 @@ export default function BarberDashboard() {
                       width: '100%',
                       boxSizing: 'border-box'
                     }}
-                    required
                   />
                 </div>
                 <button onClick={handleAddEmployee} style={{ backgroundColor: '#6366f1', color: '#fff', border: 'none', padding: '14px 28px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '0.95rem' }}>Personel Ekle</button>
