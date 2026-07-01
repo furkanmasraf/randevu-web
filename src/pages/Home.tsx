@@ -121,7 +121,7 @@ export default function Home() {
                 transition: 'all 0.2s ease-in-out'
               }}
             >
-              📅 Randevularım
+              👤 Profilim
             </button>
 
             <button 

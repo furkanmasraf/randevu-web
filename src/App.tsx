@@ -4,7 +4,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import RegisterShop from './pages/RegisterShop'; 
 import BookAppointment from './pages/BookAppointment'; 
-import MyAppointments from './pages/MyAppointments';
+import CustomerDashboard from './pages/CustomerDashboard'; // Klasör yapına göre import ismi güncellendi
 import BarberDashboard from './pages/BarberDashboard';
 
 function App() {
@@ -18,7 +18,10 @@ function App() {
         <Route path="/register-shop" element={<RegisterShop />} />
         <Route path="/book-appointment/:shopId" element={<BookAppointment />} />
         <Route path="/" element={<Home />} />
-        <Route path="/my-appointments" element={<MyAppointments />} />
+        
+        {/* İsmi MyAppointments yerine doğrudan yeni bileşen adına çektik */}
+        <Route path="/my-appointments" element={<CustomerDashboard />} /> 
+        
         <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
         <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
 
