@@ -8,6 +8,10 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Hover durumları için inline state takipleri
+  const [isBtnHovered, setIsBtnHovered] = useState<boolean>(false);
+  const [focusedInput, setFocusedInput] = useState<string>('');
+
   const handleLoginClick = async (): Promise<void> => {
     if (!email || !password) {
       alert("Lütfen e-posta ve şifre alanlarını doldurun.");
@@ -29,17 +33,12 @@ const Login: React.FC = () => {
 
         if (role && role.toUpperCase() === 'SHOP_OWNER') {
           try {
-            // MÜHENDİSLİK AKIŞI: Bu kullanıcının halihazırda bir dükkanı var mı kontrol et
             await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
-            // Dükkan bulundu! Doğrudan dashboard paneline yönlendir.
             setIsLoading(false);
             window.location.href = '/shop-owner/dashboard';
           } catch (shopErr) {
-            // Dükkan bulunamadı! (Backend 404 veya hata döndü). Önce dükkan kayıt formuna yönlendir.
-            console.log("Kullanıcıya ait dükkan bulunamadı, dükkan oluşturma formuna yönlendiriliyor...");
             setIsLoading(false);
             window.location.href = '/shop-owner/register-shop';
           }
@@ -57,100 +56,142 @@ const Login: React.FC = () => {
     }
   };
 
+  // Ortak input stil fabrikası (Premium focus efekti içerir)
+  const getInputStyle = (inputName: string) => ({
+    padding: '14px 16px',
+    borderRadius: '12px',
+    border: focusedInput === inputName ? '2px solid #6366f1' : '1px solid #e2e8f0',
+    fontSize: '0.95rem',
+    outline: 'none',
+    backgroundColor: '#f8fafc',
+    color: '#334155',
+    transition: 'all 0.2s ease-in-out',
+    boxShadow: focusedInput === inputName ? '0 0 0 4px rgba(99, 102, 241, 0.15)' : 'none',
+  });
+
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f9fafb', margin: 0, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: '#f8fafc', margin: 0, overflow: 'hidden' }}>
       
+      {/* SOL ALAN: Premium Arka Plan Görseli & Cam Efektli (Glassmorphism) Kart */}
       <div style={{
-        flex: 1,
-        backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80')`,
+        flex: 1.2,
+        backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: '40px'
       }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}></div>
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 48px' }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: 800, color: '#ffffff', margin: '0 0 16px 0', letterSpacing: '1px' }}>
-            Randevu Kuaför
+        {/* Koyu Sinematik Overlay */}
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)' }}></div>
+        
+        {/* Lüks Cam Efektli Bilgi Paneli */}
+        <div style={{
+          position: 'relative',
+          zIndex: 10,
+          textAlign: 'center',
+          padding: '48px 32px',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+          maxWidth: '500px'
+        }}>
+          <h1 style={{ fontSize: '3.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 16px 0', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
+            Makas <span style={{ color: '#818cf8' }}>Lab</span>
           </h1>
-          <p style={{ fontSize: '1.25rem', color: '#e5e7eb', fontWeight: 500, margin: 0 }}>
-            Tarzını keşfet, sıradaki randevunu saniyeler içinde planla.
+          <p style={{ fontSize: '1.2rem', color: '#f1f5f9', fontWeight: 400, margin: 0, lineHeight: 1.6, opacity: 0.9 }}>
+            Premium kuaför deneyimi şimdi dijital dünyada. Sıradaki randevunu saniyeler içinde planla veya işletmeni lüksle yönet.
           </p>
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px', justifyContent: 'center' }}>
+      {/* SAĞ ALAN: Minimalist ve Elit Giriş Formu */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px', justifyContent: 'center', backgroundColor: '#ffffff' }}>
         <div style={{
           width: '100%',
-          maxWidth: '420px',
+          maxWidth: '400px',
           backgroundColor: '#ffffff',
-          padding: '40px',
-          borderRadius: '16px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #f3f4f6'
         }}>
           
-          <div style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
-              Tekrar Hoş Geldiniz
+          <div style={{ marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '2.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 10px 0', letterSpacing: '-0.025em' }}>
+              Hoş Geldiniz
             </h2>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
-              Hesabınıza giriş yapın ve randevularınızı yönetin.
+            <p style={{ fontSize: '1rem', color: '#64748b', margin: 0, fontWeight: 400 }}>
+              Hesabınıza giriş yapın ve deneyiminizi yönetin.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>E-posta Adresi</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* E-posta Alanı */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155', letterSpacing: '0.025em' }}>E-POSTA ADRESİ</label>
               <input
                 type="email"
                 required
                 value={email}
+                onFocus={() => setFocusedInput('email')}
+                onBlur={() => setFocusedInput('')}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none' }}
-                placeholder="name@example.com"
+                style={getInputStyle('email')}
+                placeholder="isim@domain.com"
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Şifre</label>
+            {/* Şifre Alanı */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155', letterSpacing: '0.025em' }}>ŞİFRE</label>
               <input
                 type="password"
                 required
                 value={password}
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput('')}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none' }}
+                style={getInputStyle('password')}
                 placeholder="••••••••"
               />
             </div>
 
+            {/* Giriş Yap Butonu */}
             <button
               type="button"
               disabled={isLoading}
+              onMouseEnter={() => setIsBtnHovered(true)}
+              onMouseLeave={() => setIsBtnHovered(false)}
               onClick={handleLoginClick}
               style={{
-                marginTop: '10px',
-                padding: '14px',
-                borderRadius: '10px',
+                marginTop: '8px',
+                padding: '16px',
+                borderRadius: '14px',
                 border: 'none',
-                backgroundColor: isLoading ? '#4b5563' : '#111827',
+                backgroundColor: isLoading ? '#64748b' : (isBtnHovered ? '#4f46e5' : '#6366f1'),
                 color: '#ffffff',
-                fontSize: '0.95rem',
+                fontSize: '1rem',
                 fontWeight: 600,
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                transition: 'background-color 0.2s'
+                boxShadow: isBtnHovered ? '0 10px 15px -3px rgba(99, 102, 241, 0.3)' : '0 4px 6px -1px rgba(99, 102, 241, 0.2)',
+                transform: isBtnHovered && !isLoading ? 'translateY(-1px)' : 'none',
+                transition: 'all 0.2s ease-in-out'
               }}
             >
-              {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+              {isLoading ? 'Doğrulanıyor...' : 'Sisteme Giriş Yap'}
             </button>
           </div>
 
-          <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280', marginTop: '24px' }}>
-            Hesabınız yok mu?{' '}
-            <Link to="/register" style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>Hemen Kayıt Olun</Link>
+          {/* Alt Bilgi & Kayıt Ol Linki */}
+          <div style={{ textAlign: 'center', fontSize: '0.95rem', color: '#64748b', marginTop: '32px', fontWeight: 400 }}>
+            Henüz bir hesabınız yok mu?{' '}
+            <Link to="/register" style={{ fontWeight: 600, color: '#6366f1', textDecoration: 'none', borderBottom: '1px solid transparent', transition: 'border-color 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderBottom = '1px solid #6366f1'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderBottom = '1px solid transparent'}>
+              Hemen Kayıt Olun
+            </Link>
           </div>
 
         </div>

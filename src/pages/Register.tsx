@@ -5,6 +5,7 @@ import axios from 'axios';
 export default function Register() {
   const navigate = useNavigate();
 
+  // Orijinal veri yapın tamamen korundu
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -16,6 +17,10 @@ export default function Register() {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+
+  // Stil ve focus takipleri için state'ler
+  const [isBtnHovered, setIsBtnHovered] = useState<boolean>(false);
+  const [focusedInput, setFocusedInput] = useState<string>('');
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -38,7 +43,6 @@ export default function Register() {
 
     try {
       await axios.post('http://localhost:8080/api/auth/register', payload);
-      
       alert('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
       navigate('/login');
     } catch (err: any) {
@@ -49,70 +53,246 @@ export default function Register() {
     }
   };
 
+  const getInputStyle = (inputName: string) => ({
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: focusedInput === inputName ? '2px solid #6366f1' : '1px solid #cbd5e1',
+    fontSize: '0.95rem',
+    outline: 'none',
+    backgroundColor: '#ffffff',
+    color: '#334155',
+    transition: 'all 0.2s ease-in-out',
+    boxShadow: focusedInput === inputName ? '0 0 0 4px rgba(99, 102, 241, 0.15)' : 'none',
+  });
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', width: '100%', maxWidth: '450px' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: '#f8fafc', margin: 0, overflow: 'hidden' }}>
+      
+      {/* SOL ALAN: MakasLab Temalı Sinematik Cam Efektli Panel */}
+      <div style={{
+        flex: 1.1,
+        backgroundImage: `url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1200&q=80')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px'
+      }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)' }}></div>
         
-        <h2 style={{ textAlign: 'center', margin: '0 0 8px 0', color: '#111827', fontWeight: 700 }}>Hesap Oluştur</h2>
-        <p style={{ textAlign: 'center', margin: '0 0 24px 0', color: '#6b7280', fontSize: '0.9rem' }}>Hemen kaydolun ve sistemin tadını çıkarın.</p>
-
-        {error && <div style={{ backgroundColor: '#fee2e2', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem', fontWeight: 500 }}>{error}</div>}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Ad</label>
-              <input type="text" name="firstName" required value={formData.firstName} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Soyad</label>
-              <input type="text" name="lastName" required value={formData.lastName} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>E-posta</label>
-            <input type="email" name="email" required value={formData.email} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Telefon Numarası</label>
-            <input type="tel" name="phoneNumber" placeholder="05551234567" required value={formData.phoneNumber} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Şifre</label>
-            <input type="password" name="password" required value={formData.password} onChange={handleChange} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>Hesap Türü</label>
-            <select 
-              name="role" 
-              value={formData.role} 
-              onChange={handleChange} 
-              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 500 }}
-            >
-              <option value="CUSTOMER">Müşteri (Randevu Almak İstiyorum)</option>
-              <option value="SHOP_OWNER">Dükkan Sahibi / Berber (Salonumu Yönetmek İstiyorum)</option>
-            </select>
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{ marginTop: '8px', backgroundColor: '#111827', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', transition: 'background-color 0.2s' }}
-          >
-            {loading ? 'Kaydediliyor...' : 'Kayıt Ol'}
-          </button>
-        </form>
-
-        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.875rem', color: '#4b5563' }}>
-          Zaten hesabınız var mı? <span onClick={() => navigate('/login')} style={{ color: '#111827', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>Giriş Yap</span>
-        </p>
-
+        <div style={{
+          position: 'relative',
+          zIndex: 10,
+          textAlign: 'center',
+          padding: '44px 32px',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          maxWidth: '460px'
+        }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: 800, color: '#ffffff', margin: '0 0 16px 0', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
+            Makas<span style={{ color: '#818cf8' }}>Lab</span>'a Katıl
+          </h1>
+          <p style={{ fontSize: '1.15rem', color: '#e2e8f0', fontWeight: 400, margin: 0, lineHeight: 1.6 }}>
+            İster dakikalar içinde tarzına en uygun randevuyu al, ister işletmeni dijitalleştirerek lüksün ve konforun tadını çıkar.
+          </p>
+        </div>
       </div>
+
+      {/* SAĞ ALAN: Kayıt Formu */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        alignItems: 'flex-start', 
+        padding: '40px 48px', 
+        justifyContent: 'center', 
+        backgroundColor: '#ffffff', 
+        overflowY: 'auto',
+        height: '100vh',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{ width: '100%', maxWidth: '420px', backgroundColor: '#ffffff', paddingTop: '24px', paddingBottom: '24px' }}>
+          
+          <div style={{ marginBottom: '28px' }}>
+            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0', letterSpacing: '-0.025em' }}>
+              Yeni Hesap Oluştur
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0, fontWeight: 400 }}>
+              Hemen kaydolun ve dijital dünyaya adım atın.
+            </p>
+          </div>
+
+          {error && (
+            <div style={{ backgroundColor: '#fef2f2', color: '#b91c1c', padding: '12px 14px', borderRadius: '10px', marginBottom: '20px', fontSize: '0.875rem', fontWeight: 600, border: '1px solid #fca5a5' }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            
+            {/* Ad ve Soyad - Yan Yana Kolon */}
+            <div style={{ display: 'flex', gap: '14px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>AD</label>
+                <input 
+                  type="text" 
+                  name="firstName" 
+                  required 
+                  value={formData.firstName} 
+                  onFocus={() => setFocusedInput('firstName')}
+                  onBlur={() => setFocusedInput('')}
+                  onChange={handleChange} 
+                  style={getInputStyle('firstName')} 
+                  placeholder="Hasan"
+                />
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>SOYAD</label>
+                <input 
+                  type="text" 
+                  name="lastName" 
+                  required 
+                  value={formData.lastName} 
+                  onFocus={() => setFocusedInput('lastName')}
+                  onBlur={() => setFocusedInput('')}
+                  onChange={handleChange} 
+                  style={getInputStyle('lastName')} 
+                  placeholder="Yılmaz"
+                />
+              </div>
+            </div>
+
+            {/* E-posta */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>E-POSTA ADRESİ</label>
+              <input 
+                type="email" 
+                name="email" 
+                required 
+                value={formData.email} 
+                onFocus={() => setFocusedInput('email')}
+                onBlur={() => setFocusedInput('')}
+                onChange={handleChange} 
+                style={getInputStyle('email')} 
+                placeholder="hasan@domain.com"
+              />
+            </div>
+
+            {/* Telefon Numarası */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>TELEFON NUMARASI</label>
+              <input 
+                type="tel" 
+                name="phoneNumber" 
+                placeholder="05551234567" 
+                required 
+                value={formData.phoneNumber} 
+                onFocus={() => setFocusedInput('phoneNumber')}
+                onBlur={() => setFocusedInput('')}
+                onChange={handleChange} 
+                style={getInputStyle('phoneNumber')} 
+              />
+            </div>
+
+            {/* Şifre */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>ŞİFRE</label>
+              <input 
+                type="password" 
+                name="password" 
+                required 
+                value={formData.password} 
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput('')}
+                onChange={handleChange} 
+                style={getInputStyle('password')} 
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* Premium Rol Seçim Kartları (State ile Senkronize) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>HESAP TÜRÜ</label>
+              <div style={{ display: 'flex', gap: '14px' }}>
+                
+                {/* Müşteri Kartı */}
+                <div 
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'CUSTOMER' }))}
+                  style={{
+                    flex: 1,
+                    padding: '14px',
+                    borderRadius: '12px',
+                    border: formData.role === 'CUSTOMER' ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                    backgroundColor: formData.role === 'CUSTOMER' ? '#f5f3ff' : '#ffffff',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: formData.role === 'CUSTOMER' ? '#4f46e5' : '#475569' }}>Müşteriyim</div>
+                </div>
+
+                {/* Dükkan Sahibi Kartı */}
+                <div 
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'SHOP_OWNER' }))}
+                  style={{
+                    flex: 1,
+                    padding: '14px',
+                    borderRadius: '12px',
+                    border: formData.role === 'SHOP_OWNER' ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                    backgroundColor: formData.role === 'SHOP_OWNER' ? '#f5f3ff' : '#ffffff',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: formData.role === 'SHOP_OWNER' ? '#4f46e5' : '#475569' }}>İşletmeyim</div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Kayıt Ol Butonu */}
+            <button 
+              type="submit" 
+              disabled={loading}
+              onMouseEnter={() => setIsBtnHovered(true)}
+              onMouseLeave={() => setIsBtnHovered(false)}
+              style={{ 
+                marginTop: '10px', 
+                backgroundColor: loading ? '#64748b' : (isBtnHovered ? '#4f46e5' : '#6366f1'), 
+                color: '#fff', 
+                border: 'none', 
+                padding: '14px', 
+                borderRadius: '12px', 
+                fontWeight: 700, 
+                cursor: loading ? 'not-allowed' : 'pointer', 
+                fontSize: '1rem', 
+                boxShadow: isBtnHovered && !loading ? '0 10px 15px -3px rgba(99, 102, 241, 0.3)' : 'none',
+                transform: isBtnHovered && !loading ? 'translateY(-1px)' : 'none',
+                transition: 'all 0.2s ease-in-out' 
+              }}
+            >
+              {loading ? 'Hesap Oluşturuluyor...' : 'Kayıt Ol'}
+            </button>
+          </form>
+
+          {/* Giriş Linki */}
+          <p style={{ textAlign: 'center', marginTop: '28px', fontSize: '0.9rem', color: '#64748b', fontWeight: 400 }}>
+            Zaten hesabınız var mı?{' '}
+            <span onClick={() => navigate('/login')} style={{ color: '#6366f1', fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
+              Giriş Yap
+            </span>
+          </p>
+
+        </div>
+      </div>
+
     </div>
   );
 }
