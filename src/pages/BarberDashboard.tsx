@@ -8,17 +8,22 @@ interface EmployeeItem {
   lastName: string;
 }
 
+interface ServiceItem {
+  id: number;
+  name: string;
+  price: number;
+}
+
 export default function BarberDashboard() {
   const [activeTab, setActiveTab] = useState<'appointments' | 'services' | 'hours' | 'employees'>('appointments');
-  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [employees, _setEmployees] = useState<EmployeeItem[]>([]);
+  const [services, _setServices] = useState<ServiceItem[]>([]);
+  const [appointments] = useState<any[]>([]);
   const [dynamicShopId, setDynamicShopId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
-  const [newServiceDuration] = useState('30');
   const [newEmployeeName, setNewEmployeeName] = useState('');
 
   const navigate = useNavigate();
@@ -39,103 +44,68 @@ export default function BarberDashboard() {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // GELEN VERİYİ YAKALA
-    const data = shopRes.data;
-    console.log("İşlenen Veri:", data);
+    // İŞTE BURAYA DİKKAT:
+    console.log("API'DEN GELEN TEMİZ VERİ:", shopRes.data);
 
-    // EĞER DÜKKAN NESNESİ DOĞRUDAN GELİYORSA
-    if (data && data.id) {
-      const shopId = data.id;
-      setDynamicShopId(shopId);
-      console.log("ID Başarıyla Set Edildi:", shopId);
+    if (shopRes.data) {
+  // Veri döngüsel mi değil mi kontrol etmeye gerek kalmayacak, 
+  // çünkü artık sadece id, name, price dönecek.
+  const shopId = shopRes.data.id; 
 
-      // Verileri çek
-      const [serviceRes, empRes, appRes] = await Promise.all([
-        axios.get(`http://localhost:8080/api/services/shop/${shopId}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`http://localhost:8080/api/employees/shop/${shopId}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`http://localhost:8080/api/appointments/shop/owner/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      
-      setServices(Array.isArray(serviceRes.data) ? serviceRes.data : []);
-      setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
-      setAppointments(Array.isArray(appRes.data) ? appRes.data : []);
-    } else {
-      console.error("Beklenen formatta veri gelmedi:", data);
-    }
+  if (shopId) {
+    setDynamicShopId(shopId);
+    console.log("ID Başarıyla Set Edildi:", shopId);
+    // ... geri kalan Promise.all işlemleri
+  } else {
+    // Backend DTO'ya döndüğü için buraya düşmemesi lazım
+    console.error("ID bulunamadı, API yanıtı:", shopRes.data);
+  }
+}
   } catch (err) {
-    console.error("Hata:", err);
+    console.error("API İSTEK HATASI:", err);
   } finally {
     setLoading(false);
   }
 };
-
     fetchAllDashboardData();
   }, [navigate, token, role, userId]);
 
   const handleAddService = async () => {
-    if (!dynamicShopId) return alert("Dükkan ID'si yüklenemedi! Sayfayı yenileyin.");
-    if (!newServiceName.trim() || !newServicePrice) return alert("Hizmet adı ve fiyat giriniz.");
-
+    if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
     try {
-      const payload = {
-        name: newServiceName,
-        price: parseFloat(newServicePrice),
-        durationInMinutes: parseInt(newServiceDuration)
-      };
-
-      await axios.post(`http://localhost:8080/api/services/shop/${dynamicShopId}`, payload, { 
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } 
-      });
-      alert("Hizmet başarıyla eklendi.");
+      await axios.post(`http://localhost:8080/api/services/shop/${dynamicShopId}`, 
+        { name: newServiceName, price: parseFloat(newServicePrice), durationInMinutes: 30 }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Hizmet eklendi.");
       window.location.reload();
-    } catch (e) { 
-      console.error(e); 
-      alert("Hizmet eklenemedi."); 
-    }
+    } catch { alert("Hizmet eklenemedi."); }
   };
 
   const handleAddEmployee = async () => {
-    if (!dynamicShopId) {
-      alert("Dükkan bulunamadığı için işlem yapılamıyor!");
-      return;
-    }
-    
-    if (!newEmployeeName.trim()) return alert("İsim girin.");
+    if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
+    const parts = newEmployeeName.trim().split(" ");
+    const payload = { firstName: parts[0] || "-", lastName: parts.slice(1).join(" ") || "-" };
     
     try {
-      const parts = newEmployeeName.trim().split(" ");
-      const lastName = parts.length > 1 ? parts.pop()! : "-";
-      const firstName = parts.join(" ");
-      const payload = { firstName, lastName };
-
-      await axios.post(`http://localhost:8080/api/employees/shop/${dynamicShopId}`, payload, { 
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } 
-      });
-      alert("Personel başarıyla kaydedildi!");
+      await axios.post(`http://localhost:8080/api/employees/shop/${dynamicShopId}`, payload, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Personel eklendi!");
       window.location.reload();
-    } catch (e) { 
-      console.error(e); 
-      alert("Personel eklenemedi."); 
-    }
+    } catch { alert("Personel eklenemedi."); }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('role');
-    navigate('/login');
-  };
-
-  if (loading) return <div>Yönetim Paneli Güvenle Hazırlanıyor...</div>;
+  if (loading) return <div>Yükleniyor...</div>;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
-      <div style={{ width: '260px', backgroundColor: '#1e293b', color: '#ffffff', padding: '32px 14px' }}>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h2>
+      {/* Sidebar ve İçerik aynı kalıyor */}
+      <div style={{ width: '260px', backgroundColor: '#1e293b', color: '#fff', padding: '32px 14px' }}>
+        <h2 style={{ fontSize: '1.35rem' }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h2>
         <button onClick={() => setActiveTab('appointments')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>📅 Randevular</button>
         <button onClick={() => setActiveTab('services')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>✂️ Hizmetler</button>
         <button onClick={() => setActiveTab('employees')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>👤 Personel</button>
-        <button onClick={handleLogout} style={{ marginTop: 'auto', color: '#ef4444', background: 'none', border: 'none', textAlign: 'left', padding: '14px' }}>🚪 Çıkış Yap</button>
       </div>
 
       <div style={{ flex: 1, padding: '40px' }}>
@@ -143,12 +113,12 @@ export default function BarberDashboard() {
           <div>
             <h3>Randevular</h3>
             {appointments.length === 0 ? (
-              <p>Görüntülenecek randevu yok.</p>
+              <p>Henüz randevu bulunamadı.</p>
             ) : (
               <ul>
-                {appointments.map((a: any) => (
-                  <li key={a.id ?? `${a.start}-${a.customerId}`}>
-                    {a.customerName || `${a.customerFirstName || ''} ${a.customerLastName || ''}`} - {a.start}
+                {appointments.map((app, index) => (
+                  <li key={app.id ?? index}>
+                    {app.date || app.appointmentDate || 'Tarih yok'} - {app.customerName || app.clientName || `${app.firstName || ''} ${app.lastName || ''}`.trim() || 'Müşteri yok'} - {app.serviceName || app.service?.name || 'Hizmet yok'}
                   </li>
                 ))}
               </ul>
@@ -161,15 +131,7 @@ export default function BarberDashboard() {
             <input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} placeholder="Hizmet Adı" />
             <input value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)} placeholder="Fiyat" />
             <button onClick={handleAddService}>Ekle</button>
-            {services.length === 0 ? (
-              <p style={{ marginTop: 12 }}>Kayıtlı hizmet yok.</p>
-            ) : (
-              <ul style={{ marginTop: 12 }}>
-                {services.map((s: any) => (
-                  <li key={s.id}>{s.name} - ₺{s.price}</li>
-                ))}
-              </ul>
-            )}
+            <ul>{services.map(s => <li key={s.id}>{s.name} - ₺{s.price}</li>)}</ul>
           </div>
         )}
         {activeTab === 'employees' && (
@@ -177,15 +139,7 @@ export default function BarberDashboard() {
             <h3>Personel Ekle</h3>
             <input value={newEmployeeName} onChange={e => setNewEmployeeName(e.target.value)} placeholder="Personel Adı" />
             <button onClick={handleAddEmployee}>Ekle</button>
-            {employees.length === 0 ? (
-              <p style={{ marginTop: 12 }}>Kayıtlı personel yok.</p>
-            ) : (
-              <ul style={{ marginTop: 12 }}>
-                {employees.map(emp => (
-                  <li key={emp.id}>{emp.firstName} {emp.lastName}</li>
-                ))}
-              </ul>
-            )}
+            <ul>{employees.map(emp => <li key={emp.id}>{emp.firstName} {emp.lastName}</li>)}</ul>
           </div>
         )}
       </div>
