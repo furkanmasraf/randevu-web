@@ -18,7 +18,7 @@ export default function BarberDashboard() {
   const [activeTab, setActiveTab] = useState<'appointments' | 'services' | 'hours' | 'employees'>('appointments');
   const [employees, _setEmployees] = useState<EmployeeItem[]>([]);
   const [services, _setServices] = useState<ServiceItem[]>([]);
-  const [appointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [dynamicShopId, setDynamicShopId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -37,30 +37,38 @@ export default function BarberDashboard() {
       return;
     }
 
-    const fetchAllDashboardData = async () => {
+const fetchAppointments = async (shopId: number) => {
+  try {
+    const response = await axios.get(`http://localhost:8080/api/appointments/shop/${shopId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    // Randevuları state'e aktar
+    // (Appointment state'ini yukarıdaki useState<any[]>(...) yerine 
+    // const [appointments, setAppointments] = useState<any[]>([]); şeklinde güncellemen gerekecek)
+    setAppointments(response.data);
+  } catch (err) {
+    console.error("Randevular çekilemedi:", err);
+  }
+};
+
+// 2. useEffect içindeki fetchAllDashboardData'yı güncelle
+const fetchAllDashboardData = async () => {
   setLoading(true);
   try {
     const shopRes = await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // İŞTE BURAYA DİKKAT:
-    console.log("API'DEN GELEN TEMİZ VERİ:", shopRes.data);
-
-    if (shopRes.data) {
-  // Veri döngüsel mi değil mi kontrol etmeye gerek kalmayacak, 
-  // çünkü artık sadece id, name, price dönecek.
-  const shopId = shopRes.data.id; 
-
-  if (shopId) {
-    setDynamicShopId(shopId);
-    console.log("ID Başarıyla Set Edildi:", shopId);
-    // ... geri kalan Promise.all işlemleri
-  } else {
-    // Backend DTO'ya döndüğü için buraya düşmemesi lazım
-    console.error("ID bulunamadı, API yanıtı:", shopRes.data);
-  }
-}
+    if (shopRes.data?.id) {
+      const shopId = shopRes.data.id;
+      setDynamicShopId(shopId);
+      
+      // BURADA SIRAYLA VERİLERİ ÇEK
+      await Promise.all([
+        fetchAppointments(shopId), // Randevuları çek
+        // Diğer servis/personel çekme işlemlerin buraya...
+      ]);
+    }
   } catch (err) {
     console.error("API İSTEK HATASI:", err);
   } finally {
@@ -98,6 +106,29 @@ export default function BarberDashboard() {
 
   if (loading) return <div>Yükleniyor...</div>;
 
+  function updateStatus(id: any, arg1: string): void {
+    if (!token) {
+      alert('Oturum bilgisi bulunamadı.');
+      return;
+    }
+
+    void axios
+      .patch(
+        `http://localhost:8080/api/appointments/${id}/status`,
+        { status: arg1 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      .then(() => {
+        setAppointments(prev =>
+          prev.map(app => (app.id === id ? { ...app, status: arg1 } : app))
+        );
+      })
+      .catch(err => {
+        console.error('Randevu durumu güncellenemedi:', err);
+        alert('Randevu durumu güncellenemedi.');
+      });
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
       {/* Sidebar ve İçerik aynı kalıyor */}
@@ -116,11 +147,40 @@ export default function BarberDashboard() {
               <p>Henüz randevu bulunamadı.</p>
             ) : (
               <ul>
-                {appointments.map((app, index) => (
-                  <li key={app.id ?? index}>
-                    {app.date || app.appointmentDate || 'Tarih yok'} - {app.customerName || app.clientName || `${app.firstName || ''} ${app.lastName || ''}`.trim() || 'Müşteri yok'} - {app.serviceName || app.service?.name || 'Hizmet yok'}
-                  </li>
-                ))}
+                {appointments.map((app) => (
+  <li key={app.id} style={{ marginBottom: '15px', padding: '20px', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div>
+        {/* DTO içindeki düz alanlara erişiyoruz */}
+        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>
+          {app.customerName || 'İsimsiz Müşteri'}
+        </div>
+        <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '4px' }}>
+          📅 {app.appointmentTime ? new Date(app.appointmentTime).toLocaleString() : 'Tarih yok'}
+        </div>
+        <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '4px' }}>
+          ✂️ {app.serviceName || 'Hizmet bilgisi yok'} — <b>{app.price ? `${app.price} TL` : 'Fiyat yok'}</b>
+        </div>
+        <div style={{ fontSize: '0.85rem', color: '#6366f1', marginTop: '4px', fontWeight: 600 }}>
+          👤 Personel: {app.employeeName || 'Atanmadı'}
+        </div>
+      </div>
+
+      <div>
+        {app.status === 'PENDING' ? (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Kabul Et</button>
+            <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Reddet</button>
+          </div>
+        ) : (
+          <div style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 700, fontSize: '0.9rem', backgroundColor: app.status === 'APPROVED' ? '#dcfce7' : '#fee2e2', color: app.status === 'APPROVED' ? '#166534' : '#991b1b' }}>
+            {app.status === 'APPROVED' ? 'ONAYLANDI' : 'REDDEDİLDİ'}
+          </div>
+        )}
+      </div>
+    </div>
+  </li>
+))}
               </ul>
             )}
           </div>
