@@ -21,6 +21,7 @@ export default function BarberDashboard() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [dynamicShopId, setDynamicShopId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [appFilter, setAppFilter] = useState<'past' | 'today' | 'future'>('today');
 
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
@@ -33,27 +34,19 @@ export default function BarberDashboard() {
   const userId = localStorage.getItem('userId');
   const role = localStorage.getItem('role');
 
-  useEffect(() => {
-    if (!token || role !== 'SHOP_OWNER') {
-      navigate('/login');
-      return;
-    }
 
-const fetchAppointments = async (shopId: number) => {
+const fetchAppointments = async (shopId: number, filter: string = 'today') => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/appointments/shop/${shopId}`, {
+    const response = await axios.get(`http://localhost:8080/api/appointments/shop/${shopId}/filter`, {
+      params: { filter },
       headers: { Authorization: `Bearer ${token}` }
     });
-    // Randevuları state'e aktar
-    // (Appointment state'ini yukarıdaki useState<any[]>(...) yerine 
-    // const [appointments, setAppointments] = useState<any[]>([]); şeklinde güncellemen gerekecek)
     setAppointments(response.data);
   } catch (err) {
     console.error("Randevular çekilemedi:", err);
   }
 };
 
-// 2. useEffect içindeki fetchAllDashboardData'yı güncelle
 const fetchAllDashboardData = async () => {
   setLoading(true);
   try {
@@ -62,20 +55,12 @@ const fetchAllDashboardData = async () => {
     });
 
     if (shopRes.data?.id) {
-      const shopId = shopRes.data.id;
-      setDynamicShopId(shopId);
-      // populate shopDetails for settings tab
+      setDynamicShopId(shopRes.data.id);
       setShopDetails({
         shopName: shopRes.data.shopName || shopRes.data.name || '',
         phoneNumber: shopRes.data.phoneNumber || shopRes.data.phone || '',
         imageUrl: shopRes.data.imageUrl || shopRes.data.image || '',
       });
-      
-      // BURADA SIRAYLA VERİLERİ ÇEK
-      await Promise.all([
-        fetchAppointments(shopId), // Randevuları çek
-        // Diğer servis/personel çekme işlemlerin buraya...
-      ]);
     }
   } catch (err) {
     console.error("API İSTEK HATASI:", err);
@@ -83,8 +68,22 @@ const fetchAllDashboardData = async () => {
     setLoading(false);
   }
 };
-    fetchAllDashboardData();
-  }, [navigate, token, role, userId]);
+      
+      // BURADA SIRAYLA VERİLERİ ÇEK
+      useEffect(() => {
+  if (!token || role !== 'SHOP_OWNER') {
+    navigate('/login');
+    return;
+  }
+  fetchAllDashboardData();
+}, [navigate, token, role, userId]);
+
+// İkinci useEffect: Filtre veya dükkan ID değiştikçe randevuları otomatik çeksin
+useEffect(() => {
+  if (dynamicShopId) {
+    fetchAppointments(dynamicShopId, appFilter);
+  }
+}, [appFilter, dynamicShopId]);
 
   const handleAddService = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
@@ -172,44 +171,67 @@ const fetchAllDashboardData = async () => {
         {activeTab === 'appointments' && (
           <div>
             <h3>Randevular</h3>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              {[
+                { label: 'Geçmiş', val: 'past' },
+                { label: 'Bugün', val: 'today' },
+                { label: 'Gelecek', val: 'future' }
+              ].map((item) => (
+                <button
+                  key={item.val}
+                  onClick={() => setAppFilter(item.val as any)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    backgroundColor: appFilter === item.val ? '#6366f1' : '#e2e8f0',
+                    color: appFilter === item.val ? '#fff' : '#1e293b'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
             {appointments.length === 0 ? (
               <p>Henüz randevu bulunamadı.</p>
             ) : (
               <ul>
                 {appointments.map((app) => (
-  <li key={app.id} style={{ marginBottom: '15px', padding: '20px', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div>
-        {/* DTO içindeki düz alanlara erişiyoruz */}
-        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>
-          {app.customerName || 'İsimsiz Müşteri'}
-        </div>
-        <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '4px' }}>
-          📅 {app.appointmentTime ? new Date(app.appointmentTime).toLocaleString() : 'Tarih yok'}
-        </div>
-        <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '4px' }}>
-          ✂️ {app.serviceName || 'Hizmet bilgisi yok'} — <b>{app.price ? `${app.price} TL` : 'Fiyat yok'}</b>
-        </div>
-        <div style={{ fontSize: '0.85rem', color: '#6366f1', marginTop: '4px', fontWeight: 600 }}>
-          👤 Personel: {app.employeeName || 'Atanmadı'}
-        </div>
-      </div>
+                  <li key={app.id} style={{ marginBottom: '15px', padding: '20px', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>
+                          {app.customerName || 'İsimsiz Müşteri'}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '4px' }}>
+                          📅 {app.appointmentTime ? new Date(app.appointmentTime).toLocaleString() : 'Tarih yok'}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '4px' }}>
+                          ✂️ {app.serviceName || 'Hizmet bilgisi yok'} — <b>{app.price ? `${app.price} TL` : 'Fiyat yok'}</b>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#6366f1', marginTop: '4px', fontWeight: 600 }}>
+                          👤 Personel: {app.employeeName || 'Atanmadı'}
+                        </div>
+                      </div>
 
-      <div>
-        {app.status === 'PENDING' ? (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Kabul Et</button>
-            <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Reddet</button>
-          </div>
-        ) : (
-          <div style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 700, fontSize: '0.9rem', backgroundColor: app.status === 'APPROVED' ? '#dcfce7' : '#fee2e2', color: app.status === 'APPROVED' ? '#166534' : '#991b1b' }}>
-            {app.status === 'APPROVED' ? 'ONAYLANDI' : 'REDDEDİLDİ'}
-          </div>
-        )}
-      </div>
-    </div>
-  </li>
-))}
+                      <div>
+                        {app.status === 'PENDING' ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Kabul Et</button>
+                            <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Reddet</button>
+                          </div>
+                        ) : (
+                          <div style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 700, fontSize: '0.9rem', backgroundColor: app.status === 'APPROVED' ? '#dcfce7' : '#fee2e2', color: app.status === 'APPROVED' ? '#166534' : '#991b1b' }}>
+                            {app.status === 'APPROVED' ? 'ONAYLANDI' : 'REDDEDİLDİ'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
               </ul>
             )}
           </div>
