@@ -15,7 +15,7 @@ interface ServiceItem {
 }
 
 export default function BarberDashboard() {
-  const [activeTab, setActiveTab] = useState<'appointments' | 'services' | 'hours' | 'employees'>('appointments');
+  const [activeTab, setActiveTab] = useState<'appointments' | 'services' | 'hours' | 'employees' | 'settings'>('appointments');
   const [employees, _setEmployees] = useState<EmployeeItem[]>([]);
   const [services, _setServices] = useState<ServiceItem[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -25,6 +25,8 @@ export default function BarberDashboard() {
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; latitude?: number; longitude?: number } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -62,6 +64,12 @@ const fetchAllDashboardData = async () => {
     if (shopRes.data?.id) {
       const shopId = shopRes.data.id;
       setDynamicShopId(shopId);
+      // populate shopDetails for settings tab
+      setShopDetails({
+        shopName: shopRes.data.shopName || shopRes.data.name || '',
+        phoneNumber: shopRes.data.phoneNumber || shopRes.data.phone || '',
+        imageUrl: shopRes.data.imageUrl || shopRes.data.image || '',
+      });
       
       // BURADA SIRAYLA VERİLERİ ÇEK
       await Promise.all([
@@ -104,6 +112,26 @@ const fetchAllDashboardData = async () => {
     } catch { alert("Personel eklenemedi."); }
   };
 
+  const handleUpdateShop = async () => {
+    const formData = new FormData();
+    if (selectedFile) formData.append("file", selectedFile);
+    formData.append("shopName", shopDetails?.shopName || "");
+    formData.append("phoneNumber", shopDetails?.phoneNumber || "");
+
+    try {
+      await axios.put(`http://localhost:8080/api/shops/${dynamicShopId}/update-with-image`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      alert("Dükkan bilgileri ve görsel güncellendi!");
+    } catch (err) {
+      console.error("Dükkan güncellemesi başarısız:", err);
+      alert("Dükkan bilgileri güncellenemedi.");
+    }
+  };
+
   if (loading) return <div>Yükleniyor...</div>;
 
   function updateStatus(id: any, arg1: string): void {
@@ -137,6 +165,7 @@ const fetchAllDashboardData = async () => {
         <button onClick={() => setActiveTab('appointments')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>📅 Randevular</button>
         <button onClick={() => setActiveTab('services')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>✂️ Hizmetler</button>
         <button onClick={() => setActiveTab('employees')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>👤 Personel</button>
+        <button onClick={() => setActiveTab('settings')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>⚙️ Dükkan Ayarları</button>
       </div>
 
       <div style={{ flex: 1, padding: '40px' }}>
@@ -202,6 +231,32 @@ const fetchAllDashboardData = async () => {
             <ul>{employees.map(emp => <li key={emp.id}>{emp.firstName} {emp.lastName}</li>)}</ul>
           </div>
         )}
+        {activeTab === 'settings' && (
+  <div style={{ background: '#fff', padding: '30px', borderRadius: '12px' }}>
+    <h3>Dükkan Bilgilerini Güncelle</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '400px' }}>
+      <input 
+        value={shopDetails?.shopName || ''} 
+        onChange={e => setShopDetails(prev => ({...prev!, shopName: e.target.value}))} 
+        placeholder="Dükkan Adı" 
+        style={{ padding: '10px' }} 
+      />
+      <input 
+        value={shopDetails?.phoneNumber || ''} 
+        onChange={e => setShopDetails(prev => ({...prev!, phoneNumber: e.target.value}))} 
+        placeholder="Telefon" 
+        style={{ padding: '10px' }} 
+      />
+      <input 
+        type="file" 
+        onChange={e => setSelectedFile(e.target.files?.[0] || null)} 
+      />
+      <button onClick={handleUpdateShop} style={{ padding: '10px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px' }}>
+        Kaydet
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
