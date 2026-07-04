@@ -15,6 +15,9 @@ interface ServiceItem {
 }
 
 export default function BarberDashboard() {
+  const [busySlotsMap, setBusySlotsMap] = useState<Record<number, string[]>>({});
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Bugün
+  const timeSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"];
   const [activeTab, setActiveTab] = useState<'appointments' | 'services' | 'hours' | 'employees' | 'settings'>('appointments');
   const [employees, _setEmployees] = useState<EmployeeItem[]>([]);
   const [services, _setServices] = useState<ServiceItem[]>([]);
@@ -35,6 +38,20 @@ export default function BarberDashboard() {
   const role = localStorage.getItem('role');
 
 
+
+const fetchBusySlots = async (employeeId: number, date: string) => {
+  try {
+    const response = await axios.get(`http://localhost:8080/api/appointments/shop/employee-schedule`, {
+      params: { employeeId, date },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    // Personelin ID'sine göre saatleri kaydet
+    setBusySlotsMap(prev => ({ ...prev, [employeeId]: response.data }));
+  } catch (err) {
+    console.error("Dolu saatler çekilemedi:", err);
+  }
+};
+
 const fetchAppointments = async (shopId: number, filter: string = 'today') => {
   try {
     const response = await axios.get(`http://localhost:8080/api/appointments/shop/${shopId}/filter`, {
@@ -50,17 +67,29 @@ const fetchAppointments = async (shopId: number, filter: string = 'today') => {
 const fetchAllDashboardData = async () => {
   setLoading(true);
   try {
+    // 1. Dükkan bilgilerini çek
     const shopRes = await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
     if (shopRes.data?.id) {
-      setDynamicShopId(shopRes.data.id);
+      const shopId = shopRes.data.id;
+      setDynamicShopId(shopId);
+      
       setShopDetails({
         shopName: shopRes.data.shopName || shopRes.data.name || '',
         phoneNumber: shopRes.data.phoneNumber || shopRes.data.phone || '',
         imageUrl: shopRes.data.imageUrl || shopRes.data.image || '',
       });
+
+      // 2. HEM RANDEVULARI HEM DE PERSONELLERİ AYNI ANDA ÇEK
+      // Artık 'employees' state'in de otomatik dolacak
+      await Promise.all([
+        fetchAppointments(shopId, appFilter),
+        axios.get(`http://localhost:8080/api/appointments/shop/${shopId}/employees`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(res => _setEmployees(res.data))
+      ]);
     }
   } catch (err) {
     console.error("API İSTEK HATASI:", err);
@@ -84,6 +113,15 @@ useEffect(() => {
     fetchAppointments(dynamicShopId, appFilter);
   }
 }, [appFilter, dynamicShopId]);
+
+useEffect(() => {
+  if (activeTab === 'hours' && dynamicShopId) {
+    // Tüm personeller için döngüyle dolu saatleri çekebilirsin 
+    // veya seçili bir personelin saatlerini çekebilirsin
+    // Şimdilik ilk personeli baz alalım ya da hepsini çekecek bir mantık kuralım
+    employees.forEach(emp => fetchBusySlots(emp.id, selectedDate));
+  }
+}, [activeTab, selectedDate, dynamicShopId]);
 
   const handleAddService = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
@@ -165,6 +203,10 @@ useEffect(() => {
         <button onClick={() => setActiveTab('services')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>✂️ Hizmetler</button>
         <button onClick={() => setActiveTab('employees')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>👤 Personel</button>
         <button onClick={() => setActiveTab('settings')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>⚙️ Dükkan Ayarları</button>
+        <button onClick={() => setActiveTab('hours')} 
+  style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>
+  🕒 Personel Takvimi
+</button>
       </div>
 
       <div style={{ flex: 1, padding: '40px' }}>
@@ -276,6 +318,32 @@ useEffect(() => {
       <button onClick={handleUpdateShop} style={{ padding: '10px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px' }}>
         Kaydet
       </button>
+    </div>
+  </div>
+)}
+{activeTab === 'hours' && (
+  <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+    <h3>Personel Müsaitlik Durumu</h3>
+    <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+    
+    <div style={{ marginTop: '20px' }}>
+      {employees.map(emp => (
+        <div key={emp.id} style={{ marginBottom: '20px' }}>
+          <h4>{emp.firstName} {emp.lastName}</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: '5px' }}>
+            {timeSlots.map(time => (
+              <div key={time} 
+                style={{ 
+                  padding: '8px', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem',
+                  backgroundColor: (busySlotsMap[emp.id] || []).includes(time) ? '#ef4444' : '#22c55e', 
+                  color: '#fff' 
+                }}>
+                {time}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   </div>
 )}
