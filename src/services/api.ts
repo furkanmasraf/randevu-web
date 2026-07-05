@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'https://randevu-sistemi-dv33.onrender.com',
 });
 
 // Her istek gönderilmeden önce localStorage'daki güncel token'ı yakalayıp Header'a ekler
