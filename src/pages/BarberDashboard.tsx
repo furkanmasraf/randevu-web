@@ -67,7 +67,6 @@ const fetchAppointments = async (shopId: number, filter: string = 'today') => {
 const fetchAllDashboardData = async () => {
   setLoading(true);
   try {
-    // 1. Dükkan bilgilerini çek
     const shopRes = await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -76,19 +75,19 @@ const fetchAllDashboardData = async () => {
       const shopId = shopRes.data.id;
       setDynamicShopId(shopId);
       
-      setShopDetails({
-        shopName: shopRes.data.shopName || shopRes.data.name || '',
-        phoneNumber: shopRes.data.phoneNumber || shopRes.data.phone || '',
-        imageUrl: shopRes.data.imageUrl || shopRes.data.image || '',
-      });
+      // ... shopDetails set etme ...
 
-      // 2. HEM RANDEVULARI HEM DE PERSONELLERİ AYNI ANDA ÇEK
-      // Artık 'employees' state'in de otomatik dolacak
+      // Promise.all içine hizmetleri çekmeyi de ekle!
       await Promise.all([
         fetchAppointments(shopId, appFilter),
         axios.get(`http://localhost:8080/api/appointments/shop/${shopId}/employees`, {
           headers: { Authorization: `Bearer ${token}` }
-        }).then(res => _setEmployees(res.data))
+        }).then(res => _setEmployees(res.data)),
+        
+        // EKSİK OLAN KISIM BURASI:
+        axios.get(`http://localhost:8080/api/services/shop/${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(res => _setServices(res.data)) // _setServices olarak tanımlamıştın
       ]);
     }
   } catch (err) {
@@ -168,6 +167,19 @@ useEffect(() => {
       alert("Dükkan bilgileri güncellenemedi.");
     }
   };
+
+  const handleDelete = async (type: 'employee' | 'service', id: number) => {
+  if (!window.confirm("Emin misin?")) return;
+  try {
+    await axios.delete(`http://localhost:8080/api/${type}s/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert("Silindi!");
+    window.location.reload(); // En hızlı çözüm
+  } catch {
+    alert("Silme hatası!");
+  }
+};
 
   if (loading) return <div>Yükleniyor...</div>;
 
@@ -284,7 +296,19 @@ useEffect(() => {
             <input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} placeholder="Hizmet Adı" />
             <input value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)} placeholder="Fiyat" />
             <button onClick={handleAddService}>Ekle</button>
-            <ul>{services.map(s => <li key={s.id}>{s.name} - ₺{s.price}</li>)}</ul>
+            <ul>
+  {services.map(service => (
+    <li key={service.id} style={{ marginBottom: '8px' }}>
+      {service.name} - {service.price} TL
+      <button 
+        onClick={() => handleDelete('service', service.id)} 
+        style={{ marginLeft: '10px', color: 'red' }}
+      >
+        Sil
+      </button>
+    </li>
+  ))}
+</ul>
           </div>
         )}
         {activeTab === 'employees' && (
@@ -292,7 +316,14 @@ useEffect(() => {
             <h3>Personel Ekle</h3>
             <input value={newEmployeeName} onChange={e => setNewEmployeeName(e.target.value)} placeholder="Personel Adı" />
             <button onClick={handleAddEmployee}>Ekle</button>
-            <ul>{employees.map(emp => <li key={emp.id}>{emp.firstName} {emp.lastName}</li>)}</ul>
+            <ul>
+  {employees.map(emp => (
+    <li key={emp.id}>
+      {emp.firstName} {emp.lastName} 
+      <button onClick={() => handleDelete('employee', emp.id)} style={{marginLeft:'10px', color:'red'}}>Sil</button>
+    </li>
+  ))}
+</ul>
           </div>
         )}
         {activeTab === 'settings' && (
