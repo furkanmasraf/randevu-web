@@ -269,6 +269,9 @@ useEffect(() => {
                         <div style={{ fontSize: '0.85rem', color: '#6366f1', marginTop: '4px', fontWeight: 600 }}>
                           👤 Personel: {app.employeeName || 'Atanmadı'}
                         </div>
+                        <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '4px' }}>
+                          📞 {app.customerPhone || 'Numara yok'}
+                        </div>
                       </div>
 
                       <div>
