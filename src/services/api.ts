@@ -2,7 +2,6 @@ import axios from 'axios';
 
 declare const process: { env: { NODE_ENV: string } } | undefined;
 
-// Ortama göre baseURL'i otomatik seçelim
 const baseURL = 'https://randevu-sistemi-dv33.onrender.com';
 
 const API = axios.create({
