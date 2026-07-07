@@ -3,9 +3,7 @@ import axios from 'axios';
 declare const process: { env: { NODE_ENV: string } } | undefined;
 
 // Ortama göre baseURL'i otomatik seçelim
-const baseURL = typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
-  ? 'https://randevu-sistemi-dv33.onrender.com'
-  : 'http://localhost:8080'; // Local'de çalışırken burayı kullanacağız.
+const baseURL = 'https://randevu-sistemi-dv33.onrender.com';
 
 const API = axios.create({
   baseURL: baseURL,
