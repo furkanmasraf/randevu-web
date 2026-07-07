@@ -1,11 +1,22 @@
 import axios from 'axios';
 
+declare const process: { env: { NODE_ENV: string } } | undefined;
+
+// Ortama göre baseURL'i otomatik seçelim
+const baseURL = typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
+  ? 'https://randevu-sistemi-dv33.onrender.com'
+  : 'http://localhost:8080'; // Local'de çalışırken burayı kullanacağız.
+
 const API = axios.create({
-  baseURL: 'https://randevu-sistemi-dv33.onrender.com',
+  baseURL: baseURL,
+  withCredentials: true // Bu, hem local'de hem canlıda CORS sorununu çözmek için elzem.
 });
 
-// Her istek gönderilmeden önce localStorage'daki güncel token'ı yakalayıp Header'a ekler
 API.interceptors.request.use((config) => {
+  if (config.url?.includes('/auth/login')) {
+    return config;
+  }
+
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

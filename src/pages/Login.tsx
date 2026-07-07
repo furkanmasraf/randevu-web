@@ -13,6 +13,7 @@ const Login: React.FC = () => {
   const [focusedInput, setFocusedInput] = useState<string>('');
 
   const handleLoginClick = async (): Promise<void> => {
+    localStorage.clear();
     if (!email || !password) {
       alert("Lütfen e-posta ve şifre alanlarını doldurun.");
       return;
@@ -21,40 +22,41 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await API.post('/auth/login', { email, password });
+      // 1. Post isteğinde header'ı açıkça belirt (JSON olduğunu garanti et)
+      const response = await API.post('api/auth/login', { email, password }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
       let { token, userId, role } = response.data;
 
       if (token) {
         token = token.replace(/^['"]|['"]$/g, '');
-
         localStorage.setItem('token', token);
         localStorage.setItem('userId', userId);
         localStorage.setItem('role', role); 
 
         if (role && role.toUpperCase() === 'SHOP_OWNER') {
           try {
-            await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
+            // 2. BURASI ÇOK ÖNEMLİ: localhost yerine canlı URL'i kullanmalıyız
+            // Eğer hala 403 alıyorsak, buradaki URL'in backend'inin adresi olduğundan emin olmalıyız..
+            await axios.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            setIsLoading(false);
             window.location.href = '/shop-owner/dashboard';
           } catch (shopErr) {
-            setIsLoading(false);
             window.location.href = '/shop-owner/register-shop';
           }
         } else {
-          setIsLoading(false);
           window.location.href = '/'; 
         }
-      } else {
-        setIsLoading(false);
       }
     } catch (err: any) {
-      setIsLoading(false);
       console.error("Giriş esnasında hata oluştu:", err);
-      alert("Hatalı e-posta veya şifre girdiniz!");
+      alert("Hatalı e-posta veya şifre!");
+    } finally {
+      setIsLoading(false);
     }
-  };
+};
 
   // Ortak input stil fabrikası (Premium focus efekti içerir)
   const getInputStyle = (inputName: string) => ({
