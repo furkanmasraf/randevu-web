@@ -1,14 +1,21 @@
 import axios from 'axios';
 
-// Artık şüpheye yer yok, direkt canlı URL'i kullanıyoruz.
+// Tarayıcıdaki (Vercel) ortamı ve bilgisayarındaki ortamı kontrol eder
+const isProduction = window.location.hostname !== 'localhost';
+
+const baseURL = isProduction 
+  ? 'https://randevu-sistemi-dv33.onrender.com' 
+  : 'http://localhost:8080';
+
 const API = axios.create({
-  baseURL: 'https://randevu-sistemi-dv33.onrender.com',
+  baseURL: baseURL,
   withCredentials: true 
 });
 
 API.interceptors.request.use((config) => {
-  // Login ve Register isteklerinde token göndermiyoruz
-  if (config.url?.includes('/auth/login') || config.url?.includes('/auth/register')) {
+  // Giriş ve Kayıt yollarını interceptor'dan muaf tut
+  const publicPaths = ['/auth/login', '/auth/register'];
+  if (publicPaths.some(path => config.url?.includes(path))) {
     return config;
   }
 
