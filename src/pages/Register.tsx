@@ -152,36 +152,37 @@ export default function Register() {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             
             {/* Ad ve Soyad - Yan Yana Kolon */}
-            <div style={{ display: 'flex', gap: '14px' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>AD</label>
-                <input 
-                  type="text" 
-                  name="firstName" 
-                  required 
-                  value={formData.firstName} 
-                  onFocus={() => setFocusedInput('firstName')}
-                  onBlur={() => setFocusedInput('')}
-                  onChange={handleChange} 
-                  style={getInputStyle('firstName')} 
-                  placeholder="Ad"
-                />
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>SOYAD</label>
-                <input 
-                  type="text" 
-                  name="lastName" 
-                  required 
-                  value={formData.lastName} 
-                  onFocus={() => setFocusedInput('lastName')}
-                  onBlur={() => setFocusedInput('')}
-                  onChange={handleChange} 
-                  style={getInputStyle('lastName')} 
-                  placeholder="Soyad"
-                />
-              </div>
-            </div>
+<div style={{ display: 'flex', gap: '14px', width: '100%' }}>
+  
+  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>AD</label>
+    <input 
+      type="text" 
+      name="firstName" 
+      required 
+      value={formData.firstName} 
+      onChange={handleChange} 
+      // width: '100%' eklendi!
+      style={{ ...getInputStyle('firstName'), width: '100%', boxSizing: 'border-box' }} 
+      placeholder="Ad"
+    />
+  </div>
+
+  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>SOYAD</label>
+    <input 
+      type="text" 
+      name="lastName" 
+      required 
+      value={formData.lastName} 
+      onChange={handleChange} 
+      // width: '100%' eklendi!
+      style={{ ...getInputStyle('lastName'), width: '100%', boxSizing: 'border-box' }} 
+      placeholder="Soyad"
+    />
+  </div>
+
+</div>
 
             {/* E-posta */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -312,5 +313,3 @@ export default function Register() {
     </div>
   );
 }
-
-// useEffect is imported from React above; no local implementation needed.
