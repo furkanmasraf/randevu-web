@@ -100,34 +100,40 @@ export default function RegisterShop() {
         </div>
 
         {/* Şehir / İlçe İkili Kolon */}
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.025em' }}>ŞEHİR</label>
-            <input 
-              type="text" 
-              placeholder="İstanbul" 
-              value={city} 
-              onFocus={() => setFocusedInput('city')}
-              onBlur={() => setFocusedInput('')}
-              onChange={(e) => setCity(e.target.value)}
-              style={getInputStyle('city')}
-              required
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.025em' }}>İLÇE</label>
-            <input 
-              type="text" 
-              placeholder="Kadıköy" 
-              value={district} 
-              onFocus={() => setFocusedInput('district')}
-              onBlur={() => setFocusedInput('')}
-              onChange={(e) => setDistrict(e.target.value)}
-              style={getInputStyle('district')}
-              required
-            />
-          </div>
-        </div>
+<div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+  
+  {/* ŞEHİR */}
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+    <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.025em' }}>ŞEHİR</label>
+    <input 
+      type="text" 
+      placeholder="İstanbul" 
+      value={city} 
+      onFocus={() => setFocusedInput('city')}
+      onBlur={() => setFocusedInput('')}
+      onChange={(e) => setCity(e.target.value)}
+      // width: '100%' ve boxSizing ekleyerek tam uyumu garantiledik
+      style={{ ...getInputStyle('city'), width: '100%', boxSizing: 'border-box' }}
+      required
+    />
+  </div>
+
+  {/* İLÇE */}
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+    <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.025em' }}>İLÇE</label>
+    <input 
+      type="text" 
+      placeholder="Kadıköy" 
+      value={district} 
+      onFocus={() => setFocusedInput('district')}
+      onBlur={() => setFocusedInput('')}
+      onChange={(e) => setDistrict(e.target.value)}
+      // width: '100%' ve boxSizing ekleyerek tam uyumu garantiledik
+      style={{ ...getInputStyle('district'), width: '100%', boxSizing: 'border-box' }}
+      required
+    />
+  </div>
+</div>
 
         {/* Detaylı Adres */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
