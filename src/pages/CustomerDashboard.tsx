@@ -14,6 +14,7 @@ interface AppointmentDTO {
 
 export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState<'appointments' | 'profile'>('appointments');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [hoveredRowId, setHoveredRowId] = useState<number | null>(null);
@@ -155,42 +156,85 @@ export default function CustomerDashboard() {
     );
   }
 
+  const SidebarButton = ({ onClick, active, icon, label, isDanger = false }: any) => (
+  <button 
+    onClick={onClick}
+    style={{ 
+      width: '100%', 
+      textAlign: 'left', 
+      padding: '14px', 
+      borderRadius: '12px', 
+      border: 'none', 
+      backgroundColor: isDanger ? 'rgba(239, 68, 68, 0.15)' : (active ? 'rgba(255,255,255,0.1)' : 'transparent'), 
+      color: isDanger ? '#ef4444' : (active ? '#818cf8' : '#94a3b8'), 
+      fontWeight: isDanger ? 700 : 600, 
+      cursor: 'pointer', 
+      fontSize: '0.95rem', 
+      transition: 'all 0.2s', 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '12px' 
+    }}
+  >
+    <span>{icon}</span> {label}
+  </button>
+);
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: '#f1f5f9', margin: 0 }}>
       
+      {/* HAMBURGER BUTONU (Mobilde görünecek) */}
+      <button 
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 1100, padding: '10px', backgroundColor: '#1e293b', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+        className="md:hidden"
+      >
+        {isSidebarOpen ? '✕' : '☰'}
+      </button>
+      
       {/* SOL SIDEBAR */}
-      <div style={{ width: '260px', backgroundColor: '#1e293b', color: '#ffffff', padding: '32px 14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '4px 0 30px rgba(0,0,0,0.02)' }}>
-        <div style={{ marginBottom: '30px', paddingLeft: '10px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800 }}>
-            Makas<span style={{ color: '#818cf8' }}>Lab</span>
-          </h2>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Müşteri Paneli</div>
+      <div style={{ 
+        width: '260px', 
+        backgroundColor: '#1e293b', 
+        color: '#ffffff', 
+        padding: '32px 14px', 
+        display: isSidebarOpen ? 'flex' : 'none', // Mobilde state'e göre açılır
+        flexDirection: 'column', 
+        gap: '10px', 
+        position: 'fixed', // Mobilde ekranın üstünde sabit
+        height: '100%',
+        zIndex: 1000,
+        boxShadow: '4px 0 30px rgba(0,0,0,0.1)'
+      }}
+      className="md:!flex md:static" // Büyük ekranda her zaman göster
+      >
+        <div style={{ marginBottom: '30px', paddingLeft: '10px', marginTop: '40px' }}>
+          <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h2>
         </div>
         
-        <button 
-          onClick={() => setActiveTab('appointments')} 
-          style={{ width: '100%', textAlign: 'left', padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: activeTab === 'appointments' ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === 'appointments' ? '#818cf8' : '#94a3b8', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px' }}
-        >
-          <span>📅</span> Randevularım
-        </button>
-        <button 
-          onClick={() => setActiveTab('profile')} 
-          style={{ width: '100%', textAlign: 'left', padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: activeTab === 'profile' ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === 'profile' ? '#818cf8' : '#94a3b8', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px' }}
-        >
-          <span>👤</span> Profil Bilgilerim
-        </button>
-
-        <button 
-          onClick={handleLogout} 
-          style={{ width: '100%', textAlign: 'left', padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontWeight: 700, cursor: 'pointer', marginTop: 'auto', fontSize: '0.95rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px' }}
-        >
-          <span>🚪</span> Çıkış Yap
-        </button>
+        <SidebarButton 
+          onClick={() => { setActiveTab('appointments'); setIsSidebarOpen(false); }} 
+          active={activeTab === 'appointments'} 
+          icon="📅" 
+          label="Randevularım" 
+        />
+        <SidebarButton 
+          onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }} 
+          active={activeTab === 'profile'} 
+          icon="👤" 
+          label="Profil Bilgilerim" 
+        />
+        <SidebarButton 
+          onClick={() => { handleLogout(); setIsSidebarOpen(false); }} 
+          isDanger={true}
+          icon="🚪" 
+          label="Çıkış Yap" 
+        />
       </div>
 
       {/* SAĞ İÇERİK ALANI */}
-      <div style={{ flex: 1, padding: '40px', overflowX: 'hidden', overflowY: 'auto', maxHeight: '100vh', boxSizing: 'border-box' }}>
-        <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.01)', border: '1px solid #e2e8f0' }}>
+      <div style={{ flex: 1, padding: '20px', paddingTop: '80px' }} className="md:padding:40px">
+        <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '24px' }} className="md:padding:40px">
 
           {/* SEKME 1: RANDEVULARIM */}
           {activeTab === 'appointments' && (
