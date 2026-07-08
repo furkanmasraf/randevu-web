@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../services/api';
 
 export default function RegisterShop() {
   const [name, setName] = useState('');
@@ -45,7 +45,7 @@ export default function RegisterShop() {
         ownerId: parseInt(userId)
       };
 
-      await axios.post('http://localhost:8080/api/shops/register', payload, {
+      await API.post('https://randevu-sistemi-dv33.onrender.com/api/shops/register', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../services/api';
 
 interface EmployeeItem {
   id: number;
@@ -41,7 +41,7 @@ export default function BarberDashboard() {
 
 const fetchBusySlots = async (employeeId: number, date: string) => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/appointments/shop/employee-schedule`, {
+    const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/employee-schedule`, {
       params: { employeeId, date },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -54,7 +54,7 @@ const fetchBusySlots = async (employeeId: number, date: string) => {
 
 const fetchAppointments = async (shopId: number, filter: string = 'today') => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/appointments/shop/${shopId}/filter`, {
+    const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${shopId}/filter`, {
       params: { filter },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -67,7 +67,7 @@ const fetchAppointments = async (shopId: number, filter: string = 'today') => {
 const fetchAllDashboardData = async () => {
   setLoading(true);
   try {
-    const shopRes = await axios.get(`http://localhost:8080/api/shops/owner/${userId}`, {
+    const shopRes = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -80,12 +80,12 @@ const fetchAllDashboardData = async () => {
       // Promise.all içine hizmetleri çekmeyi de ekle!
       await Promise.all([
         fetchAppointments(shopId, appFilter),
-        axios.get(`http://localhost:8080/api/appointments/shop/${shopId}/employees`, {
+        API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${shopId}/employees`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then(res => _setEmployees(res.data)),
         
         // EKSİK OLAN KISIM BURASI:
-        axios.get(`http://localhost:8080/api/services/shop/${shopId}`, {
+        API.get(`https://randevu-sistemi-dv33.onrender.com/api/services/shop/${shopId}`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then(res => _setServices(res.data)) // _setServices olarak tanımlamıştın
       ]);
@@ -125,7 +125,7 @@ useEffect(() => {
   const handleAddService = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
     try {
-      await axios.post(`http://localhost:8080/api/services/shop/${dynamicShopId}`, 
+      await API.post(`/api/services/shop/${dynamicShopId}`, 
         { name: newServiceName, price: parseFloat(newServicePrice), durationInMinutes: 30 }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -140,7 +140,7 @@ useEffect(() => {
     const payload = { firstName: parts[0] || "-", lastName: parts.slice(1).join(" ") || "-" };
     
     try {
-      await axios.post(`http://localhost:8080/api/employees/shop/${dynamicShopId}`, payload, 
+      await API.post(`/api/employees/shop/${dynamicShopId}`, payload, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Personel eklendi!");
@@ -155,7 +155,7 @@ useEffect(() => {
     formData.append("phoneNumber", shopDetails?.phoneNumber || "");
 
     try {
-      await axios.put(`http://localhost:8080/api/shops/${dynamicShopId}/update-with-image`, formData, {
+      await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -171,7 +171,7 @@ useEffect(() => {
   const handleDelete = async (type: 'employee' | 'service', id: number) => {
   if (!window.confirm("Emin misin?")) return;
   try {
-    await axios.delete(`http://localhost:8080/api/${type}s/${id}`, {
+    await API.delete(`https://randevu-sistemi-dv33.onrender.com/api/${type}s/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     alert("Silindi!");
@@ -189,9 +189,9 @@ useEffect(() => {
       return;
     }
 
-    void axios
+    void API
       .patch(
-        `http://localhost:8080/api/appointments/${id}/status`,
+        `https://randevu-sistemi-dv33.onrender.com/api/appointments/${id}/status`,
         { status: arg1 },
         { headers: { Authorization: `Bearer ${token}` } }
       )

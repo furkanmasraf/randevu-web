@@ -1,7 +1,6 @@
 import React, { useState, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
-import axios from 'axios';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -37,9 +36,7 @@ const Login: React.FC = () => {
 
         if (role && role.toUpperCase() === 'SHOP_OWNER') {
           try {
-            // 2. BURASI ÇOK ÖNEMLİ: localhost yerine canlı URL'i kullanmalıyız
-            // Eğer hala 403 alıyorsak, buradaki URL'in backend'inin adresi olduğundan emin olmalıyız..
-            await axios.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
+            await API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             window.location.href = '/shop-owner/dashboard';

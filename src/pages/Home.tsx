@@ -1,6 +1,6 @@
 import { useState, useEffect, ChangeEvent } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API from '../services/api';
 
 interface Shop {
   id: number;
@@ -51,7 +51,7 @@ export default function Home() {
     const fetchShops = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8080/api/shops', {
+        const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops', {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'

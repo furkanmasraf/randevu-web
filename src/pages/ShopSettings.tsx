@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from 'axios';
+import API from '../services/api';
 
 export default function ShopSettings() {
   const [shop, setShop] = useState({ shopName: '', address: '', phoneNumber: '', imageUrl: '' });
@@ -8,7 +8,7 @@ export default function ShopSettings() {
   useEffect(() => {
     // Backend'de shopId'yi muhtemelen login olan kullanıcıdan veya URL'den alıyoruz
     const shopId = localStorage.getItem('shopId'); 
-    axiosInstance.get(`http://localhost:8080/api/shops/${shopId}/details`)
+    API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`)
       .then(res => setShop(res.data))
       .finally(() => setLoading(false));
   }, []);
@@ -17,7 +17,7 @@ export default function ShopSettings() {
     e.preventDefault();
     const shopId = localStorage.getItem('shopId');
     try {
-      await axiosInstance.put(`http://localhost:8080/api/shops/${shopId}/update`, shop);
+      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/update`, shop);
       alert("Dükkan bilgileri güncellendi!");
     } catch (error) { alert("Güncelleme başarısız."); }
   };

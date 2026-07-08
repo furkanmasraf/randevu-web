@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../services/api';
 
 interface AppointmentDTO {
   id: number;
@@ -46,13 +46,13 @@ export default function CustomerDashboard() {
         setLoading(true);
         
         // 1. Randevuları Çek
-        const appResponse = await axios.get(`http://localhost:8080/api/appointments/user/${userId}`, {
+        const appResponse = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAppointments(Array.isArray(appResponse.data) ? appResponse.data : []);
 
         // 2. Profil Bilgilerini Çek
-        const userResponse = await axios.get(`http://localhost:8080/api/users/${userId}`, {
+        const userResponse = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (userResponse.data) {
@@ -79,7 +79,7 @@ export default function CustomerDashboard() {
     if (!window.confirm("Bu randevuyu iptal etmek istediğinize emin misiniz?")) return;
 
     try {
-      await axios.put(`http://localhost:8080/api/appointments/${appointmentId}/cancel`, {}, {
+      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/appointments/${appointmentId}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -109,7 +109,7 @@ export default function CustomerDashboard() {
         payload.password = profileData.password;
       }
 
-      await axios.put(`http://localhost:8080/api/users/${userId}`, payload, {
+      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert("Profil bilgileriniz başarıyla güncellendi!");

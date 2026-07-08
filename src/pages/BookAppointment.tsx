@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axiosInstance from 'axios';
+import API from '../services/api';
 
 interface Employee { id: number; firstName: string; lastName: string; title: string; }
 interface Service { id: number; name: string; price: number; durationMinutes: number; }
@@ -26,7 +26,7 @@ export default function BookAppointment() {
     if (selectedEmployee && appointmentDate) {
       const fetchTakenSlots = async () => {
         try {
-          const response = await axiosInstance.get(`http://localhost:8080/api/appointments/taken-slots`, {
+          const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/taken-slots`, {
             params: { employeeId: selectedEmployee, date: appointmentDate }
           });
           setTakenSlots(response.data);
@@ -45,9 +45,9 @@ export default function BookAppointment() {
         setLoading(true);
         const headers = { Authorization: `Bearer ${token}` };
         const [empRes, servRes, shopRes] = await Promise.all([
-          axiosInstance.get(`http://localhost:8080/api/shops/${shopId}/employees`, { headers }),
-          axiosInstance.get(`http://localhost:8080/api/shops/${shopId}/services`, { headers }),
-          axiosInstance.get(`http://localhost:8080/api/shops/${shopId}/details`, { headers })
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
         ]);
         setEmployees(empRes.data);
         setServices(servRes.data);
@@ -75,7 +75,7 @@ export default function BookAppointment() {
         appointmentTime: `${appointmentDate}T${appointmentTime}:00`
       };
 
-      await axiosInstance.post('http://localhost:8080/api/appointments', payload, {
+      await API.post('/api/appointments', payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
