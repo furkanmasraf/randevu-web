@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
@@ -21,6 +21,13 @@ export default function Register() {
   // Stil ve focus takipleri için state'ler
   const [isBtnHovered, setIsBtnHovered] = useState<boolean>(false);
   const [focusedInput, setFocusedInput] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth <= 768);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -66,11 +73,20 @@ export default function Register() {
   });
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: '#f8fafc', margin: 0, overflow: 'hidden' }}>
-      
+    <div style={{ 
+  display: 'flex', 
+  flexDirection: isMobile ? 'column' : 'row', // Mobilde alt alta
+  minHeight: '100vh', 
+  width: '100vw', 
+  fontFamily: '"Inter", system-ui, sans-serif', 
+  backgroundColor: '#f8fafc', 
+  margin: 0, 
+  overflowX: 'hidden' // Taşmayı engelle
+}}>
       {/* SOL ALAN: MakasLab Temalı Sinematik Cam Efektli Panel */}
       <div style={{
-        flex: 1.1,
+        flex: isMobile ? 'none' : 1.1, // Mobilde 'none' yap
+  height: isMobile ? '200px' : '100vh', // Mobilde 200px yükseklik yeterli
         backgroundImage: `url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1200&q=80')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -106,16 +122,16 @@ export default function Register() {
 
       {/* SAĞ ALAN: Kayıt Formu */}
       <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        alignItems: 'flex-start', 
-        padding: '40px 48px', 
-        justifyContent: 'center', 
-        backgroundColor: '#ffffff', 
-        overflowY: 'auto',
-        height: '100vh',
-        boxSizing: 'border-box'
-      }}>
+  flex: 1, 
+  display: 'flex', 
+  alignItems: isMobile ? 'center' : 'flex-start', // Mobilde ortala
+  padding: isMobile ? '20px' : '40px 48px',        // Mobilde padding'i kıs
+  justifyContent: 'center', 
+  backgroundColor: '#ffffff', 
+  overflowY: 'auto', 
+  height: isMobile ? 'auto' : '100vh', // Mobilde auto yükseklik
+  boxSizing: 'border-box'
+}}>
         <div style={{ width: '100%', maxWidth: '420px', backgroundColor: '#ffffff', paddingTop: '24px', paddingBottom: '24px' }}>
           
           <div style={{ marginBottom: '28px' }}>
@@ -148,7 +164,7 @@ export default function Register() {
                   onBlur={() => setFocusedInput('')}
                   onChange={handleChange} 
                   style={getInputStyle('firstName')} 
-                  placeholder="Hasan"
+                  placeholder="Ad"
                 />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -162,7 +178,7 @@ export default function Register() {
                   onBlur={() => setFocusedInput('')}
                   onChange={handleChange} 
                   style={getInputStyle('lastName')} 
-                  placeholder="Yılmaz"
+                  placeholder="Soyad"
                 />
               </div>
             </div>
@@ -179,7 +195,7 @@ export default function Register() {
                 onBlur={() => setFocusedInput('')}
                 onChange={handleChange} 
                 style={getInputStyle('email')} 
-                placeholder="hasan@domain.com"
+                placeholder="isim@domain.com"
               />
             </div>
 
@@ -296,3 +312,5 @@ export default function Register() {
     </div>
   );
 }
+
+// useEffect is imported from React above; no local implementation needed.
