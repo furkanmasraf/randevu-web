@@ -1,11 +1,6 @@
 import axios from 'axios';
 
-// Tarayıcıdaki (Vercel) ortamı ve bilgisayarındaki ortamı kontrol eder
-const isProduction = window.location.hostname !== 'localhost';
-
-const baseURL = isProduction 
-  ? 'https://randevu-sistemi-dv33.onrender.com' 
-  : 'http://localhost:8080';
+const baseURL = 'https://randevu-sistemi-dv33.onrender.com';
 
 const API = axios.create({
   baseURL: baseURL,
