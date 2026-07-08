@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 
@@ -10,6 +10,13 @@ const Login: React.FC = () => {
   // Hover durumları için inline state takipleri
   const [isBtnHovered, setIsBtnHovered] = useState<boolean>(false);
   const [focusedInput, setFocusedInput] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth <= 768);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
   const handleLoginClick = async (): Promise<void> => {
     localStorage.clear();
@@ -69,48 +76,66 @@ const Login: React.FC = () => {
   });
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: '"Inter", system-ui, sans-serif', backgroundColor: '#f8fafc', margin: 0, overflow: 'hidden' }}>
+  <div style={{ 
+    display: 'flex', 
+    flexDirection: isMobile ? 'column' : 'row', 
+    minHeight: '100vh', // 'height: 100vh' yerine 'minHeight' kullanmak mobilde kaydırmayı kolaylaştırır
+    width: '100vw', 
+    fontFamily: '"Inter", system-ui, sans-serif', 
+    backgroundColor: '#f8fafc', 
+    margin: 0, 
+    overflowX: 'hidden' // Yatay kaymayı engelle
+  }}>
       
       {/* SOL ALAN: Premium Arka Plan Görseli & Cam Efektli (Glassmorphism) Kart */}
       <div style={{
-        flex: 1.2,
-        backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px'
-      }}>
-        {/* Koyu Sinematik Overlay */}
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)' }}></div>
-        
-        {/* Lüks Cam Efektli Bilgi Paneli */}
-        <div style={{
-          position: 'relative',
-          zIndex: 10,
-          textAlign: 'center',
-          padding: '48px 32px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
-          maxWidth: '500px'
-        }}>
-          <h1 style={{ fontSize: '3.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 16px 0', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
-            Makas <span style={{ color: '#818cf8' }}>Lab</span>
-          </h1>
-          <p style={{ fontSize: '1.2rem', color: '#f1f5f9', fontWeight: 400, margin: 0, lineHeight: 1.6, opacity: 0.9 }}>
-            Premium kuaför deneyimi şimdi dijital dünyada. Sıradaki randevunu saniyeler içinde planla veya işletmeni lüksle yönet.
-          </p>
-        </div>
-      </div>
+  flex: isMobile ? 'none' : 1.2,
+  height: isMobile ? '250px' : '100vh', 
+  backgroundImage: `url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80')`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  position: 'relative',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '20px'
+}}>
+  {/* Koyu Sinematik Overlay */}
+  <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)' }}></div>
+  
+  {/* Lüks Cam Efektli Bilgi Paneli (Senin Orijinal Kodun) */}
+  <div style={{
+    position: 'relative',
+    zIndex: 10,
+    textAlign: 'center',
+    padding: isMobile ? '20px' : '48px 32px',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(12px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    maxWidth: '500px'
+  }}>
+    <h1 style={{ fontSize: isMobile ? '1.8rem' : '3.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 16px 0' }}>
+      Makas <span style={{ color: '#818cf8' }}>Lab</span>
+    </h1>
+    {!isMobile && (
+      <p style={{ fontSize: '1.2rem', color: '#f1f5f9', fontWeight: 400, lineHeight: 1.6, opacity: 0.9 }}>
+        Premium kuaför deneyimi şimdi dijital dünyada. Sıradaki randevunu saniyeler içinde planla veya işletmeni lüksle yönet.
+      </p>
+    )}
+  </div>
+</div>
 
       {/* SAĞ ALAN: Minimalist ve Elit Giriş Formu */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px', justifyContent: 'center', backgroundColor: '#ffffff' }}>
+      <div style={{ 
+      flex: 1, 
+      display: 'flex', 
+      alignItems: 'center', 
+      padding: isMobile ? '20px' : '48px', 
+      justifyContent: 'center', 
+      backgroundColor: '#ffffff',
+      overflowY: 'auto' // İçerik uzunsa kaydırılabilir olsun
+    }}>
         <div style={{
           width: '100%',
           maxWidth: '400px',
