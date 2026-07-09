@@ -9,8 +9,8 @@ interface AppointmentDTO {
   serviceName: string;
   price: number;
   appointmentTime: string;
-  addressText?: string; 
-  phoneNumber?: string;
+  shopAddress?: string; 
+  shopPhone?: string;
   status: 'PENDING' | 'APPROVED' | 'CANCELLED' | 'REJECTED';
 }
 
@@ -287,8 +287,8 @@ export default function CustomerDashboard() {
         {renderStatusBadge(app.status)}
       </div>
       
-      <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '4px' }}>📍 {app.addressText || 'Konum bilgisi yok'}</div>
-      <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>📞 {app.phoneNumber || 'Telefon bilgisi yok'}</div>
+      <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '4px' }}>📍 {app.shopAddress || 'Konum bilgisi yok'}</div>
+      <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>📞 {app.shopPhone || 'Telefon bilgisi yok'}</div>
       
       <div style={{ color: '#475569', fontSize: '0.9rem' }}>👤 {app.employeeName}</div>
       <div style={{ color: '#475569', fontSize: '0.9rem' }}>✂️ {app.serviceName}</div>
@@ -330,8 +330,8 @@ export default function CustomerDashboard() {
         <tr key={app.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
           <td style={{ padding: '20px 24px', fontWeight: 700 }}>{app.shopName}</td>
           <td style={{ padding: '20px 24px', fontSize: '0.85rem', color: '#64748b' }}>
-            <div style={{ marginBottom: '4px' }}>📍 {app.addressText || '-'}</div>
-            <div>📞 {app.phoneNumber || '-'}</div>
+            <div style={{ marginBottom: '4px' }}>📍 {app.shopAddress || '-'}</div>
+            <div>📞 {app.shopPhone || '-'}</div>
           </td>
           <td style={{ padding: '20px 24px' }}>{app.employeeName}</td>
           <td style={{ padding: '20px 24px' }}>{app.serviceName}</td>
