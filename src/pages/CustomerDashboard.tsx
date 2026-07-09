@@ -9,6 +9,8 @@ interface AppointmentDTO {
   serviceName: string;
   price: number;
   appointmentTime: string;
+  addressText?: string; 
+  phoneNumber?: string;
   status: 'PENDING' | 'APPROVED' | 'CANCELLED' | 'REJECTED';
 }
 
@@ -24,6 +26,7 @@ export default function CustomerDashboard() {
     lastName: '',
     email: '',
     phoneNumber: '',
+    addressText: '',
     password: ''
   });
   const [focusedInput, setFocusedInput] = useState<string>('');
@@ -61,6 +64,7 @@ export default function CustomerDashboard() {
             lastName: userResponse.data.lastName || '',
             email: userResponse.data.email || '',
             phoneNumber: userResponse.data.phoneNumber || '',
+            addressText: userResponse.data.addressText || '',
             password: '' 
           });
         }
@@ -102,7 +106,8 @@ export default function CustomerDashboard() {
       const payload: any = {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
-        phoneNumber: profileData.phoneNumber
+        phoneNumber: profileData.phoneNumber,
+        addressText: profileData.addressText
       };
 
       if (profileData.password.trim() !== '') {
@@ -257,7 +262,9 @@ export default function CustomerDashboard() {
     <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
         <h2 style={{ margin: 0, color: '#0f172a', fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.025em' }}>Randevularım</h2>
-        <p style={{ margin: '6px 0 0 0', color: '#64748b', fontSize: '0.95rem', lineHeight: 1.5 }}>Geçmiş ve gelecek randevu taleplerinizin durumunu buradan takip edebilirsiniz.</p>
+        <p style={{ margin: '6px 0 0 0', color: '#64748b', fontSize: '0.95rem', lineHeight: 1.5 }}>
+          Geçmiş ve gelecek randevularınızı buradan takip edebilirsiniz.
+        </p>
       </div>
       <button 
         onClick={() => navigate('/')} 
@@ -266,67 +273,81 @@ export default function CustomerDashboard() {
         ← Ana Sayfa
       </button>
     </div>
-    
+
     {appointments.length === 0 ? (
       <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>Henüz randevunuz bulunmuyor.</div>
     ) : (
       <>
         {/* MOBİL: KART GÖRÜNÜMÜ */}
-        <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {appointments.map((app) => (
-            <div key={app.id} style={{ padding: '16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>{app.shopName}</span>
-                {renderStatusBadge(app.status)}
-              </div>
-              <div style={{ color: '#475569', fontSize: '0.9rem', marginBottom: '4px' }}>👤 {app.employeeName}</div>
-              <div style={{ color: '#475569', fontSize: '0.9rem', marginBottom: '8px' }}>✂️ {app.serviceName}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-                <span style={{ fontWeight: 700, color: '#6366f1' }}>{app.price} TL</span>
-                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>
-                  {new Date(app.appointmentTime).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}
-                </span>
-              </div>
-              {(app.status === 'PENDING' || app.status === 'APPROVED') && (
-                <button onClick={() => handleCancel(app.id)} style={{ width: '100%', marginTop: '12px', padding: '10px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>İptal Et</button>
-              )}
-            </div>
-          ))}
-        </div>
+<div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+  {appointments.map((app) => (
+    <div key={app.id} style={{ padding: '16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>{app.shopName}</span>
+        {renderStatusBadge(app.status)}
+      </div>
+      
+      <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '4px' }}>📍 {app.addressText || 'Konum bilgisi yok'}</div>
+      <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>📞 {app.phoneNumber || 'Telefon bilgisi yok'}</div>
+      
+      <div style={{ color: '#475569', fontSize: '0.9rem' }}>👤 {app.employeeName}</div>
+      <div style={{ color: '#475569', fontSize: '0.9rem' }}>✂️ {app.serviceName}</div>
+      
+      <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 800, color: '#6366f1' }}>{app.price} TL</span>
+        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{new Date(app.appointmentTime).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+      </div>
+      
+      {(app.status === 'PENDING' || app.status === 'APPROVED') && (
+        <button 
+          onClick={() => handleCancel(app.id)} 
+          style={{ width: '100%', marginTop: '12px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}
+        >
+          İptal Et
+        </button>
+      )}
+    </div>
+  ))}
+</div>
 
         {/* MASAÜSTÜ: TABLO GÖRÜNÜMÜ */}
-        <div className="hidden md:block" style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>SALON</th>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>PERSONEL</th>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>HİZMET</th>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>TARİH / SAAT</th>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>TUTAR</th>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>DURUM</th>
-                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>İŞLEM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((app) => (
-                <tr key={app.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '20px 24px', fontWeight: 700 }}>{app.shopName}</td>
-                  <td style={{ padding: '20px 24px' }}>{app.employeeName}</td>
-                  <td style={{ padding: '20px 24px' }}>{app.serviceName}</td>
-                  <td style={{ padding: '20px 24px' }}>{new Date(app.appointmentTime).toLocaleString('tr-TR')}</td>
-                  <td style={{ padding: '20px 24px', fontWeight: 700, color: '#6366f1' }}>{app.price} TL</td>
-                  <td style={{ padding: '20px 24px' }}>{renderStatusBadge(app.status)}</td>
-                  <td style={{ padding: '20px 24px', textAlign: 'center' }}>
-                    {(app.status === 'PENDING' || app.status === 'APPROVED') && (
-                      <button onClick={() => handleCancel(app.id)} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 }}>İptal Et</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+<div className="hidden md:block" style={{ overflowX: 'auto', backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+    <thead>
+      <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>SALON</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>İLETİŞİM / KONUM</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>PERSONEL</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>HİZMET</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>TARİH / SAAT</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>TUTAR</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700 }}>DURUM</th>
+        <th style={{ padding: '18px 24px', color: '#475569', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>İŞLEM</th>
+      </tr>
+    </thead>
+    <tbody>
+      {appointments.map((app) => (
+        <tr key={app.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+          <td style={{ padding: '20px 24px', fontWeight: 700 }}>{app.shopName}</td>
+          <td style={{ padding: '20px 24px', fontSize: '0.85rem', color: '#64748b' }}>
+            <div style={{ marginBottom: '4px' }}>📍 {app.addressText || '-'}</div>
+            <div>📞 {app.phoneNumber || '-'}</div>
+          </td>
+          <td style={{ padding: '20px 24px' }}>{app.employeeName}</td>
+          <td style={{ padding: '20px 24px' }}>{app.serviceName}</td>
+          <td style={{ padding: '20px 24px' }}>{new Date(app.appointmentTime).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}</td>
+          <td style={{ padding: '20px 24px', fontWeight: 700, color: '#6366f1' }}>{app.price} TL</td>
+          <td style={{ padding: '20px 24px' }}>{renderStatusBadge(app.status)}</td>
+          <td style={{ padding: '20px 24px', textAlign: 'center' }}>
+            {(app.status === 'PENDING' || app.status === 'APPROVED') && (
+              <button onClick={() => handleCancel(app.id)} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 }}>İptal Et</button>
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
       </>
     )}
   </div>
