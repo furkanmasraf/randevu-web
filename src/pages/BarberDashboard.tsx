@@ -307,87 +307,240 @@ useEffect(() => {
         </div>
       )}
         {activeTab === 'services' && (
+  <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '24px' }}>Hizmet Yönetimi</h1>
+
+    {/* YENİ: Hizmet Ekleme Kartı (Modern Tasarım) */}
+    <div style={{ 
+        backgroundColor: '#ffffff', 
+        borderRadius: '24px', 
+        padding: '24px', 
+        marginBottom: '32px',
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+        border: '1px solid #e2e8f0' 
+    }}>
+      <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1.1rem' }}>Yeni Hizmet Ekle</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <input 
+          value={newServiceName} 
+          onChange={e => setNewServiceName(e.target.value)} 
+          placeholder="Hizmet Adı (örn: Saç Kesimi)" 
+          style={{ padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+        />
+        <input 
+          value={newServicePrice} 
+          onChange={e => setNewServicePrice(e.target.value)} 
+          placeholder="Fiyat (TL)" 
+          type="number"
+          style={{ padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+        />
+        <button 
+          onClick={handleAddService} 
+          style={{ 
+            backgroundColor: '#4f46e5', color: '#fff', border: 'none', padding: '14px', 
+            borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', marginTop: '4px' 
+          }}
+        >
+          Hizmeti Kaydet
+        </button>
+      </div>
+    </div>
+
+    {/* YENİ: Hizmet Listesi (Randevu kartlarıyla aynı stil) */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {services.map(service => (
+        <div key={service.id} style={{ 
+            backgroundColor: '#fff', padding: '20px', borderRadius: '20px', 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+        }}>
           <div>
-            <h3>Hizmet Ekle</h3>
-            <input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} placeholder="Hizmet Adı" />
-            <input value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)} placeholder="Fiyat" />
-            <button onClick={handleAddService}>Ekle</button>
-            <ul>
-  {services.map(service => (
-    <li key={service.id} style={{ marginBottom: '8px' }}>
-      {service.name} - {service.price} TL
-      <button 
-        onClick={() => handleDelete('service', service.id)} 
-        style={{ marginLeft: '10px', color: 'red' }}
-      >
-        Sil
-      </button>
-    </li>
-  ))}
-</ul>
+            <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>{service.name}</h4>
+            <p style={{ margin: '4px 0 0 0', color: '#6366f1', fontWeight: 700, fontSize: '0.9rem' }}>{service.price} TL</p>
           </div>
-        )}
+          <button 
+            onClick={() => handleDelete('service', service.id)} 
+            style={{ 
+                backgroundColor: '#fff1f2', color: '#e11d48', border: 'none', 
+                padding: '10px 20px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' 
+            }}
+          >
+            Sil
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
         {activeTab === 'employees' && (
-          <div>
-            <h3>Personel Ekle</h3>
-            <input value={newEmployeeName} onChange={e => setNewEmployeeName(e.target.value)} placeholder="Personel Adı" />
-            <button onClick={handleAddEmployee}>Ekle</button>
-            <ul>
-  {employees.map(emp => (
-    <li key={emp.id}>
-      {emp.firstName} {emp.lastName} 
-      <button onClick={() => handleDelete('employee', emp.id)} style={{marginLeft:'10px', color:'red'}}>Sil</button>
-    </li>
-  ))}
-</ul>
+  <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '24px' }}>Personel Yönetimi</h1>
+
+    {/* YENİ: Personel Ekleme Kartı */}
+    <div style={{ 
+        backgroundColor: '#ffffff', 
+        borderRadius: '24px', 
+        padding: '24px', 
+        marginBottom: '32px',
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+        border: '1px solid #e2e8f0' 
+    }}>
+      <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1.1rem' }}>Yeni Personel Ekle</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <input 
+          value={newEmployeeName} 
+          onChange={e => setNewEmployeeName(e.target.value)} 
+          placeholder="Ad Soyad (örn: Ad Soyad)" 
+          style={{ padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+        />
+        <button 
+          onClick={handleAddEmployee} 
+          style={{ 
+            backgroundColor: '#4f46e5', color: '#fff', border: 'none', padding: '14px', 
+            borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', marginTop: '4px' 
+          }}
+        >
+          Personeli Kaydet
+        </button>
+      </div>
+    </div>
+
+    {/* YENİ: Personel Listesi (Premium Kart Yapısı) */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {employees.map(emp => (
+        <div key={emp.id} style={{ 
+            backgroundColor: '#fff', padding: '20px', borderRadius: '20px', 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+                width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#eef2ff', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4f46e5' 
+            }}>
+              {emp.firstName[0]}{emp.lastName[0]}
+            </div>
+            <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>
+              {emp.firstName} {emp.lastName}
+            </h4>
           </div>
-        )}
+          <button 
+            onClick={() => handleDelete('employee', emp.id)} 
+            style={{ 
+                backgroundColor: '#fff1f2', color: '#e11d48', border: 'none', 
+                padding: '10px 20px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' 
+            }}
+          >
+            Sil
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
         {activeTab === 'settings' && (
-  <div style={{ background: '#fff', padding: '30px', borderRadius: '12px' }}>
-    <h3>Dükkan Bilgilerini Güncelle</h3>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '400px' }}>
-      <input 
-        value={shopDetails?.shopName || ''} 
-        onChange={e => setShopDetails(prev => ({...prev!, shopName: e.target.value}))} 
-        placeholder="Dükkan Adı" 
-        style={{ padding: '10px' }} 
-      />
-      <input 
-        value={shopDetails?.phoneNumber || ''} 
-        onChange={e => setShopDetails(prev => ({...prev!, phoneNumber: e.target.value}))} 
-        placeholder="Telefon" 
-        style={{ padding: '10px' }} 
-      />
-      <input 
-        type="file" 
-        onChange={e => setSelectedFile(e.target.files?.[0] || null)} 
-      />
-      <button onClick={handleUpdateShop} style={{ padding: '10px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px' }}>
-        Kaydet
-      </button>
+  <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '24px' }}>Dükkan Ayarları</h1>
+
+    <div style={{ 
+        backgroundColor: '#ffffff', 
+        borderRadius: '24px', 
+        padding: '32px', 
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+        border: '1px solid #e2e8f0' 
+    }}>
+      <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '1.2rem', color: '#1e293b' }}>İşletme Bilgileri</h3>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Dükkan Adı */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>Dükkan Adı</label>
+          <input 
+            value={shopDetails?.shopName || ''} 
+            onChange={e => setShopDetails(prev => ({...prev!, shopName: e.target.value}))} 
+            placeholder="MakasLab" 
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        {/* Telefon */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>İletişim Numarası</label>
+          <input 
+            value={shopDetails?.phoneNumber || ''} 
+            onChange={e => setShopDetails(prev => ({...prev!, phoneNumber: e.target.value}))} 
+            placeholder="05xx xxx xx xx" 
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        {/* Logo Yükleme */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>Dükkan Logosu</label>
+          <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc' }}>
+            <input 
+              type="file" 
+              onChange={e => setSelectedFile(e.target.files?.[0] || null)} 
+              style={{ fontSize: '0.9rem' }}
+            />
+          </div>
+        </div>
+
+        <button 
+          onClick={handleUpdateShop} 
+          style={{ 
+            marginTop: '12px', backgroundColor: '#4f46e5', color: '#fff', border: 'none', 
+            padding: '16px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem' 
+          }}
+        >
+          Değişiklikleri Kaydet
+        </button>
+      </div>
     </div>
   </div>
 )}
 {activeTab === 'hours' && (
-  <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
-    <h3>Personel Müsaitlik Durumu</h3>
-    <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
-    
-    <div style={{ marginTop: '20px' }}>
+  <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '24px' }}>Personel Takvimi</h1>
+
+    {/* Tarih Seçici - Premium Stil */}
+    <div style={{ marginBottom: '32px', backgroundColor: '#fff', padding: '16px 24px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'inline-block' }}>
+      <input 
+        type="date" 
+        value={selectedDate} 
+        onChange={e => setSelectedDate(e.target.value)} 
+        style={{ border: 'none', fontSize: '1rem', fontWeight: 600, color: '#4f46e5', cursor: 'pointer' }}
+      />
+    </div>
+
+    {/* Personel Müsaitlik Listesi */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {employees.map(emp => (
-        <div key={emp.id} style={{ marginBottom: '20px' }}>
-          <h4>{emp.firstName} {emp.lastName}</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: '5px' }}>
-            {timeSlots.map(time => (
-              <div key={time} 
-                style={{ 
-                  padding: '8px', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem',
-                  backgroundColor: (busySlotsMap[emp.id] || []).includes(time) ? '#ef4444' : '#22c55e', 
-                  color: '#fff' 
+        <div key={emp.id} style={{ 
+            backgroundColor: '#fff', padding: '24px', borderRadius: '24px', 
+            border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#64748b' }}>
+              {emp.firstName[0]}{emp.lastName[0]}
+            </div>
+            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{emp.firstName} {emp.lastName}</h4>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px' }}>
+            {timeSlots.map(time => {
+              const isBusy = (busySlotsMap[emp.id] || []).includes(time);
+              return (
+                <div key={time} style={{ 
+                  padding: '10px 0', borderRadius: '8px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700,
+                  backgroundColor: isBusy ? '#fef2f2' : '#f0fdf4', 
+                  color: isBusy ? '#e11d48' : '#15803d',
+                  border: `1px solid ${isBusy ? '#fecaca' : '#bbf7d0'}`
                 }}>
-                {time}
-              </div>
-            ))}
+                  {time}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
