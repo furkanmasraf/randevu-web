@@ -31,6 +31,7 @@ export default function BarberDashboard() {
   const [newEmployeeName, setNewEmployeeName] = useState('');
   const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; latitude?: number; longitude?: number } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -207,92 +208,104 @@ useEffect(() => {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
-      {/* Sidebar ve İçerik aynı kalıyor */}
-      <div style={{ width: '260px', backgroundColor: '#1e293b', color: '#fff', padding: '32px 14px' }}>
-        <h2 style={{ fontSize: '1.35rem' }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h2>
-        <button onClick={() => setActiveTab('appointments')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>📅 Randevular</button>
-        <button onClick={() => setActiveTab('services')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>✂️ Hizmetler</button>
-        <button onClick={() => setActiveTab('employees')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>👤 Personel</button>
-        <button onClick={() => setActiveTab('settings')} style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>⚙️ Dükkan Ayarları</button>
-        <button onClick={() => setActiveTab('hours')} 
-  style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: '#fff', textAlign: 'left' }}>
-  🕒 Personel Takvimi
-</button>
-      </div>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'system-ui, sans-serif' }}>
+    
+    {/* MOBİL HAMBURGER */}
+    <button 
+      className="md:hidden"
+      style={{ position: 'fixed', top: '15px', left: '15px', zIndex: 99, background: '#1e293b', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', fontSize: '1.2rem', cursor: 'pointer' }}
+      onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+    >
+      ☰
+    </button>
 
-      <div style={{ flex: 1, padding: '40px' }}>
-        {activeTab === 'appointments' && (
-          <div>
-            <h3>Randevular</h3>
+    {/* SIDEBAR */}
+    <div style={{ 
+      position: 'fixed', inset: '0', zIndex: 50, width: '280px', backgroundColor: '#0f172a', color: '#fff', 
+      transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.3s ease',
+      padding: '40px 20px'
+    }} className="md:static md:transform-none">
+      <h2 style={{ fontSize: '1.5rem', fontWeight: '900', marginBottom: '40px', color: '#818cf8' }}>MakasLab</h2>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {[
+          { id: 'appointments', label: 'Randevular', icon: '📅' },
+          { id: 'services', label: 'Hizmetler', icon: '✂️' },
+          { id: 'employees', label: 'Personel', icon: '👤' },
+          { id: 'settings', label: 'Ayarlar', icon: '⚙️' },
+          { id: 'hours', label: 'Takvim', icon: '🕒' }
+        ].map(item => (
+          <button 
+            key={item.id}
+            onClick={() => { setActiveTab(item.id as any); setIsSidebarOpen(false); }}
+            style={{ width: '100%', padding: '12px', textAlign: 'left', background: activeTab === item.id ? '#1e293b' : 'transparent', border: 'none', color: '#fff', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            {item.icon} {item.label}
+          </button>
+        ))}
+      </nav>
+    </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-              {[
-                { label: 'Geçmiş', val: 'past' },
-                { label: 'Bugün', val: 'today' },
-                { label: 'Gelecek', val: 'future' }
-              ].map((item) => (
+    {/* ANA İÇERİK */}
+    <main style={{ flex: 1, padding: '40px', marginTop: '60px', maxWidth: '1200px', marginInline: 'auto' }}>
+      {activeTab === 'appointments' && (
+        <div>
+          <header style={{ marginBottom: '30px' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a' }}>Randevular</h1>
+            {/* FİLTRELER */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              {['past', 'today', 'future'].map((f) => (
                 <button
-                  key={item.val}
-                  onClick={() => setAppFilter(item.val as any)}
+                  key={f}
+                  onClick={() => setAppFilter(f as any)}
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    backgroundColor: appFilter === item.val ? '#6366f1' : '#e2e8f0',
-                    color: appFilter === item.val ? '#fff' : '#1e293b'
+                    padding: '10px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: 700,
+                    backgroundColor: appFilter === f ? '#4f46e5' : '#fff', color: appFilter === f ? '#fff' : '#64748b',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                   }}
                 >
-                  {item.label}
+                  {f === 'past' ? 'Geçmiş' : f === 'today' ? 'Bugün' : 'Gelecek'}
                 </button>
               ))}
             </div>
+          </header>
 
-            {appointments.length === 0 ? (
-              <p>Henüz randevu bulunamadı.</p>
-            ) : (
-              <ul>
-                {appointments.map((app) => (
-                  <li key={app.id} style={{ marginBottom: '15px', padding: '20px', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>
-                          {app.customerName || 'İsimsiz Müşteri'}
-                        </div>
-                        <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '4px' }}>
-                          📅 {app.appointmentTime ? new Date(app.appointmentTime).toLocaleString() : 'Tarih yok'}
-                        </div>
-                        <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '4px' }}>
-                          ✂️ {app.serviceName || 'Hizmet bilgisi yok'} — <b>{app.price ? `${app.price} TL` : 'Fiyat yok'}</b>
-                        </div>
-                        <div style={{ fontSize: '0.85rem', color: '#6366f1', marginTop: '4px', fontWeight: 600 }}>
-                          👤 Personel: {app.employeeName || 'Atanmadı'}
-                        </div>
-                        <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '4px' }}>
-                          📞 {app.customerPhone || 'Numara yok'}
-                        </div>
-                      </div>
-
-                      <div>
-                        {app.status === 'PENDING' ? (
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Kabul Et</button>
-                            <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Reddet</button>
-                          </div>
-                        ) : (
-                          <div style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 700, fontSize: '0.9rem', backgroundColor: app.status === 'APPROVED' ? '#dcfce7' : '#fee2e2', color: app.status === 'APPROVED' ? '#166534' : '#991b1b' }}>
-                            {app.status === 'APPROVED' ? 'ONAYLANDI' : 'REDDEDİLDİ'}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+          {/* GRID YERLEŞİMİ */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+            gap: '24px' 
+          }}>
+            {appointments.map((app) => (
+              <div key={app.id} style={{ 
+                background: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+                border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{app.customerName}</h4>
+                  <span style={{ 
+                    fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '8px',
+                    backgroundColor: app.status === 'APPROVED' ? '#dcfce7' : '#fee2e2', color: app.status === 'APPROVED' ? '#166534' : '#991b1b'
+                  }}>
+                    {app.status}
+                  </span>
+                </div>
+                <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '0.9rem' }}>📅 {new Date(app.appointmentTime).toLocaleString()}</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>✂️ {app.serviceName} - {app.price} TL</div>
+                  <div style={{ fontSize: '0.9rem' }}>👤 {app.employeeName}</div>
+                  <div style={{ fontSize: '0.9rem' }}>📞 {app.customerPhone}</div>
+                </div>
+                {app.status === 'PENDING' && (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ flex: 1, background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Onayla</button>
+                    <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ flex: 1, background: '#f1f5f9', color: '#e11d48', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Reddet</button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
         {activeTab === 'services' && (
           <div>
             <h3>Hizmet Ekle</h3>
@@ -381,7 +394,7 @@ useEffect(() => {
     </div>
   </div>
 )}
-      </div>
+    </main>
     </div>
   );
 }
