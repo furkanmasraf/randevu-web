@@ -4,7 +4,7 @@ import API from '../services/api';
 
 interface Employee { id: number; firstName: string; lastName: string; title: string; }
 interface Service { id: number; name: string; price: number; durationMinutes: number; }
-interface ShopDetails { id: number; shopName: string; address: string; phoneNumber: string; imageUrl: string; }
+interface ShopDetails { id: number; shopName: string; addressText: string; phoneNumber: string; imageUrl: string; }
 
 export default function BookAppointment() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -37,36 +37,46 @@ export default function BookAppointment() {
   }, [selectedEmployee, appointmentDate]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { navigate('/login'); return; }
-
+    // Artık token kontrolü yok, çünkü buraya zaten giriş yapmış kullanıcı gelir!
     const fetchAllData = async () => {
       try {
         setLoading(true);
+        const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
+        
         const [empRes, servRes, shopRes] = await Promise.all([
           API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
           API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
           API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
         ]);
+        
         setEmployees(empRes.data);
         setServices(servRes.data);
         setShopDetails(shopRes.data);
-      } catch (error) { console.error(error); } finally { setLoading(false); }
+      } catch (error) { 
+        console.error("Veri çekme hatası:", error); 
+      } finally { 
+        setLoading(false); 
+      }
     };
+    
     fetchAllData();
-  }, [shopId, navigate]);
+  }, [shopId]);
 
   const allPossibleSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validasyon kontrolü
     if (!selectedEmployee || !selectedService || !appointmentDate || !appointmentTime) {
-      alert("Lütfen tüm alanları doldurun."); return;
+      alert("Lütfen tüm alanları doldurun."); 
+      return;
     }
 
     try {
       setSubmitting(true);
+      
       const payload = {
         shopId: Number(shopId),
         employeeId: Number(selectedEmployee),
@@ -80,9 +90,24 @@ export default function BookAppointment() {
       });
 
       alert("Randevunuz başarıyla oluşturuldu!");
-      navigate('/');
-    } catch (error: any) { alert(error.response?.data?.message || "Hata oluştu."); }
-    finally { setSubmitting(false); }
+
+      // Akıllı yönlendirme mantığı
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Kullanıcı giriş yapmışsa ana sayfaya (Home/Dashboard) gönder
+        navigate('/');
+      } else {
+        // Kullanıcı giriş yapmamışsa (misafir olarak alıyorsa) giriş ekranına gönder
+        navigate('/login');
+      }
+
+    } catch (error: any) { 
+      // Hata mesajını daha okunabilir hale getirdik
+      const errorMessage = error.response?.data?.message || "Randevu oluşturulurken bir hata oluştu.";
+      alert(errorMessage); 
+    } finally { 
+      setSubmitting(false); 
+    }
   };
 
   if (loading) return <div>Yükleniyor...</div>;
@@ -93,12 +118,44 @@ export default function BookAppointment() {
         
         {/* DÜKKAN VİTRİNİ */}
         {shopDetails && (
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <img src={shopDetails.imageUrl} alt={shopDetails.shopName} style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #f1f5f9' }} />
-            <h2 style={{ marginTop: '15px', marginBottom: '5px' }}>{shopDetails.shopName}</h2>
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>📍 {shopDetails.address}</p>
-            <p style={{ color: '#0f172a', fontWeight: 'bold' }}>📞 {shopDetails.phoneNumber}</p>
-          </div>
+  <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+    {/* Görseli Kontrol Et */}
+    <div style={{ 
+      width: '120px', height: '120px', borderRadius: '50%', 
+      margin: '0 auto', border: '3px solid #f1f5f9', overflow: 'hidden',
+      backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      {shopDetails.imageUrl && shopDetails.imageUrl.trim() !== "" ? (
+        <img 
+         src={`https://randevu-sistemi-dv33.onrender.com${shopDetails.imageUrl}`} 
+         alt={shopDetails.shopName} 
+         style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #f1f5f9' }} 
+        />
+      ) : (
+        <span style={{ fontSize: '3rem' }}>💈</span>
+      )}
+    </div>
+    
+    <h2 style={{ marginTop: '15px', marginBottom: '5px', color: '#0f172a' }}>{shopDetails.shopName}</h2>
+    <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '10px' }}>📍 {shopDetails.addressText}</p>
+    
+    {/* Telefon bilgisini link olarak ekledik, dokunulabilir hale geldi */}
+    <a 
+  href={shopDetails.phoneNumber ? `tel:${shopDetails.phoneNumber}` : '#'} 
+  style={{ 
+    color: shopDetails.phoneNumber ? '#3b82f6' : '#94a3b8', // Numarasızsa gri renk
+    fontWeight: 700, 
+    fontSize: '1rem', 
+    textDecoration: 'none',
+    display: 'inline-flex', 
+    alignItems: 'center', 
+    gap: '8px',
+    cursor: shopDetails.phoneNumber ? 'pointer' : 'default' // Numarasızsa tıklanmasın
+  }}
+>
+  📞 {shopDetails.phoneNumber || 'Telefon bilgisi yok'}
+</a>
+  </div>
         )}
 
         <h2>Randevu Planlama</h2>
@@ -128,6 +185,12 @@ export default function BookAppointment() {
               </option>
             ))}
           </select>
+
+          {!localStorage.getItem('token') && (
+    <p style={{ color: '#ef4444', fontSize: '0.8rem', textAlign: 'center', marginTop: '-10px' }}>
+      * Randevuyu onaylamak için giriş yapmanız gerekecektir.
+    </p>
+  )}
 
           <button type="submit" disabled={submitting} style={{ padding: '12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
             {submitting ? "Oturum Kaydediliyor..." : "Randevuyu Onayla"}

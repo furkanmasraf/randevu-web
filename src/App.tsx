@@ -4,29 +4,32 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import RegisterShop from './pages/RegisterShop'; 
 import BookAppointment from './pages/BookAppointment'; 
-import CustomerDashboard from './pages/CustomerDashboard'; // Klasör yapına göre import ismi güncellendi
+import CustomerDashboard from './pages/CustomerDashboard';
 import BarberDashboard from './pages/BarberDashboard';
+import ProtectedRoute from './pages/ProtectedRoute'; // Korumalı rota bileşeni
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* PUBLIC ROTALAR (Giriş yapmadan erişilebilir) */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
-        {/* Tüm korumaları geçici olarak kaldırıp yolları sonuna kadar açıyoruz */}
-        <Route path="/register-shop" element={<RegisterShop />} />
         <Route path="/book-appointment/:shopId" element={<BookAppointment />} />
-        <Route path="/" element={<Home />} />
         
-        {/* İsmi MyAppointments yerine doğrudan yeni bileşen adına çektik */}
-        <Route path="/my-appointments" element={<CustomerDashboard />} /> 
-        
-        <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
-        <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
+        {/* KORUMALI ROTALAR (Sadece giriş yapmış kullanıcılar) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/my-appointments" element={<CustomerDashboard />} />
+          
+          {/* Dükkan Sahibi Rotaları */}
+          <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
+          <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
+          {/* Eğer RegisterShop herkesin erişimine açık olsun dersen bunu dışarıya taşıyabiliriz */}
+        </Route>
 
-        {/* Catch-all rotasını da tamamen kapatıyoruz ki tarayıcı hiçbir yere fırlatamasın */}
-        {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
+        {/* CATCH-ALL (Tanımsız rotalar için ana sayfaya yönlendir) */}
+        <Route path="*" element={<Home />} />
       </Routes>
     </Router>
   );
