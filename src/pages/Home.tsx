@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
@@ -12,27 +12,21 @@ interface Shop {
   longitude: number;
   subscribed: boolean;
   category?: string;
+  phoneNumber?: string;
 }
 
 const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
-const CATEGORIES = ["Tümü", "Erkek Kuaförü", "Kadın Kuaförü", "Güzellik Salonu"];
+
 
 export default function Home() {
   const navigate = useNavigate();
 
   // Durum (State) Yönetimleri
   const [shops, setShops] = useState<Shop[]>([]); 
-  const [loading, setLoading] = useState<boolean>(true);
+  // loading state removed because its value was unused
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('Tümü');
-  const [selectedCategory, setSelectedCategory] = useState<string>('Tümü');
-
-  // Etkileşim Takipleri İçin Hover State'leri
-  const [hoveredCardId, setHoveredCardId] = useState<number | null>(null);
-  const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
-
-  const firstName = localStorage.getItem('firstName') || 'Kullanıcı';
-  const lastName = localStorage.getItem('lastName') || '';
+  const selectedCategory = 'Tümü';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -50,7 +44,6 @@ export default function Home() {
 
     const fetchShops = async () => {
       try {
-        setLoading(true);
         const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -60,8 +53,6 @@ export default function Home() {
         setShops(response.data);
       } catch (error) {
         console.error("Dükkanlar yüklenirken hata oluştu:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -92,221 +83,71 @@ export default function Home() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '60px', fontFamily: '"Inter", system-ui, sans-serif' }}>
-      
-      {/*  ÜST BAŞLIK VE ELİT NAVİGASYON BARI */}
-      <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '20px 0', marginBottom: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.025em' }}>
-              Makas<span style={{ color: '#818cf8' }}>Lab</span> Müşteri Paneli
-            </h1>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>Hoş geldin, {firstName} {lastName} ✨</p>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              onClick={() => navigate('/my-appointments')}
-              onMouseEnter={() => setHoveredBtn('appointments')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{ 
-                backgroundColor: hoveredBtn === 'appointments' ? '#334155' : '#1e293b', 
-                color: '#f8fafc', 
-                border: '1px solid #334155', 
-                padding: '10px 20px', 
-                borderRadius: '10px', 
-                fontWeight: 600, 
-                cursor: 'pointer', 
-                fontSize: '0.9rem',
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              👤 Profilim
-            </button>
+  <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", system-ui, sans-serif', paddingBottom: '80px' }}>
+    
+    {/* 1. PREMIUM HERO (Responsive Görsel) */}
+    <header style={{ 
+  position: 'relative', 
+  height: '400px', 
+  display: 'flex', 
+  flexDirection: 'column', 
+  justifyContent: 'center', 
+  alignItems: 'center', 
+  textAlign: 'center', 
+  color: '#fff',
+  background: 'linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.5)), url("src/assets/kuaforsalonu.jpg")',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat'
+}}>
+      <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', fontWeight: 900, margin: 0 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h1>
+      <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '10px', padding: '0 20px' }}>Premium kuaför ve güzellik deneyimi dijital dünyada.</p>
 
-            <button 
-              onClick={handleLogout}
-              onMouseEnter={() => setHoveredBtn('logout')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{ 
-                backgroundColor: hoveredBtn === 'logout' ? '#dc2626' : '#ef4444', 
-                color: '#fff', 
-                border: 'none', 
-                padding: '10px 20px', 
-                borderRadius: '10px', 
-                fontWeight: 600, 
-                cursor: 'pointer', 
-                fontSize: '0.9rem',
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              Çıkış Yap
-            </button>
-          </div>
-        </div>
+      {/* Navigasyon (Mobil uyumlu) */}
+      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '8px' }}>
+        <button onClick={() => navigate('/my-appointments')} style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>👤 Profilim</button>
+        <button onClick={handleLogout} style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Çıkış</button>
       </div>
+    </header>
 
-      {/* ANA İÇERİK ALANI */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-        
-        {/* 🔍 PREMIUM FILTRELEME ALANI */}
-        <div style={{ 
-          backgroundColor: '#ffffff', 
-          padding: '24px 32px', 
-          borderRadius: '20px', 
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02)',
-          border: '1px solid #e2e8f0',
-          marginBottom: '32px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px'
-        }}>
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 2, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>SALON ARA</label>
-              <input 
-                type="text"
-                placeholder="Kuaför salonu veya anahtar kelime yazın..."
-                value={searchQuery}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem', backgroundColor: '#f8fafc', transition: 'all 0.2s' }}
-              />
-            </div>
-
-            <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>KONUM SEÇ</label>
-              <select 
-                value={selectedCity}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedCity(e.target.value)}
-                style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem', backgroundColor: '#f8fafc', color: '#334155', cursor: 'pointer' }}
-              >
-                {CITIES.map(city => <option key={city} value={city}>{city}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>KATEGORİLER:</span>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {CATEGORIES.map(category => {
-                const isSelected = selectedCategory === category;
-                return (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: '24px',
-                      border: isSelected ? '1px solid #6366f1' : '1px solid #e2e8f0',
-                      backgroundColor: isSelected ? '#6366f1' : '#ffffff',
-                      color: isSelected ? '#ffffff' : '#64748b',
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      boxShadow: isSelected ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                      transition: 'all 0.2s ease-in-out'
-                    }}
-                  >
-                    {category}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+    {/* 2. YÜZEN FİLTRE (Responsive) */}
+    <div style={{ maxWidth: '900px', margin: '-60px auto 40px auto', padding: '0 20px', position: 'relative', zIndex: 10 }}>
+      <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '20px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+          <input type="text" placeholder="Salon ara..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ flex: 2, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
+          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }}>{CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
         </div>
-
-        {/* 💈 DÜKKAN LİSTELEME VE KART ALANI */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b', fontSize: '1.1rem', fontWeight: 500 }}>Salonlar lüks deneyime hazırlanıyor...</div>
-        ) : filteredShops.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' }}>
-            {filteredShops.map((shop) => {
-              const isCardHovered = hoveredCardId === shop.id;
-              const isErkek = shop.name.toLowerCase().includes("erkek");
-              const isKadin = shop.name.toLowerCase().includes("kadın") || shop.name.toLowerCase().includes("bayan");
-              
-              return (
-                <div 
-                  key={shop.id} 
-                  onMouseEnter={() => setHoveredCardId(shop.id)}
-                  onMouseLeave={() => setHoveredCardId(null)}
-                  style={{ 
-                    backgroundColor: '#ffffff', 
-                    borderRadius: '20px', 
-                    padding: '28px', 
-                    boxShadow: isCardHovered ? '0 20px 25px -5px rgba(99, 102, 241, 0.1), 0 10px 10px -5px rgba(99, 102, 241, 0.04)' : '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
-                    border: isCardHovered ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid #e2e8f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transform: isCardHovered ? 'translateY(-4px)' : 'none',
-                    transition: 'all 0.25s ease-in-out',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div>
-                    {/* Rozet Tasarımı */}
-                    <span style={{ 
-                      backgroundColor: isErkek ? '#eff6ff' : isKadin ? '#fdf2f8' : '#f0fdf4', 
-                      color: isErkek ? '#1d4ed8' : isKadin ? '#db2777' : '#16a34a', 
-                      padding: '6px 14px', 
-                      borderRadius: '30px', 
-                      fontSize: '0.75rem', 
-                      fontWeight: 700, 
-                      display: 'inline-block', 
-                      marginBottom: '16px' 
-                    }}>
-                      {isErkek ? "💈 Erkek Kuaförü" : isKadin ? "✂️ Kadın Kuaförü" : "✨ Güzellik Salonu"}
-                    </span>
-                    
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '1.35rem', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                      {shop.name}
-                    </h3>
-                    
-                    <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#64748b', lineHeight: '1.5' }}>
-                      📍 <strong style={{ color: '#334155' }}>{shop.city} / {shop.district}</strong> <br />
-                      <span style={{ fontSize: '0.825rem', color: '#94a3b8', marginTop: '4px', display: 'inline-block' }}>{shop.addressText}</span>
-                    </p>
-                  </div>
-
-                  <button 
-                    onClick={() => navigate(`/book-appointment/${shop.id}`)}
-                    style={{ 
-                      width: '100%', 
-                      backgroundColor: isCardHovered ? '#4f46e5' : '#0f172a', 
-                      color: '#ffffff', 
-                      border: 'none', 
-                      padding: '14px 0', 
-                      borderRadius: '12px', 
-                      fontWeight: 600, 
-                      cursor: 'pointer',
-                      fontSize: '0.95rem',
-                      boxShadow: isCardHovered ? '0 10px 15px -3px rgba(79, 70, 229, 0.3)' : 'none',
-                      transition: 'all 0.2s ease-in-out'
-                    }}
-                  >
-                    Randevu Al
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div style={{ 
-            backgroundColor: '#ffffff', 
-            padding: '50px', 
-            borderRadius: '20px', 
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
-            border: '1px solid #e2e8f0',
-            textAlign: 'center',
-            color: '#94a3b8',
-            fontSize: '1rem',
-            fontWeight: 500
-          }}>
-            🔍 Arama kriterlerinize uygun lüks bir dükkan bulunamadı...
-          </div>
-        )}
       </div>
     </div>
-  );
+
+    {/* 3. KOMPAKT VE RESPONSIVE DÜKKAN LİSTESİ */}
+    <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Mobilde 1, masaüstünde 3 sütun yapar
+        gap: '20px' 
+      }}>
+        {filteredShops.map((shop) => (
+          <div key={shop.id} style={{ 
+            backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '8px'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>{shop.name}</h3>
+            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              <div style={{ marginBottom: '4px' }}>📍 {shop.city} / {shop.district}</div>
+              <div style={{ marginBottom: '4px' }}>🏠 {shop.addressText}</div>
+              <div style={{ fontWeight: 600, color: '#334155' }}>📞 {shop.phoneNumber || 'Telefon bilgisi yok'}</div>
+            </div>
+            <button 
+              onClick={() => navigate(`/book-appointment/${shop.id}`)}
+              style={{ marginTop: 'auto', width: '100%', backgroundColor: '#0f172a', color: '#fff', padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Randevu Al
+            </button>
+          </div>
+        ))}
+      </div>
+    </main>
+  </div>
+);
 }
