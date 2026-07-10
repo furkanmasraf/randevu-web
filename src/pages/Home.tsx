@@ -95,7 +95,7 @@ export default function Home() {
   alignItems: 'center', 
   textAlign: 'center', 
   color: '#fff',
-background: `linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.5)), url(${salonGorseli})`,  backgroundSize: 'cover',
+  background: 'linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.5)), url("/kuaforsalonu.jpg")',  backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat'
 }}>
