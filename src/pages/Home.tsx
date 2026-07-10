@@ -59,11 +59,6 @@ export default function Home() {
     fetchShops();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
-
   const filteredShops = shops.filter((shop) => {
     const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
     const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -104,8 +99,47 @@ export default function Home() {
 
       {/* Navigasyon (Mobil uyumlu) */}
       <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '8px' }}>
-        <button onClick={() => navigate('/my-appointments')} style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>👤 Profilim</button>
-        <button onClick={handleLogout} style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Çıkış</button>
+        <button 
+    onClick={() => {
+      const token = localStorage.getItem('token');
+      navigate(token ? '/my-appointments' : '/login');
+    }} 
+    style={{ 
+      padding: '8px 12px', 
+      borderRadius: '8px', 
+      border: 'none', 
+      background: 'rgba(255,255,255,0.15)', 
+      color: '#fff', 
+      cursor: 'pointer', 
+      fontSize: '0.8rem', 
+      fontWeight: 600 
+    }}
+  >
+    👤 Profilim
+  </button>
+
+  {/* Çıkış Butonu: Sadece giriş yapılmışsa görünür */}
+  {localStorage.getItem('token') && (
+    <button 
+      onClick={() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }} 
+      style={{ 
+        padding: '8px 12px', 
+        borderRadius: '8px', 
+        border: 'none', 
+        background: '#ef4444', 
+        color: '#fff', 
+        cursor: 'pointer', 
+        fontSize: '0.8rem', 
+        fontWeight: 600 
+      }}
+    >
+      Çıkış
+    </button>
+  )}
       </div>
     </header>
 
