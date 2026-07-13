@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 interface Employee { id: number; firstName: string; lastName: string; title: string; }
 interface Service { id: number; name: string; price: number; durationMinutes: number; }
@@ -121,20 +126,33 @@ export default function BookAppointment() {
   <div style={{ textAlign: 'center', marginBottom: '30px' }}>
     {/* Görseli Kontrol Et */}
     <div style={{ 
-      width: '120px', height: '120px', borderRadius: '50%', 
-      margin: '0 auto', border: '3px solid #f1f5f9', overflow: 'hidden',
-      backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      {shopDetails.imageUrl && shopDetails.imageUrl.trim() !== "" ? (
-        <img 
-         src={`https://randevu-sistemi-dv33.onrender.com${shopDetails.imageUrl}`} 
-         alt={shopDetails.shopName} 
-         style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #f1f5f9' }} 
-        />
-      ) : (
-        <span style={{ fontSize: '3rem' }}>💈</span>
-      )}
-    </div>
+  width: '100%', 
+  marginBottom: '30px', 
+  borderRadius: '16px', 
+  overflow: 'hidden', 
+  boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+}}>
+  <Swiper
+    modules={[Navigation, Pagination, Autoplay]}
+    navigation={true}
+    pagination={{ clickable: true }}
+    autoplay={{ delay: 3500 }}
+    style={{ height: '280px' }} // Dikdörtgen görünüm için yükseklik
+  >
+    <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+  {shopDetails.imageUrl && shopDetails.imageUrl.trim() !== "" ? (
+    <img 
+      src={`https://randevu-sistemi-dv33.onrender.com${shopDetails.imageUrl}`} 
+      alt={shopDetails.shopName} 
+      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+    />
+  ) : (
+    <span style={{ fontSize: '4rem' }}>💈</span> // Görsel yoksa şık bir ikon
+  )}
+</SwiperSlide>
+    {/* İleride buraya daha fazla SwiperSlide ekleyebilirsin */}
+  </Swiper>
+</div>
     
     <h2 style={{ marginTop: '15px', marginBottom: '5px', color: '#0f172a' }}>{shopDetails.shopName}</h2>
     <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '10px' }}>📍 {shopDetails.addressText}</p>
@@ -161,7 +179,7 @@ export default function BookAppointment() {
         <h2>Randevu Planlama</h2>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)} style={{ padding: '12px', borderRadius: '8px' }}>
+          <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)} style={inputStyle}>
             <option value="">Personel Seçin</option>
             {employees.map(emp => (
               <option key={emp.id} value={emp.id}>
@@ -170,14 +188,14 @@ export default function BookAppointment() {
             ))}
           </select>
 
-          <select value={selectedService} onChange={(e) => setSelectedService(e.target.value)} style={{ padding: '12px', borderRadius: '8px' }}>
+          <select value={selectedService} onChange={(e) => setSelectedService(e.target.value)} style={inputStyle}>
             <option value="">Hizmet Seçin</option>
             {services.map(s => <option key={s.id} value={s.id}>{s.name} - {s.price} TL</option>)}
           </select>
 
-          <input type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} style={{ padding: '12px', borderRadius: '8px' }} />
+          <input type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} style={inputStyle} />
 
-          <select value={appointmentTime} onChange={(e) => setAppointmentTime(e.target.value)} style={{ padding: '12px', borderRadius: '8px' }}>
+          <select value={appointmentTime} onChange={(e) => setAppointmentTime(e.target.value)} style={inputStyle}>
             <option value="">Saat Seçin</option>
             {allPossibleSlots.map(slot => (
               <option key={slot} value={slot} disabled={takenSlots.includes(slot)} style={{ color: takenSlots.includes(slot) ? 'red' : 'black' }}>
@@ -192,7 +210,7 @@ export default function BookAppointment() {
     </p>
   )}
 
-          <button type="submit" disabled={submitting} style={{ padding: '12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+          <button type="submit" disabled={submitting} style={buttonStyle}>
             {submitting ? "Oturum Kaydediliyor..." : "Randevuyu Onayla"}
           </button>
         </form>
@@ -200,3 +218,11 @@ export default function BookAppointment() {
     </div>
   );
 }
+
+const inputStyle: React.CSSProperties = {
+  padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: '0.95rem', outline: 'none'
+};
+
+const buttonStyle: React.CSSProperties = {
+  padding: '14px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem', marginTop: '10px'
+};
