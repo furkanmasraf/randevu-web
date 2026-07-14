@@ -39,6 +39,11 @@ export default function BarberDashboard() {
   const userId = localStorage.getItem('userId');
   const role = localStorage.getItem('role');
 
+  const handleLogout = () => {
+    localStorage.removeItem('token'); // Token'ı sil
+    localStorage.removeItem('user');  // Varsa kullanıcı bilgilerini sil
+    navigate('/');              
+  };
 
 
 const fetchBusySlots = async (employeeId: number, date: string) => {
@@ -249,6 +254,20 @@ useEffect(() => {
           </button>
         ))}
       </nav>
+      <button 
+    onClick={handleLogout}
+    style={{ 
+      marginTop: 'auto', // Bu, butonun en alta yapışmasını sağlar
+      padding: '10px',
+      backgroundColor: 'transparent',
+      border: '1px solid #ef4444',
+      color: '#ef4444',
+      cursor: 'pointer',
+      width: '100%'
+    }}
+  >
+    Çıkış Yap
+  </button>
     </div>
 
     {/* ANA İÇERİK */}

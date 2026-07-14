@@ -11,6 +11,7 @@ interface Shop {
   latitude: number;
   longitude: number;
   subscribed: boolean;
+  imageUrl?: string;
   category?: string;
   phoneNumber?: string;
 }
@@ -154,33 +155,67 @@ export default function Home() {
     </div>
 
     {/* 3. KOMPAKT VE RESPONSIVE DÜKKAN LİSTESİ */}
-    <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Mobilde 1, masaüstünde 3 sütun yapar
+<main style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+  <div style={{ 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
+    gap: '20px' 
+  }}>
+    {filteredShops.map((shop) => (
+      <div key={shop.id} style={{ 
+        backgroundColor: '#fff', 
+        padding: '20px', 
+        borderRadius: '16px', 
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)', 
+        display: 'flex', 
+        flexDirection: 'row', // Yatay düzen için row
+        alignItems: 'center', 
         gap: '20px' 
       }}>
-        {filteredShops.map((shop) => (
-          <div key={shop.id} style={{ 
-            backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '8px'
-          }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>{shop.name}</h3>
-            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-              <div style={{ marginBottom: '4px' }}>📍 {shop.city} / {shop.district}</div>
-              <div style={{ marginBottom: '4px' }}>🏠 {shop.addressText}</div>
-              <div style={{ fontWeight: 600, color: '#334155' }}>📞 {shop.phoneNumber || 'Telefon bilgisi yok'}</div>
-            </div>
-            <button 
-              onClick={() => navigate(`/book-appointment/${shop.id}`)}
-              style={{ marginTop: 'auto', width: '100%', backgroundColor: '#0f172a', color: '#fff', padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Randevu Al
-            </button>
+        
+        {/* SOL TARAF: KÜÇÜK LOGO ALANI */}
+        <div style={{ width: '100px', height: '100px', flexShrink: 0 }}>
+          <img 
+            src={shop.imageUrl && shop.imageUrl.trim() !== "" 
+                  ? `https://randevu-sistemi-dv33.onrender.com${shop.imageUrl}` 
+                  : "https://via.placeholder.com/100?text=Logo"}
+            alt={shop.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
+            onError={(e) => e.currentTarget.src = "https://via.placeholder.com/100?text=Hata"}
+          />
+        </div>
+
+        {/* SAĞ TARAF: DÜKKAN BİLGİLERİ */}
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>{shop.name}</h3>
+          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+            <div style={{ marginBottom: '2px' }}>📍 {shop.city} / {shop.district}</div>
+            <div style={{ marginBottom: '2px' }}>🏠 {shop.addressText}</div>
+            <div style={{ fontWeight: 600, color: '#334155' }}>📞 {shop.phoneNumber || 'Telefon bilgisi yok'}</div>
           </div>
-        ))}
+          <button 
+            onClick={() => navigate(`/book-appointment/${shop.id}`)}
+            style={{ 
+              marginTop: '10px', 
+              width: '100%', 
+              backgroundColor: '#0f172a', 
+              color: '#fff', 
+              padding: '8px', 
+              borderRadius: '8px', 
+              border: 'none', 
+              fontWeight: 700, 
+              cursor: 'pointer' 
+            }}
+          >
+            Randevu Al
+          </button>
+        </div>
+        
       </div>
-    </main>
+    ))}
+  </div>
+</main>
   </div>
 );
 }
