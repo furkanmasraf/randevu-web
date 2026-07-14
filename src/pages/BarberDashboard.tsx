@@ -32,6 +32,7 @@ export default function BarberDashboard() {
   const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; latitude?: number; longitude?: number } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [vitrinFile, setVitrinFile] = useState<File | null>(null);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -150,24 +151,29 @@ useEffect(() => {
   };
 
   const handleUpdateShop = async () => {
-    const formData = new FormData();
-    if (selectedFile) formData.append("file", selectedFile);
-    formData.append("shopName", shopDetails?.shopName || "");
-    formData.append("phoneNumber", shopDetails?.phoneNumber || "");
+  const formData = new FormData();
+  
+  // Metin verileri
+  formData.append("shopName", shopDetails?.shopName || "");
+  formData.append("phoneNumber", shopDetails?.phoneNumber || "");
+  
+  // Dosya verileri (Sadece varsa ekle)
+  if (selectedFile) formData.append("logo", selectedFile);
+  if (vitrinFile) formData.append("vitrinFile", vitrinFile);
 
-    try {
-      await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        }
-      });
-      alert("Dükkan bilgileri ve görsel güncellendi!");
-    } catch (err) {
-      console.error("Dükkan güncellemesi başarısız:", err);
-      alert("Dükkan bilgileri güncellenemedi.");
-    }
-  };
+  try {
+    await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
+      headers: { 
+        Authorization: `Bearer ${token}` 
+        // "Content-Type" başlığını manuel ekleme, axios bunu kendi halleder!
+      }
+    });
+    alert("Dükkan bilgileri ve görseller başarıyla güncellendi!");
+  } catch (err) {
+    console.error("Dükkan güncellemesi başarısız:", err);
+    alert("Dükkan bilgileri güncellenemedi.");
+  }
+};
 
   const handleDelete = async (type: 'employee' | 'service', id: number) => {
   if (!window.confirm("Emin misin?")) return;
@@ -485,6 +491,21 @@ useEffect(() => {
             />
           </div>
         </div>
+
+        {/* Vitrin Görseli Yükleme */}
+<div>
+  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>
+    Dükkan Vitrin Görseli (Slider)
+  </label>
+  <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc' }}>
+    <input 
+      type="file" 
+      onChange={e => setVitrinFile(e.target.files?.[0] || null)} 
+      style={{ fontSize: '0.9rem' }}
+    />
+    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>Bu görsel, randevu sayfanın en üstünde dikdörtgen olarak görünecektir.</p>
+  </div>
+</div>
 
         <button 
           onClick={handleUpdateShop} 
