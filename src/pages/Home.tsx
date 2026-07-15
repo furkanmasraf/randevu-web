@@ -176,14 +176,21 @@ export default function Home() {
         
         {/* SOL TARAF: KÜÇÜK LOGO ALANI */}
         <div style={{ width: '100px', height: '100px', flexShrink: 0 }}>
+         {shop.imageUrl && shop.imageUrl.trim() !== "" ? (
           <img 
-            src={shop.imageUrl && shop.imageUrl.trim() !== "" 
-                  ? `https://randevu-sistemi-dv33.onrender.com${shop.imageUrl}` 
-                  : "https://via.placeholder.com/100?text=Logo"}
+            // Cloudinary linkini olduğu gibi kullanıyoruz (Render linki ekleme!)
+            src={shop.imageUrl}
             alt={shop.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
-            onError={(e) => e.currentTarget.src = "https://via.placeholder.com/100?text=Hata"}
+            // Eğer resim yüklenemezse tekrar tekrar istek atmasın diye 'onError' içine boş fonksiyon yazıyoruz
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
+        ) : (
+        // Resim yoksa yer tutucu gösteriyoruz
+        <div style={{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+         Logo
+        </div>
+        )}
         </div>
 
         {/* SAĞ TARAF: DÜKKAN BİLGİLERİ */}
