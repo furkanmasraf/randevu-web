@@ -30,6 +30,7 @@ export default function CustomerDashboard() {
     password: ''
   });
   const [focusedInput, setFocusedInput] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -51,7 +52,10 @@ export default function CustomerDashboard() {
         const appResponse = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setAppointments(Array.isArray(appResponse.data) ? appResponse.data : []);
+        const sorted = Array.isArray(appResponse.data) 
+          ? [...appResponse.data].sort((a, b) => new Date(b.appointmentTime).getTime() - new Date(a.appointmentTime).getTime())
+          : [];
+        setAppointments(sorted);
 
         // 2. Profil Bilgilerini Çek
         const userResponse = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, {
@@ -97,31 +101,34 @@ export default function CustomerDashboard() {
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    
-    try {
-      const payload: any = {
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-        phoneNumber: profileData.phoneNumber,
-        addressText: profileData.addressText
-      };
+  e.preventDefault();
+  setIsSubmitting(true); // Yükleniyor durumunu başlat
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
+  
+  try {
+    const payload: any = {
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      phoneNumber: profileData.phoneNumber,
+      addressText: profileData.addressText
+    };
 
-      if (profileData.password.trim() !== '') {
-        payload.password = profileData.password;
-      }
-
-      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert("Profil bilgileriniz başarıyla güncellendi!");
-    } catch (error) {
-      console.error("Profil güncellenirken hata oluştu:", error);
-      alert("Profil bilgileri güncellenemedi.");
+    if (profileData.password.trim() !== '') {
+      payload.password = profileData.password;
     }
-  };
+
+    await API.put(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, payload, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert("Profil bilgileriniz başarıyla güncellendi!");
+  } catch (error) {
+    console.error("Profil güncellenirken hata oluştu:", error);
+    alert("Profil bilgileri güncellenemedi.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleLogout = () => {
     localStorage.clear();
@@ -200,46 +207,49 @@ export default function CustomerDashboard() {
       </button>
       
       {/* SOL SIDEBAR */}
-      <div style={{ 
-        width: '260px', 
-        backgroundColor: '#1e293b', 
-        color: '#ffffff', 
-        padding: '32px 14px', 
-        display: isSidebarOpen ? 'flex' : 'none',
-        flexDirection: 'column', 
-        gap: '12px', 
-        position: 'fixed', 
-        height: '100%',
-        zIndex: 1000,
-        boxShadow: '4px 0 30px rgba(0,0,0,0.1)'
-      }}
-      className="md:!flex md:static" 
-      >
-        <div style={{ marginBottom: '40px', paddingLeft: '14px', marginTop: '40px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h2>
-        </div>
-        
-        <SidebarButton 
-          onClick={() => { setActiveTab('appointments'); setIsSidebarOpen(false); }} 
-          active={activeTab === 'appointments'} 
-          icon="📅" 
-          label="Randevularım" 
-        />
-        <SidebarButton 
-          onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }} 
-          active={activeTab === 'profile'} 
-          icon="👤" 
-          label="Profil Bilgilerim" 
-        />
-        <div style={{ marginTop: 'auto' }}>
-          <SidebarButton 
-            onClick={() => { handleLogout(); setIsSidebarOpen(false); }} 
-            isDanger={true}
-            icon="🚪" 
-            label="Çıkış Yap" 
-          />
-        </div>
-      </div>
+<div style={{ 
+  width: '260px', 
+  backgroundColor: '#1e293b', 
+  color: '#ffffff', 
+  padding: '32px 20px', 
+  display: isSidebarOpen ? 'flex' : 'none',
+  flexDirection: 'column', 
+  position: 'fixed', 
+  height: '100%',
+  zIndex: 1000,
+  boxShadow: '4px 0 30px rgba(0,0,0,0.1)'
+}}
+className="md:!flex md:static" 
+>
+  {/* Logo Alanı */}
+  <div style={{ marginBottom: '40px', paddingLeft: '10px' }}>
+    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h2>
+  </div>
+  
+  {/* Menü Grupları */}
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexGrow: 1 }}>
+  <SidebarButton 
+    onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }} 
+    active={activeTab === 'profile'} 
+    icon="👤" 
+    label="Profil Bilgilerim" 
+  />
+  <SidebarButton 
+    onClick={() => { setActiveTab('appointments'); setIsSidebarOpen(false); }} 
+    active={activeTab === 'appointments'} 
+    icon="📅" 
+    label="Randevularım" 
+  />
+
+  <div style={{ marginTop: '24px' }}>
+    <SidebarButton 
+      onClick={() => { handleLogout(); setIsSidebarOpen(false); }} 
+      isDanger={true}
+      label="Çıkış Yap" 
+    />
+  </div>
+</div>
+</div>
 
       {/* ARKA PLAN KARARTICI */}
       {isSidebarOpen && (
@@ -286,84 +296,68 @@ export default function CustomerDashboard() {
       </button>
     </div>
 
-    {/* 3. RANDEVU LİSTESİ (Responsive Tasarım) */}
+    {/* 3. RANDEVU LİSTESİ (Tüm ekranlarda kart yapısı) */}
 {appointments.length === 0 ? (
   <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>Henüz randevunuz bulunmuyor.</div>
 ) : (
-  <>
-    {/* MOBİL: Sadece mobilde görünür (md:hidden hariç değil, md:block ile gizlendi) */}
-    <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {appointments.map((app) => (
-        <div key={app.id} style={{ 
-          padding: '20px', background: '#fff', borderRadius: '16px', 
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' 
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem' }}>{app.shopName}</span>
-            {renderStatusBadge(app.status)}
+  <div style={{ 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+    gap: '20px' 
+  }}>
+    {appointments.map((app) => (
+      <div key={app.id} style={{ 
+        padding: '24px', 
+        background: '#fff', 
+        borderRadius: '20px', 
+        border: '1px solid #e2e8f0', 
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        {/* Başlık ve Durum */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>{app.shopName}</h3>
+            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{new Date(app.appointmentTime).toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })}</span>
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div>📍 {app.shopAddress || '-'}</div>
-            <div>📞 {app.shopPhone || '-'}</div>
-            <div style={{ display: 'flex', gap: '20px', marginTop: '4px' }}>
-              <span>👤 {app.employeeName}</span>
-              <span>✂️ {app.serviceName}</span>
-            </div>
-            <div style={{ fontWeight: 700, color: '#6366f1', fontSize: '1rem', marginTop: '4px' }}>{app.price} TL</div>
-          </div>
-          
-          {(app.status === 'PENDING' || app.status === 'APPROVED') && (
-            <button 
-              onClick={() => handleCancel(app.id)} 
-              style={{ width: '100%', marginTop: '16px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              İptal Et
-            </button>
-          )}
+          {renderStatusBadge(app.status)}
         </div>
-      ))}
-    </div>
 
-    {/* MASAÜSTÜ: Sadece masaüstünde görünür */}
-    <div className="hidden md:block" style={{ backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-        <thead style={{ backgroundColor: '#f8fafc' }}>
-          <tr>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800 }}>SALON</th>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800 }}>İLETİŞİM</th>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800 }}>DETAYLAR</th>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800 }}>TARİH / SAAT</th>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800 }}>TUTAR</th>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800 }}>DURUM</th>
-            <th style={{ padding: '16px 20px', color: '#475569', fontSize: '0.75rem', fontWeight: 800, textAlign: 'center' }}>İŞLEM</th>
-          </tr>
-        </thead>
-        <tbody style={{ fontSize: '0.9rem' }}>
-          {appointments.map((app) => (
-            <tr key={app.id} style={{ borderTop: '1px solid #f1f5f9' }}>
-              <td style={{ padding: '20px', fontWeight: 700 }}>{app.shopName}</td>
-              <td style={{ padding: '20px', color: '#64748b' }}>
-                <div style={{ fontSize: '0.8rem' }}>{app.shopAddress || '-'}</div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{app.shopPhone || '-'}</div>
-              </td>
-              <td style={{ padding: '20px' }}>
-                <div style={{ color: '#0f172a' }}>{app.employeeName}</div>
-                <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{app.serviceName}</div>
-              </td>
-              <td style={{ padding: '20px' }}>{new Date(app.appointmentTime).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}</td>
-              <td style={{ padding: '20px', fontWeight: 700, color: '#6366f1' }}>{app.price} TL</td>
-              <td style={{ padding: '20px' }}>{renderStatusBadge(app.status)}</td>
-              <td style={{ padding: '20px', textAlign: 'center' }}>
-                {(app.status === 'PENDING' || app.status === 'APPROVED') && (
-                  <button onClick={() => handleCancel(app.id)} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem' }}>İptal</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </>
+        {/* Detaylar */}
+        <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div>📍 {app.shopAddress || '-'}</div>
+          <div>📞 {app.shopPhone || '-'}</div>
+          <div style={{ display: 'flex', gap: '16px', marginTop: '4px', padding: '10px', background: '#f8fafc', borderRadius: '10px' }}>
+            <span>👤 {app.employeeName}</span>
+            <span>✂️ {app.serviceName}</span>
+          </div>
+          <div style={{ fontWeight: 800, color: '#6366f1', fontSize: '1.1rem', marginTop: '4px' }}>{app.price} TL</div>
+        </div>
+        
+        {/* İptal Butonu */}
+        {(app.status === 'PENDING' || app.status === 'APPROVED') && (
+          <button 
+            onClick={() => handleCancel(app.id)} 
+            style={{ 
+              width: '100%', 
+              backgroundColor: '#fee2e2', 
+              color: '#ef4444', 
+              border: 'none', 
+              padding: '12px', 
+              borderRadius: '12px', 
+              fontWeight: 700, 
+              cursor: 'pointer',
+              transition: 'background 0.2s'
+            }}
+          >
+            Randevuyu İptal Et
+          </button>
+        )}
+      </div>
+    ))}
+  </div>
 )}
   </div>
 )}
@@ -412,13 +406,22 @@ export default function CustomerDashboard() {
 
       <button 
         type="submit" 
-        style={{ 
-          width: '100%', backgroundColor: '#0f172a', color: '#fff', border: 'none', 
-          padding: '16px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', 
-          fontSize: '1rem', marginTop: '8px', transition: 'all 0.2s' 
+        disabled={isSubmitting} // Butonu kilitle
+          style={{ 
+          width: '100%', 
+          backgroundColor: isSubmitting ? '#94a3b8' : '#0f172a', // Pasif renk
+          color: '#fff', 
+          border: 'none', 
+          padding: '16px', 
+          borderRadius: '12px', 
+          fontWeight: 700, 
+          cursor: isSubmitting ? 'not-allowed' : 'pointer', // İmleç değişimi
+          fontSize: '1rem', 
+          marginTop: '8px', 
+          transition: 'all 0.2s' 
         }}
-      >
-        Değişiklikleri Kaydet
+        >
+        {isSubmitting ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
       </button>
     </form>
   </div>
