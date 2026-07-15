@@ -30,35 +30,35 @@ export default function Home() {
   const selectedCategory = 'Tümü';
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    
-    if (!token) {
-      navigate('/login');
-      return;
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+  
+  // 1. Sadece Dükkan Sahibi ise onu dashboard'una gönder
+  // Müşteri veya ziyaretçi ana sayfada kalabilir.
+  if (token && role && role.toUpperCase() === 'SHOP_OWNER') {
+    navigate('/barber-dashboard');
+    return;
+  }
+
+  // 2. Dükkanları çekmek için artık zorunlu bir token yok.
+  // Eğer API'n dışarıya açıksa, token göndermene gerek kalmaz.
+  const fetchShops = async () => {
+    try {
+      // Not: Eğer backend'de /api/shops endpoint'i için Authorization şartsa 
+      // bu isteği `token` varsa ekleyerek yapabilirsin.
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops', {
+        headers: headers
+      });
+      setShops(response.data);
+    } catch (error) {
+      console.error("Dükkanlar yüklenirken hata oluştu:", error);
     }
+  };
 
-    if (role && role.toUpperCase() === 'SHOP_OWNER') {
-      navigate('/shop-owner/dashboard');
-      return;
-    }
-
-    const fetchShops = async () => {
-      try {
-        const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        setShops(response.data);
-      } catch (error) {
-        console.error("Dükkanlar yüklenirken hata oluştu:", error);
-      }
-    };
-
-    fetchShops();
-  }, [navigate]);
+  fetchShops();
+}, [navigate]);
 
   const filteredShops = shops.filter((shop) => {
     const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
@@ -78,10 +78,28 @@ export default function Home() {
     return matchesCity && matchesSearch && matchesCategory;
   });
 
+  const handleProfileClick = () => {
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+
+  if (!token) {
+    // Giriş yapmamışsa login'e at
+    navigate('/login');
+  } else {
+    // Rol kontrolü yap ve ilgili dashboard'a yönlendir
+    // role bilgisini 'CUSTOMER' veya 'SHOP_OWNER' şeklinde tuttuğunu varsayıyorum
+    if (role?.toUpperCase() === 'SHOP_OWNER') {
+      navigate('/barber-dashboard');
+    } else {
+      navigate('/customer-dashboard');
+    }
+  }
+};
+
   return (
   <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", system-ui, sans-serif', paddingBottom: '80px' }}>
     
-    {/* 1. PREMIUM HERO (Responsive Görsel) */}
+    {/* 1.(Responsive Görsel) */}
     <header style={{ 
   position: 'relative', 
   height: '400px', 
@@ -91,58 +109,35 @@ export default function Home() {
   alignItems: 'center', 
   textAlign: 'center', 
   color: '#fff',
-  background: 'linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.5)), url("/kuaforsalonu.jpg")',  backgroundSize: 'cover',
+  background: 'linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.5)), url("/kuaforsalonu.jpg")', 
+  backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat'
 }}>
-      <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', fontWeight: 900, margin: 0 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h1>
-      <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '10px', padding: '0 20px' }}>Premium kuaför ve güzellik deneyimi dijital dünyada.</p>
+  <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', fontWeight: 900, margin: 0 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h1>
+  <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '10px', padding: '0 20px' }}>Premium kuaför ve güzellik deneyimi dijital dünyada.</p>
 
-      {/* Navigasyon (Mobil uyumlu) */}
-      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '8px' }}>
-        <button 
-    onClick={() => {
-      const token = localStorage.getItem('token');
-      navigate(token ? '/my-appointments' : '/login');
-    }} 
-    style={{ 
-      padding: '8px 12px', 
-      borderRadius: '8px', 
-      border: 'none', 
-      background: 'rgba(255,255,255,0.15)', 
-      color: '#fff', 
-      cursor: 'pointer', 
-      fontSize: '0.8rem', 
-      fontWeight: 600 
-    }}
-  >
-    👤 Profilim
-  </button>
-
-  {/* Çıkış Butonu: Sadece giriş yapılmışsa görünür */}
-  {localStorage.getItem('token') && (
+  {/* SADECE PROFİLİM BUTONU - ÇIKIŞ BUTONU KALDIRILDI */}
+  <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
     <button 
-      onClick={() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        navigate('/');
-      }} 
+      onClick={handleProfileClick}
       style={{ 
-        padding: '8px 12px', 
-        borderRadius: '8px', 
-        border: 'none', 
-        background: '#ef4444', 
+        padding: '10px 24px', 
+        borderRadius: '12px', 
+        border: '1px solid rgba(255,255,255,0.3)', 
+        background: 'rgba(255,255,255,0.15)', 
         color: '#fff', 
         cursor: 'pointer', 
-        fontSize: '0.8rem', 
-        fontWeight: 600 
+        fontWeight: 600,
+        fontSize: '0.9rem',
+        backdropFilter: 'blur(5px)',
+        transition: 'all 0.3s ease'
       }}
     >
-      Çıkış
+      👤 Profilim
     </button>
-  )}
-      </div>
-    </header>
+  </div>
+</header>
 
     {/* 2. YÜZEN FİLTRE (Responsive) */}
     <div style={{ maxWidth: '900px', margin: '-60px auto 40px auto', padding: '0 20px', position: 'relative', zIndex: 10 }}>

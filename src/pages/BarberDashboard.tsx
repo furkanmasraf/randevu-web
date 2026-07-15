@@ -174,7 +174,6 @@ useEffect(() => {
   if (vitrinFiles.length) vitrinFiles.forEach((file) => formData.append("vitrinFiles", file));
 
   try {
-    console.log("İstek şu adrese gidiyor:", `https://randevu-sistemi-dv33.onrender.com/api/shops/${dynamicShopId}/update-with-image`);
     await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
       headers: { 
         Authorization: `Bearer ${token}` 
