@@ -9,7 +9,7 @@ import 'swiper/css/pagination';
 
 interface Employee { id: number; firstName: string; lastName: string; title: string; }
 interface Service { id: number; name: string; price: number; durationMinutes: number; }
-interface ShopDetails { id: number; shopName: string; addressText: string; phoneNumber: string; imageUrl: string; }
+interface ShopDetails { id: number; shopName: string; addressText: string; phoneNumber: string; imageUrl: string; vitrinImageUrls: string[]; vitrinImageUrl?: string;}
 
 export default function BookAppointment() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -50,14 +50,25 @@ export default function BookAppointment() {
         const headers = { Authorization: `Bearer ${token}` };
         
         const [empRes, servRes, shopRes] = await Promise.all([
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
-        ]);
-        
-        setEmployees(empRes.data);
-        setServices(servRes.data);
-        setShopDetails(shopRes.data);
+  API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
+  API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
+  API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
+]);
+
+// BURADA MÜDAHALE EDİYORUZ:
+const shopData = shopRes.data;
+
+// Eğer backend'den liste gelmediyse ama string geldiyse, onu diziye çevirip atıyoruz
+const normalizedShopDetails = {
+  ...shopData,
+  vitrinImageUrls: Array.isArray(shopData.vitrinImageUrls) 
+      ? shopData.vitrinImageUrls 
+      : (shopData.vitrinImageUrl ? [shopData.vitrinImageUrl] : [])
+};
+
+setEmployees(empRes.data);
+setServices(servRes.data);
+setShopDetails(normalizedShopDetails);
       } catch (error) { 
         console.error("Veri çekme hatası:", error); 
       } finally { 
@@ -123,36 +134,41 @@ export default function BookAppointment() {
         
         {/* DÜKKAN VİTRİNİ */}
         {shopDetails && (
-  <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-    {/* Görseli Kontrol Et */}
-    <div style={{ 
-  width: '100%', 
-  marginBottom: '30px', 
-  borderRadius: '16px', 
-  overflow: 'hidden', 
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+           <div style={{ 
+           width: '100%', 
+           marginBottom: '30px', 
+           borderRadius: '16px', 
+           overflow: 'hidden', 
+           boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
 }}>
-  <Swiper
-    modules={[Navigation, Pagination, Autoplay]}
-    navigation={true}
-    pagination={{ clickable: true }}
-    autoplay={{ delay: 3500 }}
-    style={{ height: '280px' }} // Dikdörtgen görünüm için yükseklik
-  >
+          <Swiper
+           modules={[Navigation, Pagination, Autoplay]}
+           navigation={true}
+           pagination={{ clickable: true }}
+           autoplay={{ delay: 3500 }}
+           style={{ height: '280px' }}
+        >
+  {/* 1. ÖNCELİK: Eğer yeni liste yapısı gelirse onu kullan */}
+  {shopDetails.vitrinImageUrls && shopDetails.vitrinImageUrls.length > 0 ? (
+    shopDetails.vitrinImageUrls.map((url, index) => (
+      <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+        <img src={url} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </SwiperSlide>
+    ))
+  ) : shopDetails.vitrinImageUrl ? (
+    /* 2. ÖNCELİK: Eğer liste gelmediyse ama eski tekil URL geldiyse onu kullan */
     <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-  {shopDetails.imageUrl && shopDetails.imageUrl.trim() !== "" ? (
-    <img 
-      src={`https://randevu-sistemi-dv33.onrender.com${shopDetails.imageUrl}`} 
-      alt={shopDetails.shopName} 
-      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-    />
+      <img src={shopDetails.vitrinImageUrl} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    </SwiperSlide>
   ) : (
-    <span style={{ fontSize: '4rem' }}>💈</span> // Görsel yoksa şık bir ikon
+    /* 3. ÖNCELİK: Hiçbiri yoksa ikon göster */
+    <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+      <span style={{ fontSize: '4rem' }}>💈</span>
+    </SwiperSlide>
   )}
-</SwiperSlide>
-    {/* İleride buraya daha fazla SwiperSlide ekleyebilirsin */}
-  </Swiper>
-</div>
+</Swiper>
+    </div>
     
     <h2 style={{ marginTop: '15px', marginBottom: '5px', color: '#0f172a' }}>{shopDetails.shopName}</h2>
     <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '10px' }}>📍 {shopDetails.addressText}</p>

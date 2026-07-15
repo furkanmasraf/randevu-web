@@ -32,7 +32,8 @@ export default function BarberDashboard() {
   const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; latitude?: number; longitude?: number } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [vitrinFile, setVitrinFile] = useState<File | null>(null);
+  const [vitrinFiles, setVitrinFiles] = useState<File[]>([]);
+
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -43,6 +44,11 @@ export default function BarberDashboard() {
     localStorage.removeItem('token'); // Token'ı sil
     localStorage.removeItem('user');  // Varsa kullanıcı bilgilerini sil
     navigate('/');              
+  };
+
+  // 2. Görseli Silme Fonksiyonu
+  const removeFile = (indexToRemove: number) => {
+  setVitrinFiles(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
 
@@ -164,9 +170,11 @@ useEffect(() => {
   
   // Dosya verileri (Sadece varsa ekle)
   if (selectedFile) formData.append("logo", selectedFile);
-  if (vitrinFile) formData.append("vitrinFile", vitrinFile);
+  // Birden fazla vitrin görseli destekleniyorsa hepsini ekle
+  if (vitrinFiles.length) vitrinFiles.forEach((file) => formData.append("vitrinFiles", file));
 
   try {
+    console.log("İstek şu adrese gidiyor:", `https://randevu-sistemi-dv33.onrender.com/api/shops/${dynamicShopId}/update-with-image`);
     await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
       headers: { 
         Authorization: `Bearer ${token}` 
@@ -514,15 +522,46 @@ useEffect(() => {
         {/* Vitrin Görseli Yükleme */}
 <div>
   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>
-    Dükkan Vitrin Görseli (Slider)
+    Dükkan Vitrin Görselleri (Çoklu Seçim)
   </label>
-  <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc' }}>
+  
+  {/* Dosya Seçici */}
+  <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc', marginBottom: '15px' }}>
     <input 
       type="file" 
-      onChange={e => setVitrinFile(e.target.files?.[0] || null)} 
-      style={{ fontSize: '0.9rem' }}
+      multiple 
+      accept="image/*"
+      onChange={e => {
+        if (e.target.files) {
+          const newFiles = Array.from(e.target.files);
+          setVitrinFiles(prev => [...prev, ...newFiles]); // Mevcutlara ekle
+        }
+      }} 
     />
-    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>Bu görsel, randevu sayfanın en üstünde dikdörtgen olarak görünecektir.</p>
+  </div>
+
+  {/* Seçilen Görsellerin Listesi ve Silme Butonları */}
+  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+    {vitrinFiles.map((file, index) => (
+      <div key={index} style={{ position: 'relative', width: '80px', height: '80px' }}>
+        <img 
+          src={URL.createObjectURL(file)} 
+          alt="preview" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
+        />
+        <button 
+          type="button"
+          onClick={() => removeFile(index)}
+          style={{ 
+            position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', 
+            color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', 
+            cursor: 'pointer', fontSize: '12px', lineHeight: '20px'
+          }}
+        >
+          ×
+        </button>
+      </div>
+    ))}
   </div>
 </div>
 
