@@ -131,9 +131,9 @@ export default function CustomerDashboard() {
 };
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  localStorage.clear();
+  navigate('/');
+};
 
   const getInputStyle = (inputName: string) => ({
     padding: '12px 14px',
@@ -364,17 +364,24 @@ className="md:!flex md:static"
 
           {/* SEKME 2: PROFiL BİLGİLERİM */}
           {activeTab === 'profile' && (
-  <div style={{ 
-    maxWidth: '600px', 
-    backgroundColor: '#fff', 
-    padding: '40px', 
-    borderRadius: '24px', 
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-  }}>
-    <div style={{ marginBottom: '32px' }}>
-      <h2 style={{ color: '#0f172a', fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.025em' }}>Profil Ayarları</h2>
-      <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '0.95rem' }}>Kişisel bilgilerinizi buradan yönetebilirsiniz.</p>
+  <div style={{ maxWidth: '600px', backgroundColor: '#fff', padding: '40px', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+    
+    {/* BAŞLIK VE ANA SAYFA BUTONU */}
+    <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div>
+        <h2 style={{ color: '#0f172a', fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.025em' }}>Profil Ayarları</h2>
+        <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '0.95rem' }}>Kişisel bilgilerinizi buradan yönetebilirsiniz.</p>
+      </div>
+      <button 
+        onClick={() => navigate('/')} 
+        style={{ 
+          backgroundColor: '#ffffff', border: '1px solid #e2e8f0', padding: '10px 20px', borderRadius: '12px', 
+          cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.875rem',
+          transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' 
+        }}
+      >
+        ← Ana Sayfa
+      </button>
     </div>
     
     <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
