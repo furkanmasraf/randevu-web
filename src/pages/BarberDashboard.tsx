@@ -29,7 +29,7 @@ export default function BarberDashboard() {
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; latitude?: number; longitude?: number } | null>(null);
+  const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; vitrinImages?: string[]; latitude?: number; longitude?: number } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [vitrinFiles, setVitrinFiles] = useState<File[]>([]);
@@ -86,15 +86,17 @@ const fetchAllDashboardData = async () => {
     const shopRes = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    console.log("Backend'den Gelen Dükkan Verisi:", shopRes.data);
 
     if (shopRes.data?.id) {
       const shopId = shopRes.data.id;
       setDynamicShopId(shopId);
       
       setShopDetails({
-      shopName: shopRes.data.shopName || '',
+      shopName: shopRes.data.name || '', 
       phoneNumber: shopRes.data.phoneNumber || '',
       imageUrl: shopRes.data.imageUrl || '',
+      vitrinImages: shopRes.data.vitrinImages || [],
       latitude: shopRes.data.latitude || 0,
       longitude: shopRes.data.longitude || 0
       });
@@ -143,6 +145,12 @@ useEffect(() => {
     employees.forEach(emp => fetchBusySlots(emp.id, selectedDate));
   }
 }, [activeTab, selectedDate, dynamicShopId]);
+
+useEffect(() => {
+  if (token && userId && role === 'SHOP_OWNER') {
+    fetchAllDashboardData();
+  }
+}, [userId]);
 
   const handleAddService = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
