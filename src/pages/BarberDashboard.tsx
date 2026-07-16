@@ -29,7 +29,7 @@ export default function BarberDashboard() {
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; vitrinImages?: string[]; latitude?: number; longitude?: number } | null>(null);
+  const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; vitrinImageUrls?: string[]; latitude?: number; longitude?: number } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [vitrinFiles, setVitrinFiles] = useState<File[]>([]);
@@ -96,7 +96,7 @@ const fetchAllDashboardData = async () => {
       shopName: shopRes.data.name || '', 
       phoneNumber: shopRes.data.phoneNumber || '',
       imageUrl: shopRes.data.imageUrl || '',
-      vitrinImages: shopRes.data.vitrinImages || [],
+      vitrinImageUrls: shopRes.data.vitrinImages || [],
       latitude: shopRes.data.latitude || 0,
       longitude: shopRes.data.longitude || 0
       });
@@ -180,22 +180,20 @@ useEffect(() => {
 
   const handleUpdateShop = async () => {
   const formData = new FormData();
-  
-  // Metin verileri
   formData.append("shopName", shopDetails?.shopName || "");
   formData.append("phoneNumber", shopDetails?.phoneNumber || "");
+  formData.append("existingImageUrls", JSON.stringify(shopDetails?.vitrinImageUrls || []));
   
-  // Dosya verileri (Sadece varsa ekle)
-  if (selectedFile) formData.append("logo", selectedFile);
-  // Birden fazla vitrin görseli destekleniyorsa hepsini ekle
-  if (vitrinFiles.length) vitrinFiles.forEach((file) => formData.append("vitrinFiles", file));
+  if (selectedFile) {
+    formData.append("logo", selectedFile);
+} else if (shopDetails?.imageUrl === "") { // logo silindiyse
+    formData.append("logoDeleted", "true");
+}
+  vitrinFiles.forEach((file) => formData.append("vitrinFiles", file));
 
   try {
     await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
-      headers: { 
-        Authorization: `Bearer ${token}` 
-        // "Content-Type" başlığını manuel ekleme, axios bunu kendi halleder!
-      }
+      headers: { Authorization: `Bearer ${token}` }
     });
     alert("Dükkan bilgileri ve görseller başarıyla güncellendi!");
   } catch (err) {
@@ -543,16 +541,38 @@ useEffect(() => {
         </div>
 
         {/* Logo Yükleme */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#475569', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DÜKKAN LOGOSU</label>
-          <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc' }}>
-            <input 
-              type="file" 
-              onChange={e => setSelectedFile(e.target.files?.[0] || null)} 
-              style={{ fontSize: '0.9rem', cursor: 'pointer' }}
-            />
-          </div>
-        </div>
+<div>
+  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#475569', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DÜKKAN LOGOSU</label>
+  
+  <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc', marginBottom: '15px' }}>
+    
+    {/* LOGO GÖRÜNTÜLEME VE SİLME */}
+    {(shopDetails?.imageUrl || selectedFile) && (
+      <div style={{ position: 'relative', display: 'inline-block', marginBottom: '10px' }}>
+        <img 
+          src={selectedFile ? URL.createObjectURL(selectedFile) : shopDetails?.imageUrl} 
+          alt="Dükkan Logosu" 
+          style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }} 
+        />
+        <button 
+          type="button"
+          onClick={() => {
+            setSelectedFile(null); // Yeni seçileni temizle
+            setShopDetails(prev => ({ ...prev!, imageUrl: "" })); // Mevcut olanı sil
+          }}
+          style={{ position: 'absolute', top: 0, right: 0, background: 'red', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px' }}
+        >X</button>
+      </div>
+    )}
+
+    <input 
+      type="file" 
+      accept="image/*"
+      onChange={e => setSelectedFile(e.target.files?.[0] || null)} 
+      style={{ display: 'block', margin: '0 auto', fontSize: '0.9rem' }}
+    />
+  </div>
+</div>
 
         {/* Vitrin Görseli Yükleme */}
         <div>
@@ -572,6 +592,39 @@ useEffect(() => {
                 }
               }} 
             />
+            {/* Vitrin Görselleri Listeleme ve Silme */}
+<div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+  
+  {/* 1. Sunucudan Gelenler */}
+  {shopDetails?.vitrinImageUrls?.map((url, index) => (
+    <div key={`db-${index}`} style={{ position: 'relative' }}>
+      <img src={url} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover' }} />
+      <button 
+        type="button" // Formu göndermemesi için önemli
+        onClick={() => setShopDetails(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            vitrinImageUrls: prev.vitrinImageUrls?.filter((_, i) => i !== index) ?? []
+          };
+        })}
+        style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px' }}
+      >X</button>
+    </div>
+  ))}
+
+  {/* 2. Yeni Seçilenler */}
+  {vitrinFiles.map((file, index) => (
+    <div key={`new-${index}`} style={{ position: 'relative' }}>
+      <img src={URL.createObjectURL(file)} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', border: '2px solid blue' }} />
+      <button 
+        type="button"
+        onClick={() => setVitrinFiles(prev => prev.filter((_, i) => i !== index))}
+        style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px' }}
+      >X</button>
+    </div>
+  ))}
+</div>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
