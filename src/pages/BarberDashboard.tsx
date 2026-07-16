@@ -163,6 +163,21 @@ useEffect(() => {
     } catch { alert("Hizmet eklenemedi."); }
   };
 
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    // Sidebar'ın dışına tıklandığında ve sidebar açıksa kapat
+    const sidebarElement = document.getElementById('sidebar-id');
+    
+    // Eğer sidebar açıksa (isSidebarOpen state'in varsa) ve tıklanan yer sidebar'ın dışındaysa
+    if (isSidebarOpen && sidebarElement && !sidebarElement.contains(event.target as Node)) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, [isSidebarOpen]); // isSidebarOpen değiştikçe bu etkiyi güncelle
+
   const handleAddEmployee = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
     const parts = newEmployeeName.trim().split(" ");
