@@ -96,22 +96,21 @@ const fetchAllDashboardData = async () => {
       shopName: shopRes.data.name || '', 
       phoneNumber: shopRes.data.phoneNumber || '',
       imageUrl: shopRes.data.imageUrl || '',
-      vitrinImageUrls: shopRes.data.vitrinImages || [],
+      vitrinImageUrls: shopRes.data.vitrinImageUrls || [],
       latitude: shopRes.data.latitude || 0,
       longitude: shopRes.data.longitude || 0
       });
 
-      // Promise.all içine hizmetleri çekmeyi de ekle!
+      // Promise.all içine hizmetleri çekme
       await Promise.all([
         fetchAppointments(shopId, appFilter),
         API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${shopId}/employees`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then(res => _setEmployees(res.data)),
         
-        // EKSİK OLAN KISIM BURASI:
         API.get(`https://randevu-sistemi-dv33.onrender.com/api/services/shop/${shopId}`, {
           headers: { Authorization: `Bearer ${token}` }
-        }).then(res => _setServices(res.data)) // _setServices olarak tanımlamıştın
+        }).then(res => _setServices(res.data))
       ]);
     }
   } catch (err) {
@@ -603,7 +602,6 @@ useEffect(() => {
         type="button" // Formu göndermemesi için önemli
         onClick={() => setShopDetails(prev => {
           if (!prev) return prev;
-          console.log("State İçindeki Vitrin Görselleri:", shopDetails?.vitrinImageUrls);
           return {
             ...prev,
             vitrinImageUrls: prev.vitrinImageUrls?.filter((_, i) => i !== index) ?? []
