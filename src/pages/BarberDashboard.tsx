@@ -59,6 +59,7 @@ const fetchBusySlots = async (employeeId: number, date: string) => {
       params: { employeeId, date },
       headers: { Authorization: `Bearer ${token}` }
     });
+    console.log(`Personel ${employeeId} için gelen dolu saatler:`, response.data);
     // Personelin ID'sine göre saatleri kaydet
     setBusySlotsMap(prev => ({ ...prev, [employeeId]: response.data }));
   } catch (err) {
@@ -227,49 +228,41 @@ useEffect(() => {
   }
 };
 
-const blockSlot = async (employeeId: number, time: string) => {
-  // ISO formatında tarih-saat birleşimi (Örn: 2026-07-16T10:00:00)
+const toggleSlotStatus = async (employeeId: number, time: string) => {
   const formattedTime = `${selectedDate}T${time}:00`;
-  
+  const isBusy = busySlotsMap[employeeId]?.includes(time);
+
   try {
-    await API.post(`https://randevu-sistemi-dv33.onrender.com/api/appointments/block`, {
-      employeeId,
-      appointmentTime: formattedTime
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
+    if (isBusy) {
+      // EĞER KIRMIZIYSA (Zaten bloklu) -> Bloklamayı Kaldır (DELETE)
+      await API.delete(`https://randevu-sistemi-dv33.onrender.com/api/appointments/unblock`, {
+        params: { employeeId, appointmentTime: formattedTime },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } else {
+      // EĞER YEŞİLSE (Müsait) -> Blokla (POST)
+      await API.post(`https://randevu-sistemi-dv33.onrender.com/api/appointments/block`, {
+        employeeId,
+        appointmentTime: formattedTime
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+
     // İşlem başarılı, listeyi yenile
     fetchBusySlots(employeeId, selectedDate);
   } catch (err) {
-    console.error("Bloklama hatası:", err);
-    alert("Bu saat zaten dolu.");
+    console.error("İşlem hatası:", err);
+    alert("İşlem gerçekleştirilemedi.");
   }
 };
 
-  if (loading) return <div>Yükleniyor...</div>;
-
-  function updateStatus(id: any, arg1: string): void {
-    if (!token) {
-      alert('Oturum bilgisi bulunamadı.');
-      return;
-    }
-
-    void API
-      .patch(
-        `https://randevu-sistemi-dv33.onrender.com/api/appointments/${id}/status`,
-        { status: arg1 },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      .then(() => {
-        setAppointments(prev =>
-          prev.map(app => (app.id === id ? { ...app, status: arg1 } : app))
-        );
-      })
-      .catch(err => {
-        console.error('Randevu durumu güncellenemedi:', err);
-        alert('Randevu durumu güncellenemedi.');
-      });
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>Yükleniyor...</div>
+      </div>
+    );
   }
 
   return (
@@ -369,6 +362,28 @@ const blockSlot = async (employeeId: number, time: string) => {
     };
     
     const statusStyle = getStatusStyle(app.status);
+
+    function updateStatus(id: any, status: string): void {
+      if (!token) {
+        alert('Giriş bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+        return;
+      }
+
+      (async () => {
+        try {
+          await API.put(`/api/appointments/${id}`, { status }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          if (dynamicShopId) {
+            await fetchAppointments(dynamicShopId, appFilter);
+          }
+        } catch (err) {
+          console.error('Randevu durumu güncellenemedi:', err);
+          alert('Randevu durumu güncellenemedi.');
+        }
+      })();
+    }
 
     return (
       <div key={app.id} style={{ 
@@ -732,14 +747,14 @@ const blockSlot = async (employeeId: number, time: string) => {
             return (
              <div 
               key={time} 
-              onClick={() => !isBusy && blockSlot(emp.id, time)} // Sadece boşsa tıkla
+              onClick={() => toggleSlotStatus(emp.id, time)}
               style={{ 
               padding: '10px 0', 
               borderRadius: '8px', 
               textAlign: 'center', 
               fontSize: '0.85rem', 
               fontWeight: 700,
-              cursor: isBusy ? 'not-allowed' : 'pointer', // Doluysa tıklanamaz imleci
+              cursor: 'pointer',
               backgroundColor: isBusy ? '#fef2f2' : '#f0fdf4', 
               color: isBusy ? '#e11d48' : '#15803d',
               border: `1px solid ${isBusy ? '#fecaca' : '#bbf7d0'}`,
