@@ -603,6 +603,7 @@ useEffect(() => {
         type="button" // Formu göndermemesi için önemli
         onClick={() => setShopDetails(prev => {
           if (!prev) return prev;
+          console.log("State İçindeki Vitrin Görselleri:", shopDetails?.vitrinImageUrls);
           return {
             ...prev,
             vitrinImageUrls: prev.vitrinImageUrls?.filter((_, i) => i !== index) ?? []
