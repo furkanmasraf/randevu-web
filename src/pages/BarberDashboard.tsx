@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
@@ -33,6 +33,7 @@ export default function BarberDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [vitrinFiles, setVitrinFiles] = useState<File[]>([]);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
 
   const navigate = useNavigate();
@@ -165,18 +166,15 @@ useEffect(() => {
 
   useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
-    // Sidebar'ın dışına tıklandığında ve sidebar açıksa kapat
-    const sidebarElement = document.getElementById('sidebar-id');
-    
-    // Eğer sidebar açıksa (isSidebarOpen state'in varsa) ve tıklanan yer sidebar'ın dışındaysa
-    if (isSidebarOpen && sidebarElement && !sidebarElement.contains(event.target as Node)) {
+    // Sadece mobil görünümdeyse (genişlik < 768px) ve sidebar açıksa kapat
+    if (isSidebarOpen && window.innerWidth < 768 && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
       setIsSidebarOpen(false);
     }
   };
 
   document.addEventListener('mousedown', handleClickOutside);
   return () => document.removeEventListener('mousedown', handleClickOutside);
-}, [isSidebarOpen]); // isSidebarOpen değiştikçe bu etkiyi güncelle
+}, [isSidebarOpen]);
 
   const handleAddEmployee = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
@@ -267,7 +265,9 @@ useEffect(() => {
     </button>
 
     {/* SIDEBAR */}
-    <div style={{ 
+    <div
+      ref={sidebarRef}
+      style={{ 
       position: 'fixed', inset: '0', zIndex: 50, width: '280px', backgroundColor: '#0f172a', color: '#fff', 
       transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.3s ease',
       padding: '40px 20px'
