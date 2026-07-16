@@ -364,26 +364,28 @@ const toggleSlotStatus = async (employeeId: number, time: string) => {
     const statusStyle = getStatusStyle(app.status);
 
     function updateStatus(id: any, status: string): void {
-      if (!token) {
-        alert('Giriş bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-        return;
+  if (!token) {
+    alert('Giriş bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+    return;
+  }
+
+  (async () => {
+    try {
+      // 1. URL'in sonuna "/status" ekledik
+      // 2. Metot tipini patch olarak güncelledik (Backend'le uyumlu)
+      await API.patch(`/api/appointments/${id}/status`, { status }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (dynamicShopId) {
+        await fetchAppointments(dynamicShopId, appFilter);
       }
-
-      (async () => {
-        try {
-          await API.put(`/api/appointments/${id}`, { status }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-
-          if (dynamicShopId) {
-            await fetchAppointments(dynamicShopId, appFilter);
-          }
-        } catch (err) {
-          console.error('Randevu durumu güncellenemedi:', err);
-          alert('Randevu durumu güncellenemedi.');
-        }
-      })();
+    } catch (err) {
+      console.error('Randevu durumu güncellenemedi:', err);
+      alert('Randevu durumu güncellenemedi.');
     }
+  })();
+}
 
     return (
       <div key={app.id} style={{ 
