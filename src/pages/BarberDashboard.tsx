@@ -71,7 +71,10 @@ const fetchAppointments = async (shopId: number, filter: string = 'today') => {
       params: { filter },
       headers: { Authorization: `Bearer ${token}` }
     });
-    setAppointments(response.data);
+    const sortedAppointments = response.data.sort((a: any, b: any) => {
+      return new Date(b.appointmentTime).getTime() - new Date(a.appointmentTime).getTime();
+    });
+    setAppointments(sortedAppointments);
   } catch (err) {
     console.error("Randevular çekilemedi:", err);
   }
@@ -88,7 +91,13 @@ const fetchAllDashboardData = async () => {
       const shopId = shopRes.data.id;
       setDynamicShopId(shopId);
       
-      // ... shopDetails set etme ...
+      setShopDetails({
+      shopName: shopRes.data.shopName || '',
+      phoneNumber: shopRes.data.phoneNumber || '',
+      imageUrl: shopRes.data.imageUrl || '',
+      latitude: shopRes.data.latitude || 0,
+      longitude: shopRes.data.longitude || 0
+      });
 
       // Promise.all içine hizmetleri çekmeyi de ekle!
       await Promise.all([
@@ -247,10 +256,10 @@ useEffect(() => {
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {[
           { id: 'appointments', label: 'Randevular', icon: '📅' },
-          { id: 'services', label: 'Hizmetler', icon: '✂️' },
-          { id: 'employees', label: 'Personel', icon: '👤' },
-          { id: 'settings', label: 'Ayarlar', icon: '⚙️' },
-          { id: 'hours', label: 'Takvim', icon: '🕒' }
+          { id: 'services', label: 'Hizmet Yönetimi', icon: '✂️' },
+          { id: 'employees', label: 'Personel Yönetimi', icon: '👤' },
+          { id: 'settings', label: 'İşletme Ayarları', icon: '⚙️' },
+          { id: 'hours', label: 'Personel Takvimi', icon: '🕒' }
         ].map(item => (
           <button 
             key={item.id}
@@ -303,39 +312,58 @@ useEffect(() => {
 
           {/* GRID YERLEŞİMİ */}
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
-            gap: '24px' 
+  display: 'grid', 
+  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+  gap: '24px' 
+}}>
+  {appointments.map((app) => {
+    // 1. Durumları Backend'den GELENE GÖRE eşle
+    const getStatusStyle = (status: string) => {
+      switch (status) {
+        case 'APPROVED': return { label: 'Onaylandı', color: '#166534', bg: '#dcfce7' };
+        case 'REJECTED': return { label: 'Reddedildi', color: '#991b1b', bg: '#fee2e2' };
+        case 'CANCELLED': return { label: 'İptal Edildi', color: '#64748b', bg: '#f1f5f9' };
+        case 'PENDING': return { label: 'Bekliyor', color: '#854d0e', bg: '#fef9c3' };
+        default: return { label: status, color: '#000', bg: '#eee' };
+      }
+    };
+    
+    const statusStyle = getStatusStyle(app.status);
+
+    return (
+      <div key={app.id} style={{ 
+        background: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+        border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{app.customerName}</h4>
+          
+          <span style={{ 
+            fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '8px',
+            backgroundColor: statusStyle.bg, color: statusStyle.color 
           }}>
-            {appointments.map((app) => (
-              <div key={app.id} style={{ 
-                background: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
-                border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{app.customerName}</h4>
-                  <span style={{ 
-                    fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '8px',
-                    backgroundColor: app.status === 'APPROVED' ? '#dcfce7' : '#fee2e2', color: app.status === 'APPROVED' ? '#166534' : '#991b1b'
-                  }}>
-                    {app.status}
-                  </span>
-                </div>
-                <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ fontSize: '0.9rem' }}>📅 {new Date(app.appointmentTime).toLocaleString()}</div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>✂️ {app.serviceName} - {app.price} TL</div>
-                  <div style={{ fontSize: '0.9rem' }}>👤 {app.employeeName}</div>
-                  <div style={{ fontSize: '0.9rem' }}>📞 {app.customerPhone}</div>
-                </div>
-                {app.status === 'PENDING' && (
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ flex: 1, background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Onayla</button>
-                    <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ flex: 1, background: '#f1f5f9', color: '#e11d48', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Reddet</button>
-                  </div>
-                )}
-              </div>
-            ))}
+            {statusStyle.label}
+          </span>
+        </div>
+
+        <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '0.9rem' }}>📅 {new Date(app.appointmentTime).toLocaleString()}</div>
+          <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>✂️ {app.serviceName} - {app.price} TL</div>
+          <div style={{ fontSize: '0.9rem' }}>👤 {app.employeeName}</div>
+          <div style={{ fontSize: '0.9rem' }}>📞 {app.customerPhone}</div>
+        </div>
+
+        {/* 2. Buton kontrolünü de İngilizce yap ki çalışsın */}
+        {app.status === 'PENDING' && (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => updateStatus(app.id, 'APPROVED')} style={{ flex: 1, background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Onayla</button>
+            <button onClick={() => updateStatus(app.id, 'REJECTED')} style={{ flex: 1, background: '#f1f5f9', color: '#e11d48', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Reddet</button>
           </div>
+        )}
+      </div>
+    );
+  })}
+</div>
         </div>
       )}
         {activeTab === 'services' && (
@@ -471,14 +499,14 @@ useEffect(() => {
   </div>
 )}
         {activeTab === 'settings' && (
-  <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+  <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '40px' }}>
     <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '24px' }}>Dükkan Ayarları</h1>
 
     <div style={{ 
         backgroundColor: '#ffffff', 
         borderRadius: '24px', 
         padding: '32px', 
-        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
         border: '1px solid #e2e8f0' 
     }}>
       <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '1.2rem', color: '#1e293b' }}>İşletme Bilgileri</h3>
@@ -486,89 +514,87 @@ useEffect(() => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Dükkan Adı */}
         <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>Dükkan Adı</label>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#475569', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DÜKKAN ADI</label>
           <input 
             value={shopDetails?.shopName || ''} 
             onChange={e => setShopDetails(prev => ({...prev!, shopName: e.target.value}))} 
             placeholder="MakasLab" 
-            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }}
           />
         </div>
 
         {/* Telefon */}
         <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>İletişim Numarası</label>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#475569', fontSize: '0.75rem', letterSpacing: '0.05em' }}>İLETİŞİM NUMARASI</label>
           <input 
             value={shopDetails?.phoneNumber || ''} 
             onChange={e => setShopDetails(prev => ({...prev!, phoneNumber: e.target.value}))} 
-            placeholder="05xx xxx xx xx" 
-            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box' }}
+            placeholder="05XX XXX XX XX" 
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }}
           />
         </div>
 
         {/* Logo Yükleme */}
         <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>Dükkan Logosu</label>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#475569', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DÜKKAN LOGOSU</label>
           <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc' }}>
             <input 
               type="file" 
               onChange={e => setSelectedFile(e.target.files?.[0] || null)} 
-              style={{ fontSize: '0.9rem' }}
+              style={{ fontSize: '0.9rem', cursor: 'pointer' }}
             />
           </div>
         </div>
 
         {/* Vitrin Görseli Yükleme */}
-<div>
-  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>
-    Dükkan Vitrin Görselleri (Çoklu Seçim)
-  </label>
-  
-  {/* Dosya Seçici */}
-  <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc', marginBottom: '15px' }}>
-    <input 
-      type="file" 
-      multiple 
-      accept="image/*"
-      onChange={e => {
-        if (e.target.files) {
-          const newFiles = Array.from(e.target.files);
-          setVitrinFiles(prev => [...prev, ...newFiles]); // Mevcutlara ekle
-        }
-      }} 
-    />
-  </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#475569', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+            VİTRİN GÖRSELLERİ
+          </label>
+          
+          <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', backgroundColor: '#f8fafc', marginBottom: '15px' }}>
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*"
+              onChange={e => {
+                if (e.target.files) {
+                  const newFiles = Array.from(e.target.files);
+                  setVitrinFiles(prev => [...prev, ...newFiles]);
+                }
+              }} 
+            />
+          </div>
 
-  {/* Seçilen Görsellerin Listesi ve Silme Butonları */}
-  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-    {vitrinFiles.map((file, index) => (
-      <div key={index} style={{ position: 'relative', width: '80px', height: '80px' }}>
-        <img 
-          src={URL.createObjectURL(file)} 
-          alt="preview" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
-        />
-        <button 
-          type="button"
-          onClick={() => removeFile(index)}
-          style={{ 
-            position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', 
-            color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', 
-            cursor: 'pointer', fontSize: '12px', lineHeight: '20px'
-          }}
-        >
-          ×
-        </button>
-      </div>
-    ))}
-  </div>
-</div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {vitrinFiles.map((file, index) => (
+              <div key={index} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                <img 
+                  src={URL.createObjectURL(file)} 
+                  alt="preview" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
+                />
+                <button 
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  style={{ 
+                    position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', 
+                    color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', 
+                    cursor: 'pointer', fontSize: '12px', lineHeight: '20px'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <button 
           onClick={handleUpdateShop} 
           style={{ 
             marginTop: '12px', backgroundColor: '#4f46e5', color: '#fff', border: 'none', 
-            padding: '16px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem' 
+            padding: '16px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', transition: 'background 0.2s' 
           }}
         >
           Değişiklikleri Kaydet
