@@ -144,7 +144,7 @@ useEffect(() => {
     // Şimdilik ilk personeli baz alalım ya da hepsini çekecek bir mantık kuralım
     employees.forEach(emp => fetchBusySlots(emp.id, selectedDate));
   }
-}, [activeTab, selectedDate, dynamicShopId]);
+}, [activeTab, selectedDate, dynamicShopId, appointments]);
 
 useEffect(() => {
   if (token && userId && role === 'SHOP_OWNER') {
