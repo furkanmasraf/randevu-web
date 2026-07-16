@@ -227,6 +227,26 @@ useEffect(() => {
   }
 };
 
+const blockSlot = async (employeeId: number, time: string) => {
+  // ISO formatında tarih-saat birleşimi (Örn: 2026-07-16T10:00:00)
+  const formattedTime = `${selectedDate}T${time}:00`;
+  
+  try {
+    await API.post(`https://randevu-sistemi-dv33.onrender.com/api/appointments/block`, {
+      employeeId,
+      appointmentTime: formattedTime
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    // İşlem başarılı, listeyi yenile
+    fetchBusySlots(employeeId, selectedDate);
+  } catch (err) {
+    console.error("Bloklama hatası:", err);
+    alert("Bu saat zaten dolu.");
+  }
+};
+
   if (loading) return <div>Yükleniyor...</div>;
 
   function updateStatus(id: any, arg1: string): void {
@@ -708,18 +728,28 @@ useEffect(() => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px' }}>
             {timeSlots.map(time => {
-              const isBusy = (busySlotsMap[emp.id] || []).includes(time);
-              return (
-                <div key={time} style={{ 
-                  padding: '10px 0', borderRadius: '8px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700,
-                  backgroundColor: isBusy ? '#fef2f2' : '#f0fdf4', 
-                  color: isBusy ? '#e11d48' : '#15803d',
-                  border: `1px solid ${isBusy ? '#fecaca' : '#bbf7d0'}`
-                }}>
-                  {time}
-                </div>
-              );
-            })}
+            const isBusy = (busySlotsMap[emp.id] || []).includes(time);
+            return (
+             <div 
+              key={time} 
+              onClick={() => !isBusy && blockSlot(emp.id, time)} // Sadece boşsa tıkla
+              style={{ 
+              padding: '10px 0', 
+              borderRadius: '8px', 
+              textAlign: 'center', 
+              fontSize: '0.85rem', 
+              fontWeight: 700,
+              cursor: isBusy ? 'not-allowed' : 'pointer', // Doluysa tıklanamaz imleci
+              backgroundColor: isBusy ? '#fef2f2' : '#f0fdf4', 
+              color: isBusy ? '#e11d48' : '#15803d',
+              border: `1px solid ${isBusy ? '#fecaca' : '#bbf7d0'}`,
+              transition: 'all 0.2s' // Yumuşak geçiş
+           }}
+           >
+           {time}
+           </div>
+           );
+      })}
           </div>
         </div>
       ))}
