@@ -313,6 +313,7 @@ export default function BookAppointment() {
             ))}
           </select>
 
+          {/* GİRİŞ UYARISI VE YÖNLENDİRME BUTONU */}
           {!localStorage.getItem('token') && (
             <p style={{ color: '#a3402f', fontSize: '0.8rem', textAlign: 'center', marginTop: '-4px' }}>
               * Randevuyu onaylamak için giriş yapmanız gerekecektir.
