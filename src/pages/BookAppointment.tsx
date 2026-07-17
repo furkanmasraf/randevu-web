@@ -47,7 +47,7 @@ export default function BookAppointment() {
         setLoading(true);
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
-        
+
         const [empRes, servRes, shopRes] = await Promise.all([
           API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
           API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
@@ -58,21 +58,21 @@ export default function BookAppointment() {
 
         const normalizedShopDetails = {
           ...shopData,
-          vitrinImageUrls: Array.isArray(shopData.vitrinImageUrls) 
-              ? shopData.vitrinImageUrls 
-              : (shopData.vitrinImageUrl ? [shopData.vitrinImageUrl] : [])
+          vitrinImageUrls: Array.isArray(shopData.vitrinImageUrls)
+            ? shopData.vitrinImageUrls
+            : (shopData.vitrinImageUrl ? [shopData.vitrinImageUrl] : [])
         };
 
         setEmployees(empRes.data);
         setServices(servRes.data);
         setShopDetails(normalizedShopDetails);
-      } catch (error) { 
-        console.error("Veri çekme hatası:", error); 
-      } finally { 
-        setLoading(false); 
+      } catch (error) {
+        console.error("Veri çekme hatası:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    
+
     fetchAllData();
   }, [shopId]);
 
@@ -80,15 +80,15 @@ export default function BookAppointment() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedEmployee || !selectedService || !appointmentDate || !appointmentTime) {
-      alert("Lütfen tüm alanları doldurun."); 
+      alert("Lütfen tüm alanları doldurun.");
       return;
     }
 
     try {
       setSubmitting(true);
-      
+
       const payload = {
         shopId: Number(shopId),
         employeeId: Number(selectedEmployee),
@@ -110,42 +110,103 @@ export default function BookAppointment() {
         navigate('/login');
       }
 
-    } catch (error: any) { 
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Randevu oluşturulurken bir hata oluştu.";
-      alert(errorMessage); 
-    } finally { 
-      setSubmitting(false); 
+      alert(errorMessage);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Kullanıcıyı formu kaybetmeden giriş sayfasına yönlendiren fonksiyon
-  const handleGoToLogin = () => {
-    navigate('/login', { 
-      state: { 
-        from: `/book/${shopId}`, 
-        selectedEmployee, 
-        selectedService, 
-        appointmentDate, 
-        appointmentTime 
-      } 
-    });
-  };
-
-  if (loading) return <div>Yükleniyor...</div>;
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f6f3ee',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Inter', system-ui, sans-serif",
+        color: '#8a7f6e',
+        fontSize: '0.95rem'
+      }}>
+        Yükleniyor...
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '500px', backgroundColor: '#fff', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-        
-        {/* DÜKKAN VİTRİNİ */}
+    <div style={{ padding: '40px 20px', backgroundColor: '#f6f3ee', minHeight: '100vh', display: 'flex', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+        .mkl-swiper-wrap .swiper-button-next,
+        .mkl-swiper-wrap .swiper-button-prev {
+          color: #faf7f2;
+          transform: scale(0.6);
+          background: rgba(28, 25, 23, 0.35);
+          border-radius: 50%;
+          width: 34px !important;
+          height: 34px !important;
+          margin-top: -17px;
+        }
+        .mkl-swiper-wrap .swiper-button-next::after,
+        .mkl-swiper-wrap .swiper-button-prev::after {
+          font-size: 14px !important;
+        }
+        .mkl-swiper-wrap .swiper-pagination-bullet {
+          background: #faf7f2;
+          opacity: 0.6;
+        }
+        .mkl-swiper-wrap .swiper-pagination-bullet-active {
+          background: #b8863b;
+          opacity: 1;
+        }
+
+        .mkl-field:focus {
+          outline: none !important;
+          border-color: #b8863b !important;
+          box-shadow: 0 0 0 3px rgba(184, 134, 59, 0.15);
+        }
+
+        .mkl-phone-link:hover {
+          text-decoration: underline !important;
+        }
+
+        .mkl-submit-btn {
+          transition: background-color 0.2s ease, transform 0.15s ease;
+        }
+        .mkl-submit-btn:hover:not(:disabled) {
+          background-color: #b8863b !important;
+        }
+        .mkl-submit-btn:active:not(:disabled) {
+          transform: scale(0.98);
+        }
+        .mkl-submit-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      `}</style>
+
+      <div style={{
+        width: '100%',
+        maxWidth: '500px',
+        backgroundColor: '#fff',
+        padding: '30px',
+        borderRadius: '20px',
+        boxShadow: '0 16px 32px -12px rgba(28, 25, 23, 0.14)',
+        border: '1px solid #ece4d5'
+      }}>
+
         {shopDetails && (
           <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <div style={{ 
-              width: '100%', 
-              marginBottom: '30px', 
-              borderRadius: '16px', 
-              overflow: 'hidden', 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+            <div className="mkl-swiper-wrap" style={{
+              width: '100%',
+              marginBottom: '24px',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 12px rgba(28,25,23,0.12)'
             }}>
               <Swiper
                 modules={[Navigation, Pagination, Autoplay]}
@@ -156,47 +217,78 @@ export default function BookAppointment() {
               >
                 {shopDetails.vitrinImageUrls && shopDetails.vitrinImageUrls.length > 0 ? (
                   shopDetails.vitrinImageUrls.map((url, index) => (
-                    <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                    <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f0e4' }}>
                       <img src={url} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </SwiperSlide>
                   ))
                 ) : shopDetails.vitrinImageUrl ? (
-                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f0e4' }}>
                     <img src={shopDetails.vitrinImageUrl} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </SwiperSlide>
                 ) : (
-                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-                    <span style={{ fontSize: '4rem' }}>💈</span>
+                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f0e4' }}>
+                    <span style={{ fontFamily: "'Fraunces', serif", fontSize: '2.2rem', color: '#b8863b' }}>
+                      {shopDetails.shopName?.charAt(0).toUpperCase()}
+                    </span>
                   </SwiperSlide>
                 )}
               </Swiper>
             </div>
-            
-            <h2 style={{ marginTop: '15px', marginBottom: '5px', color: '#0f172a' }}>{shopDetails.shopName}</h2>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '10px' }}>📍 {shopDetails.addressText}</p>
-            
-            <a 
-              href={shopDetails.phoneNumber ? `tel:${shopDetails.phoneNumber}` : '#'} 
-              style={{ 
-                color: shopDetails.phoneNumber ? '#3b82f6' : '#94a3b8',
-                fontWeight: 700, 
-                fontSize: '1rem', 
+
+            <h2 style={{
+              marginTop: '0',
+              marginBottom: '6px',
+              fontFamily: "'Fraunces', serif",
+              fontWeight: 600,
+              fontSize: '1.4rem',
+              color: '#1c1917'
+            }}>
+              {shopDetails.shopName}
+            </h2>
+            <p style={{ color: '#78706a', fontSize: '0.9rem', marginBottom: '10px' }}>
+              {shopDetails.addressText}
+            </p>
+
+            <a
+              className="mkl-phone-link"
+              href={shopDetails.phoneNumber ? `tel:${shopDetails.phoneNumber}` : '#'}
+              style={{
+                color: shopDetails.phoneNumber ? '#b8863b' : '#b3a692',
+                fontWeight: 700,
+                fontSize: '1rem',
                 textDecoration: 'none',
-                display: 'inline-flex', 
-                alignItems: 'center', 
+                display: 'inline-flex',
+                alignItems: 'center',
                 gap: '8px',
                 cursor: shopDetails.phoneNumber ? 'pointer' : 'default'
               }}
             >
-              📞 {shopDetails.phoneNumber || 'Telefon bilgisi yok'}
+              {shopDetails.phoneNumber || 'Telefon bilgisi yok'}
             </a>
+
+            <div style={{
+              width: '48px',
+              height: '3px',
+              margin: '20px auto 0 auto',
+              borderRadius: '3px',
+              background: 'linear-gradient(90deg, #b8863b 0%, #b8863b 45%, #7a2e2e 55%, #7a2e2e 100%)'
+            }} />
           </div>
         )}
 
-        <h2>Randevu Planlama</h2>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)} style={inputStyle}>
+        <h2 style={{
+          fontFamily: "'Fraunces', serif",
+          fontWeight: 600,
+          fontSize: '1.2rem',
+          color: '#1c1917',
+          marginBottom: '18px'
+        }}>
+          Randevu Planlama
+        </h2>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          <select className="mkl-field" value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)} style={inputStyle}>
             <option value="">Personel Seçin</option>
             {employees.map(emp => (
               <option key={emp.id} value={emp.id}>
@@ -205,17 +297,17 @@ export default function BookAppointment() {
             ))}
           </select>
 
-          <select value={selectedService} onChange={(e) => setSelectedService(e.target.value)} style={inputStyle}>
+          <select className="mkl-field" value={selectedService} onChange={(e) => setSelectedService(e.target.value)} style={inputStyle}>
             <option value="">Hizmet Seçin</option>
-            {services.map(s => <option key={s.id} value={s.id}>{s.name} - {s.price} TL</option>)}
+            {services.map(s => <option key={s.id} value={s.id}>{`${s.name} - ${s.price} TL`}</option>)}
           </select>
 
-          <input type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} style={inputStyle} />
+          <input className="mkl-field" type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} style={inputStyle} />
 
-          <select value={appointmentTime} onChange={(e) => setAppointmentTime(e.target.value)} style={inputStyle}>
+          <select className="mkl-field" value={appointmentTime} onChange={(e) => setAppointmentTime(e.target.value)} style={inputStyle}>
             <option value="">Saat Seçin</option>
             {allPossibleSlots.map(slot => (
-              <option key={slot} value={slot} disabled={takenSlots.includes(slot)} style={{ color: takenSlots.includes(slot) ? 'red' : 'black' }}>
+              <option key={slot} value={slot} disabled={takenSlots.includes(slot)} style={{ color: takenSlots.includes(slot) ? '#c0392b' : '#1c1917' }}>
                 {slot} {takenSlots.includes(slot) ? '(Dolu)' : ''}
               </option>
             ))}
@@ -223,43 +315,12 @@ export default function BookAppointment() {
 
           {/* GİRİŞ UYARISI VE YÖNLENDİRME BUTONU */}
           {!localStorage.getItem('token') && (
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '10px', 
-              padding: '12px', 
-              backgroundColor: '#fef2f2', 
-              borderRadius: '12px', 
-              border: '1px solid #fee2e2',
-              marginTop: '-5px' 
-            }}>
-              <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', margin: 0, fontWeight: 500 }}>
-                * Randevuyu onaylamak için giriş yapmanız gerekecektir.
-              </p>
-              <button 
-                type="button" 
-                onClick={handleGoToLogin} 
-                style={{ 
-                  background: '#ef4444', 
-                  color: '#fff', 
-                  border: 'none', 
-                  borderRadius: '8px', 
-                  padding: '8px 16px', 
-                  fontSize: '0.85rem', 
-                  fontWeight: 600, 
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
-              >
-                Şimdi Giriş Yap
-              </button>
-            </div>
+            <p style={{ color: '#a3402f', fontSize: '0.8rem', textAlign: 'center', marginTop: '-4px' }}>
+              * Randevuyu onaylamak için giriş yapmanız gerekecektir.
+            </p>
           )}
 
-          <button type="submit" disabled={submitting} style={buttonStyle}>
+          <button type="submit" disabled={submitting} className="mkl-submit-btn" style={buttonStyle}>
             {submitting ? "Oturum Kaydediliyor..." : "Randevuyu Onayla"}
           </button>
         </form>
@@ -269,9 +330,26 @@ export default function BookAppointment() {
 }
 
 const inputStyle: React.CSSProperties = {
-  padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: '0.95rem', outline: 'none'
+  padding: '13px 14px',
+  borderRadius: '10px',
+  border: '1px solid #e4ddd2',
+  backgroundColor: '#faf8f4',
+  fontSize: '0.95rem',
+  fontFamily: "'Inter', sans-serif",
+  color: '#1c1917',
+  outline: 'none',
+  transition: 'border-color 0.2s ease'
 };
 
 const buttonStyle: React.CSSProperties = {
-  padding: '14px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem', marginTop: '10px'
+  padding: '14px',
+  background: '#1c1917',
+  color: '#faf7f2',
+  border: 'none',
+  borderRadius: '10px',
+  cursor: 'pointer',
+  fontWeight: 700,
+  fontSize: '1rem',
+  fontFamily: "'Inter', sans-serif",
+  marginTop: '6px'
 };

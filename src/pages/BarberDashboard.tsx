@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
@@ -33,6 +33,7 @@ export default function BarberDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [vitrinFiles, setVitrinFiles] = useState<File[]>([]);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
 
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ const fetchBusySlots = async (employeeId: number, date: string) => {
       params: { employeeId, date },
       headers: { Authorization: `Bearer ${token}` }
     });
+    console.log(`Personel ${employeeId} için gelen dolu saatler:`, response.data);
     // Personelin ID'sine göre saatleri kaydet
     setBusySlotsMap(prev => ({ ...prev, [employeeId]: response.data }));
   } catch (err) {
@@ -143,7 +145,7 @@ useEffect(() => {
     // Şimdilik ilk personeli baz alalım ya da hepsini çekecek bir mantık kuralım
     employees.forEach(emp => fetchBusySlots(emp.id, selectedDate));
   }
-}, [activeTab, selectedDate, dynamicShopId]);
+}, [activeTab, selectedDate, dynamicShopId, appointments]);
 
 useEffect(() => {
   if (token && userId && role === 'SHOP_OWNER') {
@@ -162,6 +164,18 @@ useEffect(() => {
       window.location.reload();
     } catch { alert("Hizmet eklenemedi."); }
   };
+
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    // Sadece mobil görünümdeyse (genişlik < 768px) ve sidebar açıksa kapat
+    if (isSidebarOpen && window.innerWidth < 768 && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, [isSidebarOpen]);
 
   const handleAddEmployee = async () => {
     if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
@@ -214,29 +228,41 @@ useEffect(() => {
   }
 };
 
-  if (loading) return <div>Yükleniyor...</div>;
+const toggleSlotStatus = async (employeeId: number, time: string) => {
+  const formattedTime = `${selectedDate}T${time}:00`;
+  const isBusy = busySlotsMap[employeeId]?.includes(time);
 
-  function updateStatus(id: any, arg1: string): void {
-    if (!token) {
-      alert('Oturum bilgisi bulunamadı.');
-      return;
+  try {
+    if (isBusy) {
+      // EĞER KIRMIZIYSA (Zaten bloklu) -> Bloklamayı Kaldır (DELETE)
+      await API.delete(`https://randevu-sistemi-dv33.onrender.com/api/appointments/unblock`, {
+        params: { employeeId, appointmentTime: formattedTime },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } else {
+      // EĞER YEŞİLSE (Müsait) -> Blokla (POST)
+      await API.post(`https://randevu-sistemi-dv33.onrender.com/api/appointments/block`, {
+        employeeId,
+        appointmentTime: formattedTime
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
     }
 
-    void API
-      .patch(
-        `https://randevu-sistemi-dv33.onrender.com/api/appointments/${id}/status`,
-        { status: arg1 },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      .then(() => {
-        setAppointments(prev =>
-          prev.map(app => (app.id === id ? { ...app, status: arg1 } : app))
-        );
-      })
-      .catch(err => {
-        console.error('Randevu durumu güncellenemedi:', err);
-        alert('Randevu durumu güncellenemedi.');
-      });
+    // İşlem başarılı, listeyi yenile
+    fetchBusySlots(employeeId, selectedDate);
+  } catch (err) {
+    console.error("İşlem hatası:", err);
+    alert("İşlem gerçekleştirilemedi.");
+  }
+};
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>Yükleniyor...</div>
+      </div>
+    );
   }
 
   return (
@@ -252,7 +278,9 @@ useEffect(() => {
     </button>
 
     {/* SIDEBAR */}
-    <div style={{ 
+    <div
+      ref={sidebarRef}
+      style={{ 
       position: 'fixed', inset: '0', zIndex: 50, width: '280px', backgroundColor: '#0f172a', color: '#fff', 
       transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.3s ease',
       padding: '40px 20px'
@@ -334,6 +362,30 @@ useEffect(() => {
     };
     
     const statusStyle = getStatusStyle(app.status);
+
+    function updateStatus(id: any, status: string): void {
+  if (!token) {
+    alert('Giriş bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+    return;
+  }
+
+  (async () => {
+    try {
+      // 1. URL'in sonuna "/status" ekledik
+      // 2. Metot tipini patch olarak güncelledik (Backend'le uyumlu)
+      await API.patch(`/api/appointments/${id}/status`, { status }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (dynamicShopId) {
+        await fetchAppointments(dynamicShopId, appFilter);
+      }
+    } catch (err) {
+      console.error('Randevu durumu güncellenemedi:', err);
+      alert('Randevu durumu güncellenemedi.');
+    }
+  })();
+}
 
     return (
       <div key={app.id} style={{ 
@@ -693,18 +745,28 @@ useEffect(() => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px' }}>
             {timeSlots.map(time => {
-              const isBusy = (busySlotsMap[emp.id] || []).includes(time);
-              return (
-                <div key={time} style={{ 
-                  padding: '10px 0', borderRadius: '8px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700,
-                  backgroundColor: isBusy ? '#fef2f2' : '#f0fdf4', 
-                  color: isBusy ? '#e11d48' : '#15803d',
-                  border: `1px solid ${isBusy ? '#fecaca' : '#bbf7d0'}`
-                }}>
-                  {time}
-                </div>
-              );
-            })}
+            const isBusy = (busySlotsMap[emp.id] || []).includes(time);
+            return (
+             <div 
+              key={time} 
+              onClick={() => toggleSlotStatus(emp.id, time)}
+              style={{ 
+              padding: '10px 0', 
+              borderRadius: '8px', 
+              textAlign: 'center', 
+              fontSize: '0.85rem', 
+              fontWeight: 700,
+              cursor: 'pointer',
+              backgroundColor: isBusy ? '#fef2f2' : '#f0fdf4', 
+              color: isBusy ? '#e11d48' : '#15803d',
+              border: `1px solid ${isBusy ? '#fecaca' : '#bbf7d0'}`,
+              transition: 'all 0.2s' // Yumuşak geçiş
+           }}
+           >
+           {time}
+           </div>
+           );
+      })}
           </div>
         </div>
       ))}
