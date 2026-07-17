@@ -42,7 +42,6 @@ export default function BookAppointment() {
   }, [selectedEmployee, appointmentDate]);
 
   useEffect(() => {
-    // Artık token kontrolü yok, çünkü buraya zaten giriş yapmış kullanıcı gelir!
     const fetchAllData = async () => {
       try {
         setLoading(true);
@@ -50,25 +49,23 @@ export default function BookAppointment() {
         const headers = { Authorization: `Bearer ${token}` };
         
         const [empRes, servRes, shopRes] = await Promise.all([
-  API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
-  API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
-  API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
-]);
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
+        ]);
 
-// BURADA MÜDAHALE EDİYORUZ:
-const shopData = shopRes.data;
+        const shopData = shopRes.data;
 
-// Eğer backend'den liste gelmediyse ama string geldiyse, onu diziye çevirip atıyoruz
-const normalizedShopDetails = {
-  ...shopData,
-  vitrinImageUrls: Array.isArray(shopData.vitrinImageUrls) 
-      ? shopData.vitrinImageUrls 
-      : (shopData.vitrinImageUrl ? [shopData.vitrinImageUrl] : [])
-};
+        const normalizedShopDetails = {
+          ...shopData,
+          vitrinImageUrls: Array.isArray(shopData.vitrinImageUrls) 
+              ? shopData.vitrinImageUrls 
+              : (shopData.vitrinImageUrl ? [shopData.vitrinImageUrl] : [])
+        };
 
-setEmployees(empRes.data);
-setServices(servRes.data);
-setShopDetails(normalizedShopDetails);
+        setEmployees(empRes.data);
+        setServices(servRes.data);
+        setShopDetails(normalizedShopDetails);
       } catch (error) { 
         console.error("Veri çekme hatası:", error); 
       } finally { 
@@ -84,7 +81,6 @@ setShopDetails(normalizedShopDetails);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validasyon kontrolü
     if (!selectedEmployee || !selectedService || !appointmentDate || !appointmentTime) {
       alert("Lütfen tüm alanları doldurun."); 
       return;
@@ -107,23 +103,32 @@ setShopDetails(normalizedShopDetails);
 
       alert("Randevunuz başarıyla oluşturuldu!");
 
-      // Akıllı yönlendirme mantığı
       const token = localStorage.getItem('token');
       if (token) {
-        // Kullanıcı giriş yapmışsa ana sayfaya (Home/Dashboard) gönder
         navigate('/');
       } else {
-        // Kullanıcı giriş yapmamışsa (misafir olarak alıyorsa) giriş ekranına gönder
         navigate('/login');
       }
 
     } catch (error: any) { 
-      // Hata mesajını daha okunabilir hale getirdik
       const errorMessage = error.response?.data?.message || "Randevu oluşturulurken bir hata oluştu.";
       alert(errorMessage); 
     } finally { 
       setSubmitting(false); 
     }
+  };
+
+  // Kullanıcıyı formu kaybetmeden giriş sayfasına yönlendiren fonksiyon
+  const handleGoToLogin = () => {
+    navigate('/login', { 
+      state: { 
+        from: `/book/${shopId}`, 
+        selectedEmployee, 
+        selectedService, 
+        appointmentDate, 
+        appointmentTime 
+      } 
+    });
   };
 
   if (loading) return <div>Yükleniyor...</div>;
@@ -135,61 +140,57 @@ setShopDetails(normalizedShopDetails);
         {/* DÜKKAN VİTRİNİ */}
         {shopDetails && (
           <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-           <div style={{ 
-           width: '100%', 
-           marginBottom: '30px', 
-           borderRadius: '16px', 
-           overflow: 'hidden', 
-           boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-}}>
-          <Swiper
-           modules={[Navigation, Pagination, Autoplay]}
-           navigation={true}
-           pagination={{ clickable: true }}
-           autoplay={{ delay: 3500 }}
-           style={{ height: '280px' }}
-        >
-  {/* 1. ÖNCELİK: Eğer yeni liste yapısı gelirse onu kullan */}
-  {shopDetails.vitrinImageUrls && shopDetails.vitrinImageUrls.length > 0 ? (
-    shopDetails.vitrinImageUrls.map((url, index) => (
-      <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-        <img src={url} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      </SwiperSlide>
-    ))
-  ) : shopDetails.vitrinImageUrl ? (
-    /* 2. ÖNCELİK: Eğer liste gelmediyse ama eski tekil URL geldiyse onu kullan */
-    <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-      <img src={shopDetails.vitrinImageUrl} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-    </SwiperSlide>
-  ) : (
-    /* 3. ÖNCELİK: Hiçbiri yoksa ikon göster */
-    <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-      <span style={{ fontSize: '4rem' }}>💈</span>
-    </SwiperSlide>
-  )}
-</Swiper>
-    </div>
-    
-    <h2 style={{ marginTop: '15px', marginBottom: '5px', color: '#0f172a' }}>{shopDetails.shopName}</h2>
-    <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '10px' }}>📍 {shopDetails.addressText}</p>
-    
-    {/* Telefon bilgisini link olarak ekledik, dokunulabilir hale geldi */}
-    <a 
-  href={shopDetails.phoneNumber ? `tel:${shopDetails.phoneNumber}` : '#'} 
-  style={{ 
-    color: shopDetails.phoneNumber ? '#3b82f6' : '#94a3b8', // Numarasızsa gri renk
-    fontWeight: 700, 
-    fontSize: '1rem', 
-    textDecoration: 'none',
-    display: 'inline-flex', 
-    alignItems: 'center', 
-    gap: '8px',
-    cursor: shopDetails.phoneNumber ? 'pointer' : 'default' // Numarasızsa tıklanmasın
-  }}
->
-  📞 {shopDetails.phoneNumber || 'Telefon bilgisi yok'}
-</a>
-  </div>
+            <div style={{ 
+              width: '100%', 
+              marginBottom: '30px', 
+              borderRadius: '16px', 
+              overflow: 'hidden', 
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+            }}>
+              <Swiper
+                modules={[Navigation, Pagination, Autoplay]}
+                navigation={true}
+                pagination={{ clickable: true }}
+                autoplay={{ delay: 3500 }}
+                style={{ height: '280px' }}
+              >
+                {shopDetails.vitrinImageUrls && shopDetails.vitrinImageUrls.length > 0 ? (
+                  shopDetails.vitrinImageUrls.map((url, index) => (
+                    <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                      <img src={url} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </SwiperSlide>
+                  ))
+                ) : shopDetails.vitrinImageUrl ? (
+                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                    <img src={shopDetails.vitrinImageUrl} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </SwiperSlide>
+                ) : (
+                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                    <span style={{ fontSize: '4rem' }}>💈</span>
+                  </SwiperSlide>
+                )}
+              </Swiper>
+            </div>
+            
+            <h2 style={{ marginTop: '15px', marginBottom: '5px', color: '#0f172a' }}>{shopDetails.shopName}</h2>
+            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '10px' }}>📍 {shopDetails.addressText}</p>
+            
+            <a 
+              href={shopDetails.phoneNumber ? `tel:${shopDetails.phoneNumber}` : '#'} 
+              style={{ 
+                color: shopDetails.phoneNumber ? '#3b82f6' : '#94a3b8',
+                fontWeight: 700, 
+                fontSize: '1rem', 
+                textDecoration: 'none',
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '8px',
+                cursor: shopDetails.phoneNumber ? 'pointer' : 'default'
+              }}
+            >
+              📞 {shopDetails.phoneNumber || 'Telefon bilgisi yok'}
+            </a>
+          </div>
         )}
 
         <h2>Randevu Planlama</h2>
@@ -220,11 +221,43 @@ setShopDetails(normalizedShopDetails);
             ))}
           </select>
 
+          {/* GİRİŞ UYARISI VE YÖNLENDİRME BUTONU */}
           {!localStorage.getItem('token') && (
-    <p style={{ color: '#ef4444', fontSize: '0.8rem', textAlign: 'center', marginTop: '-10px' }}>
-      * Randevuyu onaylamak için giriş yapmanız gerekecektir.
-    </p>
-  )}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '10px', 
+              padding: '12px', 
+              backgroundColor: '#fef2f2', 
+              borderRadius: '12px', 
+              border: '1px solid #fee2e2',
+              marginTop: '-5px' 
+            }}>
+              <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', margin: 0, fontWeight: 500 }}>
+                * Randevuyu onaylamak için giriş yapmanız gerekecektir.
+              </p>
+              <button 
+                type="button" 
+                onClick={handleGoToLogin} 
+                style={{ 
+                  background: '#ef4444', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  padding: '8px 16px', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              >
+                Şimdi Giriş Yap
+              </button>
+            </div>
+          )}
 
           <button type="submit" disabled={submitting} style={buttonStyle}>
             {submitting ? "Oturum Kaydediliyor..." : "Randevuyu Onayla"}

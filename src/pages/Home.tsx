@@ -18,206 +18,130 @@ interface Shop {
 
 const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
 
-
 export default function Home() {
   const navigate = useNavigate();
-
-  // Durum (State) Yönetimleri
   const [shops, setShops] = useState<Shop[]>([]); 
-  // loading state removed because its value was unused
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('Tümü');
-  const selectedCategory = 'Tümü';
-
-  useEffect(() => {
+  
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role');
-  
-  // 1. Sadece Dükkan Sahibi ise onu dashboard'una gönder
-  // Müşteri veya ziyaretçi ana sayfada kalabilir.
-  if (token && role && role.toUpperCase() === 'SHOP_OWNER') {
-    navigate('/barber-dashboard');
-    return;
-  }
 
-  // 2. Dükkanları çekmek için artık zorunlu bir token yok.
-  // Eğer API'n dışarıya açıksa, token göndermene gerek kalmaz.
-  const fetchShops = async () => {
-    try {
-      // Not: Eğer backend'de /api/shops endpoint'i için Authorization şartsa 
-      // bu isteği `token` varsa ekleyerek yapabilirsin.
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      
-      const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops', {
-        headers: headers
-      });
-      setShops(response.data);
-    } catch (error) {
-      console.error("Dükkanlar yüklenirken hata oluştu:", error);
-    }
-  };
-
-  fetchShops();
-}, [navigate]);
-
-  const filteredShops = shops.filter((shop) => {
-    const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
-    const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-    let matchesCategory = true;
-    if (selectedCategory !== 'Tümü') {
-      const shopNameLower = shop.name.toLowerCase();
-      if (selectedCategory === "Erkek Kuaförü") {
-        matchesCategory = shopNameLower.includes("erkek");
-      } else if (selectedCategory === "Kadın Kuaförü") {
-        matchesCategory = shopNameLower.includes("kadın") || shopNameLower.includes("bayan");
-      } else if (selectedCategory === "Güzellik Salonu") {
-        matchesCategory = shopNameLower.includes("güzellik");
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops');
+        setShops(response.data);
+      } catch (error) {
+        console.error("Dükkanlar yüklenemedi:", error);
       }
-    }
-    return matchesCity && matchesSearch && matchesCategory;
+    };
+    fetchShops();
+  }, []);
+
+  // GÜÇLENDİRİLMİŞ FİLTRELEME:
+  // Veri null gelse bile hata vermez, anlık olarak filtreler.
+  const filteredShops = shops.filter((shop) => {
+    const sName = (shop.name || "").toLowerCase();
+    const sCity = (shop.city || "").toLowerCase();
+    const query = searchQuery.toLowerCase();
+    
+    const cityMatches = selectedCity === "Tümü" || sCity === selectedCity.toLowerCase();
+    const nameMatches = sName.includes(query);
+    
+    return cityMatches && nameMatches;
   });
 
   const handleProfileClick = () => {
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
+    if (!token) navigate('/login');
+    else navigate(role?.toUpperCase() === 'SHOP_OWNER' ? '/barber-dashboard' : '/customer-dashboard');
+  };
 
-  if (!token) {
-    // Giriş yapmamışsa login'e at
-    navigate('/login');
-  } else {
-    // Rol kontrolü yap ve ilgili dashboard'a yönlendir
-    // role bilgisini 'CUSTOMER' veya 'SHOP_OWNER' şeklinde tuttuğunu varsayıyorum
-    if (role?.toUpperCase() === 'SHOP_OWNER') {
-      navigate('/barber-dashboard');
-    } else {
-      navigate('/customer-dashboard');
-    }
-  }
-};
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
 
   return (
-  <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", system-ui, sans-serif', paddingBottom: '80px' }}>
-    
-    {/* 1.(Responsive Görsel) */}
-    <header style={{ 
-  position: 'relative', 
-  height: '400px', 
-  display: 'flex', 
-  flexDirection: 'column', 
-  justifyContent: 'center', 
-  alignItems: 'center', 
-  textAlign: 'center', 
-  color: '#fff',
-  background: 'linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.5)), url("/kuaforsalonu.jpg")', 
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat'
-}}>
-  <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', fontWeight: 900, margin: 0 }}>Makas<span style={{ color: '#818cf8' }}>Lab</span></h1>
-  <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '10px', padding: '0 20px' }}>Premium kuaför ve güzellik deneyimi dijital dünyada.</p>
-
-  {/* SADECE PROFİLİM BUTONU - ÇIKIŞ BUTONU KALDIRILDI */}
-  <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-    <button 
-      onClick={handleProfileClick}
-      style={{ 
-        padding: '10px 24px', 
-        borderRadius: '12px', 
-        border: '1px solid rgba(255,255,255,0.3)', 
-        background: 'rgba(255,255,255,0.15)', 
-        color: '#fff', 
-        cursor: 'pointer', 
-        fontWeight: 600,
-        fontSize: '0.9rem',
-        backdropFilter: 'blur(5px)',
-        transition: 'all 0.3s ease'
-      }}
-    >
-      👤 Profilim
-    </button>
-  </div>
-</header>
-
-    {/* 2. YÜZEN FİLTRE (Responsive) */}
-    <div style={{ maxWidth: '900px', margin: '-60px auto 40px auto', padding: '0 20px', position: 'relative', zIndex: 10 }}>
-      <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '20px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-          <input type="text" placeholder="Salon ara..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ flex: 2, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
-          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }}>{CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        </div>
-      </div>
-    </div>
-
-    {/* 3. KOMPAKT VE RESPONSIVE DÜKKAN LİSTESİ */}
-<main style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
-  <div style={{ 
-    display: 'grid', 
-    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
-    gap: '20px' 
-  }}>
-    {filteredShops.map((shop) => (
-      <div key={shop.id} style={{ 
-        backgroundColor: '#fff', 
-        padding: '20px', 
-        borderRadius: '16px', 
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.02)', 
-        display: 'flex', 
-        flexDirection: 'row', // Yatay düzen için row
-        alignItems: 'center', 
-        gap: '20px' 
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", system-ui, sans-serif' }}>
+      
+      {/* 1. HERO ALANI */}
+      <header style={{ 
+        position: 'relative', height: '500px', display: 'flex', flexDirection: 'column', 
+        justifyContent: 'center', alignItems: 'center', textAlign: 'center', color: '#fff',
+        background: 'linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url("/kuaforsalonu.jpg")', 
+        backgroundSize: 'cover', backgroundPosition: 'center'
       }}>
-        
-        {/* SOL TARAF: KÜÇÜK LOGO ALANI */}
-        <div style={{ width: '100px', height: '100px', flexShrink: 0 }}>
-         {shop.imageUrl && shop.imageUrl.trim() !== "" ? (
-          <img 
-            // Cloudinary linkini olduğu gibi kullanıyoruz (Render linki ekleme!)
-            src={shop.imageUrl}
-            alt={shop.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
-            // Eğer resim yüklenemezse tekrar tekrar istek atmasın diye 'onError' içine boş fonksiyon yazıyoruz
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-        ) : (
-        // Resim yoksa yer tutucu gösteriyoruz
-        <div style={{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-         Logo
-        </div>
-        )}
-        </div>
+        <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 900, margin: 0 }}>Berber<span style={{ color: '#818cf8' }}>Lab</span></h1>
+        <p style={{ fontSize: '1.2rem', marginTop: '15px', opacity: 0.9 }}>Kendinize bi güzellik yapın! Size en uygun salonlardan online randevunuzu kolayca alın.</p>
 
-        {/* SAĞ TARAF: DÜKKAN BİLGİLERİ */}
-        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>{shop.name}</h3>
-          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-            <div style={{ marginBottom: '2px' }}>📍 {shop.city} / {shop.district}</div>
-            <div style={{ marginBottom: '2px' }}>🏠 {shop.addressText}</div>
-            <div style={{ fontWeight: 600, color: '#334155' }}>📞 {shop.phoneNumber || 'Telefon bilgisi yok'}</div>
-          </div>
-          <button 
-            onClick={() => navigate(`/book-appointment/${shop.id}`)}
-            style={{ 
-              marginTop: '10px', 
-              width: '100%', 
-              backgroundColor: '#0f172a', 
-              color: '#fff', 
-              padding: '8px', 
-              borderRadius: '8px', 
-              border: 'none', 
-              fontWeight: 700, 
-              cursor: 'pointer' 
-            }}
-          >
-            Randevu Al
-          </button>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '12px' }}>
+          <button onClick={handleProfileClick} style={{ padding: '10px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', fontWeight: 600 }}>👤 Profilim</button>
+          {!token ? (
+            <button onClick={() => navigate('/login')} style={{ padding: '10px 20px', borderRadius: '12px', background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700 }}>🔑 Giriş Yap</button>
+          ) : (
+            <button onClick={handleLogout} style={{ padding: '10px 20px', borderRadius: '12px', background: '#ef4444', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700 }}>🚪 Çıkış</button>
+          )}
         </div>
-        
+      </header>
+
+      {/* 2. FİLTRE ALANI */}
+      <div style={{ maxWidth: '800px', margin: '-50px auto 40px auto', padding: '0 20px', zIndex: 10, position: 'relative' }}>
+        <div style={{ backgroundColor: '#fff', padding: '25px', borderRadius: '20px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', gap: '10px' }}>
+          <input 
+            type="text" 
+            placeholder="Salon ara..." 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} 
+            style={{ flex: 2, padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }} 
+          />
+          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} style={{ flex: 1, padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
       </div>
-    ))}
-  </div>
-</main>
-  </div>
-);
+
+      {/* 3. NASIL ÇALIŞIR? */}
+      <section style={{ maxWidth: '1000px', margin: '60px auto', padding: '0 20px', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '40px' }}>Nasıl Çalışır?</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
+          {[ {t: "Ara", d: "İhtiyacın olan hizmeti veya salonu seç."}, {t: "Seç", d: "Size en uygun zamanı ve uzmanı belirle."}, {t: "Onayla", d: "Randevun anında cebine gelsin."} ].map((item, i) => (
+            <div key={i} style={{ padding: '30px', background: '#fff', borderRadius: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '10px' }}>{i === 0 ? '🔍' : i === 1 ? '📅' : '✅'}</div>
+              <h3>{item.t}</h3>
+              <p style={{ color: '#64748b' }}>{item.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. DÜKKAN LİSTESİ */}
+      <main style={{ maxWidth: '1000px', margin: '0 auto 60px auto', padding: '0 20px' }}>
+        <h2 style={{ marginBottom: '20px' }}>Yakınınızdaki Salonlar</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+          {filteredShops.length > 0 ? (
+             filteredShops.map((shop) => (
+              <div key={shop.id} style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', gap: '15px' }}>
+                <div style={{ width: '80px', height: '80px', backgroundColor: '#e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{shop.name.charAt(0)}</div>
+                <div style={{ flexGrow: 1 }}>
+                  <h3 style={{ margin: '0 0 5px 0' }}>{shop.name}</h3>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b' }}>📍 {shop.district} / {shop.city}</p>
+                  <button onClick={() => navigate(`/book-appointment/${shop.id}`)} style={{ marginTop: '10px', width: '100%', padding: '8px', borderRadius: '8px', border: 'none', background: '#0f172a', color: '#fff', cursor: 'pointer' }}>Randevu Al</button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>Aradığınız kriterlerde salon bulunamadı.</p>
+          )}
+        </div>
+      </main>
+
+      {/* 5. İŞLETME SAHİPLERİ İÇİN */}
+      <section style={{ backgroundColor: '#1e293b', color: 'white', padding: '60px 20px', textAlign: 'center', borderRadius: '24px', margin: '0 20px 40px 20px' }}>
+        <h2 style={{ fontSize: '2rem' }}>Güzellik İşletmeniz mi var?</h2>
+        <p style={{ margin: '15px 0 30px 0', opacity: 0.8 }}>Randevularınızı ve salonunuzu A'dan Z'ye yönetmek çok kolay! Hemen işletme hesabı oluşturun.</p>
+        <button onClick={() => navigate('/register')} style={{ padding: '15px 30px', borderRadius: '12px', border: 'none', background: '#818cf8', color: 'white', fontWeight: 700, cursor: 'pointer' }}>Ücretsiz Kayıt Ol</button>
+      </section>
+    </div>
+  );
 }
