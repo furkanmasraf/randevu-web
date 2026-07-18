@@ -50,17 +50,22 @@ export default function Home() {
     fetchShops();
   }, [navigate]);
 
-  // GÜÇLENDİRİLMİŞ FİLTRELEME:
-  // Veri null gelse bile hata vermez, anlık olarak filtreler.
   const filteredShops = shops.filter((shop) => {
-    const sName = (shop.name || "").toLowerCase();
-    const sCity = (shop.city || "").toLowerCase();
-    const query = searchQuery.toLowerCase();
-    
-    const cityMatches = selectedCity === "Tümü" || sCity === selectedCity.toLowerCase();
-    const nameMatches = sName.includes(query);
-    
-    return cityMatches && nameMatches;
+    const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
+    const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    let matchesCategory = true;
+    if (selectedCategory !== 'Tümü') {
+      const shopNameLower = shop.name.toLowerCase();
+      if (selectedCategory === "Erkek Kuaförü") {
+        matchesCategory = shopNameLower.includes("erkek");
+      } else if (selectedCategory === "Kadın Kuaförü") {
+        matchesCategory = shopNameLower.includes("kadın") || shopNameLower.includes("bayan");
+      } else if (selectedCategory === "Güzellik Salonu") {
+        matchesCategory = shopNameLower.includes("güzellik");
+      }
+    }
+    return matchesCity && matchesSearch && matchesCategory;
   });
 
   const handleProfileClick = () => {
@@ -199,7 +204,6 @@ export default function Home() {
             Premium kuaför ve güzellik deneyimi, tek dokunuşla randevunuzda.
           </p>
         </div>
-      </div>
 
         <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
           <button
