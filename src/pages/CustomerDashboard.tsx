@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
-import { toast } from 'react-toastify'; // Toast eklendi
 
 interface AppointmentDTO {
   id: number;
@@ -18,6 +17,7 @@ interface AppointmentDTO {
 export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState<'appointments' | 'profile'>('appointments');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [appointments, setAppointments] = useState<AppointmentDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const [profileData, setProfileData] = useState({
@@ -26,10 +26,11 @@ export default function CustomerDashboard() {
     email: '',
     phoneNumber: '',
     addressText: '',
-    password: '',
-    passwordConfirm: '' // Şifre tekrarı eklendi
+    password: ''
   });
-  
+  const [focusedInput, setFocusedInput] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,13 +39,11 @@ export default function CustomerDashboard() {
     const role = localStorage.getItem('role');
 
     if (!token || !userId || role !== 'CUSTOMER') {
-      toast.error("Oturum süreniz dolmuş veya yetkisiz erişim.");
-      setLoading(false); 
       navigate('/login');
       return;
     }
 
-    const loadDashboardData = async () => {
+    const fetchAllData = async () => {
       try {
         setLoading(true);
 
@@ -54,7 +53,7 @@ export default function CustomerDashboard() {
         const sorted = Array.isArray(appResponse.data)
           ? [...appResponse.data].sort((a, b) => new Date(b.appointmentTime).getTime() - new Date(a.appointmentTime).getTime())
           : [];
-        setAppointments(sortedApps);
+        setAppointments(sorted);
 
         const userResponse = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -69,22 +68,23 @@ export default function CustomerDashboard() {
             password: ''
           });
         }
-      } catch (globalError) {
-        toast.error("Veriler yüklenirken bir sorun oluştu.");
+      } catch (error) {
+        console.error("Veriler yüklenirken hata oluştu:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadDashboardData();
+    fetchAllData();
   }, [navigate]);
 
-  const handleCancel = async (id: number) => {
+  const handleCancel = async (appointmentId: number) => {
+    const token = localStorage.getItem('token');
     if (!window.confirm("Bu randevuyu iptal etmek istediğinize emin misiniz?")) return;
-    
+
     try {
-      await API.put(`/api/appointments/${id}/cancel`, {}, { 
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
+      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/appointments/${appointmentId}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       alert("Randevunuz başarıyla iptal edildi.");
@@ -155,21 +155,6 @@ export default function CustomerDashboard() {
       default: return <span style={{ ...baseStyle, color: '#78706a', backgroundColor: '#f2ede3' }}>{status}</span>;
     }
   };
-
-  const SidebarButton = ({ onClick, active, icon, label, isDanger = false }: any) => (
-    <button 
-      onClick={onClick} 
-      style={{ 
-        width: '100%', textAlign: 'left', padding: '14px', borderRadius: '12px', border: 'none', 
-        backgroundColor: isDanger ? 'rgba(239, 68, 68, 0.15)' : (active ? 'rgba(255,255,255,0.1)' : 'transparent'), 
-        color: isDanger ? '#ef4444' : (active ? '#818cf8' : '#94a3b8'), 
-        fontWeight: isDanger ? 700 : 600, cursor: 'pointer', fontSize: '0.95rem', 
-        transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px' 
-      }}
-    >
-      <span>{icon}</span> {label}
-    </button>
-  );
 
   if (loading) {
     return (

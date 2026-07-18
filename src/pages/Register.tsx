@@ -2,15 +2,6 @@ import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
-interface FormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phoneNumber: string;
-  role: string;
-}
-
 export default function Register() {
   const navigate = useNavigate();
 
@@ -27,7 +18,8 @@ export default function Register() {
   const [error, setError] = useState<string>('');
 
   const [isBtnHovered, setIsBtnHovered] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
+  const [focusedInput, setFocusedInput] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -35,20 +27,32 @@ export default function Register() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
+
+    const payload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      phoneNumber: formData.phoneNumber,
+      role: formData.role.toUpperCase()
+    };
+
     try {
-      await API.post('/api/auth/register', { ...formData, role: formData.role.toUpperCase() });
-      alert('Kayıt başarılı!');
+      await API.post('/api/auth/register', payload);
+      alert('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
       navigate('/login');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Bir hata oluştu.');
+      console.error('Kayıt hatası:', err);
+      setError(err.response?.data?.message || 'Kayıt olurken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
     } finally {
       setLoading(false);
     }
@@ -317,7 +321,7 @@ export default function Register() {
                 transition: 'all 0.2s ease-in-out'
               }}
             >
-              {loading ? '...' : 'Kayıt Ol'}
+              {loading ? 'Hesap Oluşturuluyor...' : 'Kayıt Ol'}
             </button>
           </form>
 
@@ -330,6 +334,7 @@ export default function Register() {
 
         </div>
       </div>
+
     </div>
   );
 }

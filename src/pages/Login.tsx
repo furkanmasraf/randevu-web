@@ -1,29 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // 1. Link buraya eklendi
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import { Link } from 'react-router-dom';
 import API from '../services/api';
 
-const BACKGROUND_IMAGE_URL = '/kuaforsalonu.jpg'; 
+const Login: React.FC = () => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [isBtnHovered, setIsBtnHovered] = useState<boolean>(false);
   const [focusedInput, setFocusedInput] = useState<string>('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  const navigate = useNavigate();
-
-  // ⚡️ SUNUCU ÖN ISITMA
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-    if (emailError || !email || !password) {
-      setAlertMessage('Lütfen geçerli bir e-posta ve şifre giriniz.');
-      setShowError(true);
+  const handleLoginClick = async (): Promise<void> => {
+    localStorage.clear();
+    if (!email || !password) {
+      alert("Lütfen e-posta ve şifre alanlarını doldurun.");
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const response = await API.post('api/auth/login', { email, password }, {
@@ -52,10 +53,10 @@ const BACKGROUND_IMAGE_URL = '/kuaforsalonu.jpg';
         }
       }
     } catch (err: any) {
-      setAlertMessage('E-posta adresi veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
-      setShowError(true);
+      console.error("Giriş esnasında hata oluştu:", err);
+      alert("Hatalı e-posta veya şifre!");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -186,13 +187,6 @@ const BACKGROUND_IMAGE_URL = '/kuaforsalonu.jpg';
                 placeholder="isim@domain.com"
               />
             </div>
-            <input 
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px', boxSizing: 'border-box' }}
-            />
-          </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3d3630', letterSpacing: '0.06em' }}>ŞİFRE</label>
@@ -230,7 +224,7 @@ const BACKGROUND_IMAGE_URL = '/kuaforsalonu.jpg';
                 transition: 'all 0.2s ease-in-out'
               }}
             >
-              Anladım
+              {isLoading ? 'Doğrulanıyor...' : 'Sisteme Giriş Yap'}
             </button>
           </div>
 
@@ -244,7 +238,8 @@ const BACKGROUND_IMAGE_URL = '/kuaforsalonu.jpg';
           </div>
 
         </div>
-      )}
+      </div>
+
     </div>
   );
 };
