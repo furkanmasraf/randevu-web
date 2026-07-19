@@ -2,8 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
-import RegisterShop from './pages/RegisterShop'; 
-import BookAppointment from './pages/BookAppointment'; 
+import RegisterShop from './pages/RegisterShop';
+import ResetPassword from './pages/ResetPassword';
+import BookAppointment from './pages/BookAppointment';
 import CustomerDashboard from './pages/CustomerDashboard';
 import BarberDashboard from './pages/BarberDashboard';
 import ProtectedRoute from './pages/ProtectedRoute';
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/book-appointment/:shopId" element={<BookAppointment />} />
         
         {/* KORUMALI ROTALAR (Sadece giriş yapmış kullanıcılar) */}

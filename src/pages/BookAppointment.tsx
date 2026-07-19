@@ -26,6 +26,13 @@ export default function BookAppointment() {
   const [appointmentDate, setAppointmentDate] = useState<string>('');
   const [appointmentTime, setAppointmentTime] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
+  // Component içine ekleyin
+const [notification, setNotification] = useState<string | null>(null);
+
+const showNotification = (msg: string) => {
+  setNotification(msg);
+  setTimeout(() => setNotification(null), 3000); // 3 saniye sonra kaybolsun
+};
 
   useEffect(() => {
     if (selectedEmployee && appointmentDate) {
@@ -81,8 +88,13 @@ export default function BookAppointment() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedEmployee || !selectedService || !appointmentDate || !appointmentTime) {
-      alert("Lütfen tüm alanları doldurun.");
+    if (!selectedEmployee || !selectedService) {
+      showNotification("Lütfen bir uzman ve hizmet seçin.");
+      return;
+    }
+
+    if (!appointmentDate || !appointmentTime) {
+      showNotification("Lütfen tarih ve saatinizi seçin.");
       return;
     }
 
@@ -101,18 +113,18 @@ export default function BookAppointment() {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
-      alert("Randevunuz başarıyla oluşturuldu!");
-
+      showNotification("Randevunuz başarıyla oluşturuldu!");
       const token = localStorage.getItem('token');
-      if (token) {
-        navigate('/');
-      } else {
-        navigate('/login');
-      }
-
+      setTimeout(() => {
+        if (token) {
+          navigate('/');
+        } else {
+          navigate('/login');
+        }
+      }, 1200);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Randevu oluşturulurken bir hata oluştu.";
-      alert(errorMessage);
+      showNotification(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -294,6 +306,33 @@ export default function BookAppointment() {
           text-decoration: line-through;
         }
 
+        .mkl-submit-btn {
+          width: 100%;
+          padding: 14px 18px;
+          border-radius: 14px;
+          border: none;
+          background: #1E1B18;
+          color: #FAF8F5;
+          font-size: 0.95rem;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+        }
+
+        .mkl-submit-btn:hover:not(:disabled) {
+          background: #060504;
+          transform: translateY(-1px);
+        }
+
+        .mkl-submit-btn:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+        }
+
         /* Custom inputs */
         .mkl-custom-date {
           width: 100%;
@@ -341,6 +380,22 @@ export default function BookAppointment() {
           flex-shrink: 0;
         }
       `}</style>
+      {notification && (
+  <div style={{
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    zIndex: 9999,
+    background: '#1E1B18',
+    color: '#FAF8F5',
+    padding: '16px 24px',
+    borderRadius: '12px',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+    fontFamily: "'Inter', sans-serif"
+  }}>
+    {notification}
+  </div>
+)}
 
       <div className="mkl-booking-layout">
         
@@ -747,44 +802,33 @@ export default function BookAppointment() {
                 </div>
               )}
 
-              <button
+             <button
                 type="submit"
-                disabled={submitting || !selectedEmployee || !selectedService || !appointmentDate || !appointmentTime}
-                className="mkl-submit-btn"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  background: '#1E1B18',
-                  color: '#FAF8F5',
-                  border: 'none',
-                  borderRadius: '14px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  fontFamily: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'all 0.25s ease'
-                }}
-              >
-                {submitting ? (
-                  <>
-                    <div style={{
-                      width: '14px',
-                      height: '14px',
-                      border: '2px solid rgba(255,255,255,0.2)',
-                      borderTopColor: '#FFFFFF',
-                      borderRadius: '50%',
-                      animation: 'spin 0.6s linear infinite'
-                    }} />
-                    Randevu Alınıyor...
-                  </>
-                ) : (
-                  "Randevuyu Onayla"
-                )}
-              </button>
+                  disabled={submitting}
+                  className="mkl-submit-btn"
+                    style={{
+              
+              
+              opacity: submitting ? 0.6 : 1,
+              cursor: submitting ? 'not-allowed' : 'pointer'
+            }}
+>
+              {submitting ? (
+    <>
+      <div style={{
+        width: '14px',
+        height: '14px',
+        border: '2px solid rgba(255,255,255,0.2)',
+        borderTopColor: '#FFFFFF',
+        borderRadius: '50%',
+        animation: 'spin 0.6s linear infinite'
+      }} />
+      Randevu Alınıyor...
+    </>
+  ) : (
+    "Randevuyu Onayla"
+  )}
+</button>
             </form>
 
             <button

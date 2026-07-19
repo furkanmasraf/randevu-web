@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import API from '../services/api';
+import NotificationToast from '../components/NotificationToast';
+import useNotification from '../hooks/useNotification';
 
 export default function ShopSettings() {
   const [shop, setShop] = useState({ shopName: '', address: '', phoneNumber: '', imageUrl: '' });
   const [loading, setLoading] = useState(true);
+  const { notification, showNotification } = useNotification();
 
   useEffect(() => {
     // Backend'de shopId'yi muhtemelen login olan kullanıcıdan veya URL'den alıyoruz
@@ -18,14 +21,15 @@ export default function ShopSettings() {
     const shopId = localStorage.getItem('shopId');
     try {
       await API.put(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/update`, shop);
-      alert("Dükkan bilgileri güncellendi!");
-    } catch (error) { alert("Güncelleme başarısız."); }
+      showNotification('Dükkan bilgileri güncellendi!', 'success');
+    } catch (error) { showNotification('Güncelleme başarısız.', 'error'); }
   };
 
   if (loading) return <div>Yükleniyor...</div>;
 
   return (
     <div style={{ maxWidth: '400px', margin: '40px auto', padding: '20px' }}>
+      <NotificationToast notification={notification} />
       <h2>Dükkan Bilgilerini Güncelle</h2>
       <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <input placeholder="Dükkan Adı" value={shop.shopName} onChange={e => setShop({...shop, shopName: e.target.value})} style={{ padding: '10px' }} />

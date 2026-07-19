@@ -1,6 +1,8 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import NotificationToast from '../components/NotificationToast';
+import useNotification from '../hooks/useNotification';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function Register() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const { notification, showNotification } = useNotification();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -47,8 +50,8 @@ export default function Register() {
 
     try {
       await API.post('/api/auth/register', payload);
-      alert('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
-      navigate('/login');
+      showNotification('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.', 'success');
+      setTimeout(() => navigate('/login'), 1200);
     } catch (err: any) {
       console.error('Kayıt hatası:', err);
       setError(err.response?.data?.message || 'Kayıt olurken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
@@ -56,6 +59,7 @@ export default function Register() {
       setLoading(false);
     }
   };
+
 
   return (
     <div style={{
@@ -377,7 +381,8 @@ export default function Register() {
         }}>
 
           <div style={{ marginBottom: '28px' }}>
-            <h2 style={{
+            <NotificationToast notification={notification} />
+          <h2 style={{
               fontFamily: "'Fraunces', serif",
               fontSize: '1.85rem',
               fontWeight: 500,
