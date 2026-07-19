@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import NotificationToast from '../components/NotificationToast';
+import useNotification from '../hooks/useNotification';
 
 interface AppointmentDTO {
   id: number;
@@ -28,6 +30,8 @@ export default function CustomerDashboard() {
     password: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { notification, showNotification } = useNotification();
+  const [cancelPendingId, setCancelPendingId] = useState<number | null>(null);
 
   const navigate = useNavigate();
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -76,22 +80,28 @@ export default function CustomerDashboard() {
     fetchAllData();
   }, [navigate]);
 
-  const handleCancel = async (appointmentId: number) => {
+  const requestCancel = (appointmentId: number) => {
+    setCancelPendingId(appointmentId);
+  };
+
+  const handleCancel = async () => {
+    if (cancelPendingId === null) return;
     const token = localStorage.getItem('token');
-    if (!window.confirm("Bu randevuyu iptal etmek istediğinize emin misiniz?")) return;
 
     try {
-      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/appointments/${appointmentId}/cancel`, {}, {
+      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/appointments/${cancelPendingId}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert("Randevunuz başarıyla iptal edildi.");
       setAppointments(prev =>
-        prev.map(app => app.id === appointmentId ? { ...app, status: 'CANCELLED' } : app)
+        prev.map(app => app.id === cancelPendingId ? { ...app, status: 'CANCELLED' } : app)
       );
+      showNotification('Randevunuz başarıyla iptal edildi.', 'success');
     } catch (error) {
-      console.error("Randevu iptal edilirken hata oluştu:", error);
-      alert("Randevu iptal edilemedi.");
+      console.error('Randevu iptal edilirken hata oluştu:', error);
+      showNotification('Randevu iptal edilemedi.', 'error');
+    } finally {
+      setCancelPendingId(null);
     }
   };
 
@@ -115,10 +125,10 @@ export default function CustomerDashboard() {
       await API.put(`https://randevu-sistemi-dv33.onrender.com/api/users/${userId}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("Profil bilgileriniz başarıyla güncellendi!");
+      showNotification('Profil bilgileriniz başarıyla güncellendi!', 'success');
     } catch (error) {
-      console.error("Profil güncellenirken hata oluştu:", error);
-      alert("Profil bilgileri güncellenemedi.");
+      console.error('Profil güncellenirken hata oluştu:', error);
+      showNotification('Profil bilgileri güncellenemedi.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -588,9 +598,11 @@ export default function CustomerDashboard() {
         padding: isMobile ? '80px 20px 40px 20px' : '40px 48px',
         maxWidth: '100%',
         overflowX: 'hidden',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative'
       }}>
-        
+        <NotificationToast notification={notification} />
+
         {/* Welcome Header */}
         <div style={{
           display: 'flex',
@@ -758,7 +770,7 @@ export default function CustomerDashboard() {
                             </div>
 
                             {/* Cancel Option */}
-                            <button onClick={() => handleCancel(app.id)} className="mkl-cancel-btn">
+                            <button onClick={() => requestCancel(app.id)} className="mkl-cancel-btn">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                               </svg>
@@ -844,6 +856,64 @@ export default function CustomerDashboard() {
           )}
 
           {/* TAB 2: PROFİL AYARLARIM */}
+          {cancelPendingId !== null && (
+            <div style={{
+              marginBottom: '24px',
+              padding: '18px 20px',
+              borderRadius: '20px',
+              background: '#1E1B18',
+              color: '#FAF8F5',
+              boxShadow: '0 20px 35px rgba(0,0,0,0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Randevu İptal Onayı</h3>
+                  <p style={{ margin: '8px 0 0', color: '#D8C8AB', fontSize: '0.92rem' }}>
+                    Seçili randevuyu iptal etmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  style={{
+                    flex: 1,
+                    minWidth: '160px',
+                    background: '#c0392b',
+                    color: '#FAF8F5',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '14px 18px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Evet, İptal Et
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCancelPendingId(null)}
+                  style={{
+                    flex: 1,
+                    minWidth: '160px',
+                    background: '#FAF8F5',
+                    color: '#1E1B18',
+                    border: '1px solid rgba(30, 27, 24, 0.12)',
+                    borderRadius: '14px',
+                    padding: '14px 18px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Vazgeç
+                </button>
+              </div>
+            </div>
+          )}
           {activeTab === 'profile' && (
             <div style={{ maxWidth: '640px' }}>
 

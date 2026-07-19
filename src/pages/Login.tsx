@@ -1,12 +1,15 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
+import NotificationToast from '../components/NotificationToast';
+import useNotification from '../hooks/useNotification';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const { notification, showNotification } = useNotification();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -19,7 +22,7 @@ const Login: React.FC = () => {
   const handleLoginClick = async (): Promise<void> => {
     localStorage.clear();
     if (!email || !password) {
-      alert("Lütfen e-posta ve şifre alanlarını doldurun.");
+      showNotification('Lütfen e-posta ve şifre alanlarını doldurun.', 'error');
       return;
     }
 
@@ -53,11 +56,12 @@ const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Giriş esnasında hata oluştu:", err);
-      alert("Hatalı e-posta veya şifre!");
+      showNotification('Hatalı e-posta veya şifre!', 'error');
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div style={{
@@ -349,6 +353,7 @@ const Login: React.FC = () => {
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); handleLoginClick(); }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <NotificationToast notification={notification} />
             
             {/* Email Input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -392,7 +397,7 @@ const Login: React.FC = () => {
                 }}>
                   Şifre
                 </label>
-                <a href="#" style={{ fontSize: '0.78rem', color: '#8C8276', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); alert("Şifre sıfırlama servisi şu an bakımda."); }}>
+                <a href="/reset-password" style={{ fontSize: '0.78rem', color: '#8C8276', textDecoration: 'none' }}>
                   Şifremi Unuttum?
                 </a>
               </div>

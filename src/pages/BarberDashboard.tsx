@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import NotificationToast from '../components/NotificationToast';
+import useNotification from '../hooks/useNotification';
 
 interface EmployeeItem {
   id: number;
@@ -40,6 +42,7 @@ export default function BarberDashboard() {
   const userId = localStorage.getItem('userId');
   const role = localStorage.getItem('role');
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const { notification, showNotification } = useNotification();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -143,15 +146,15 @@ export default function BarberDashboard() {
   }, [userId]);
 
   const handleAddService = async () => {
-    if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
+    if (!dynamicShopId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
     try {
       await API.post(`/api/services/shop/${dynamicShopId}`,
         { name: newServiceName, price: parseFloat(newServicePrice), durationInMinutes: 30 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Hizmet eklendi.");
+      showNotification("Hizmet eklendi.", 'success');
       window.location.reload();
-    } catch { alert("Hizmet eklenemedi."); }
+    } catch { showNotification("Hizmet eklenemedi.", 'error'); }
   };
 
   useEffect(() => {
@@ -166,7 +169,7 @@ export default function BarberDashboard() {
   }, [isSidebarOpen]);
 
   const handleAddEmployee = async () => {
-    if (!dynamicShopId) return alert("Dükkan bilgisi yüklenemedi!");
+    if (!dynamicShopId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
     const parts = newEmployeeName.trim().split(" ");
     const payload = { firstName: parts[0] || "-", lastName: parts.slice(1).join(" ") || "-" };
 
@@ -174,9 +177,9 @@ export default function BarberDashboard() {
       await API.post(`/api/employees/shop/${dynamicShopId}`, payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Personel eklendi!");
+      showNotification("Personel eklendi!", 'success');
       window.location.reload();
-    } catch { alert("Personel eklenemedi."); }
+    } catch { showNotification("Personel eklenemedi.", 'error'); }
   };
 
   const handleUpdateShop = async () => {
@@ -196,10 +199,10 @@ export default function BarberDashboard() {
       await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("Dükkan bilgileri ve görseller başarıyla güncellendi!");
+      showNotification("Dükkan bilgileri ve görseller başarıyla güncellendi!", 'success');
     } catch (err) {
       console.error("Dükkan güncellemesi başarısız:", err);
-      alert("Dükkan bilgileri güncellenemedi.");
+      showNotification("Dükkan bilgileri güncellenemedi.", 'error');
     }
   };
 
@@ -209,10 +212,10 @@ export default function BarberDashboard() {
       await API.delete(`https://randevu-sistemi-dv33.onrender.com/api/${type}s/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("Silindi!");
+      showNotification("Silindi!", 'success');
       window.location.reload();
     } catch {
-      alert("Silme hatası!");
+      showNotification("Silme hatası!", 'error');
     }
   };
 
@@ -238,7 +241,7 @@ export default function BarberDashboard() {
       fetchBusySlots(employeeId, selectedDate);
     } catch (err) {
       console.error("İşlem hatası:", err);
-      alert("İşlem gerçekleştirilemedi.");
+      showNotification("İşlem gerçekleştirilemedi.", 'error');
     }
   };
 
@@ -548,6 +551,7 @@ export default function BarberDashboard() {
           }
         }
       `}</style>
+      <NotificationToast notification={notification} />
 
       {/* MOBİL HAMBURGER */}
       <button className="mkl-bd-hamburger" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
@@ -876,7 +880,10 @@ export default function BarberDashboard() {
                     const statusStyle = getStatusStyle(app.status);
 
                     const updateStatus = async (id: any, status: string) => {
-                      if (!token) return alert('Giriş bilgisi bulunamadı.');
+                      if (!token) {
+                        showNotification('Giriş bilgisi bulunamadı.', 'error');
+                        return;
+                      }
                       try {
                         await API.patch(`/api/appointments/${id}/status`, { status }, {
                           headers: { Authorization: `Bearer ${token}` }
@@ -886,7 +893,7 @@ export default function BarberDashboard() {
                         }
                       } catch (err) {
                         console.error('Randevu durumu güncellenemedi:', err);
-                        alert('Randevu durumu güncellenemedi.');
+                        showNotification('Randevu durumu güncellenemedi.', 'error');
                       }
                     };
 
