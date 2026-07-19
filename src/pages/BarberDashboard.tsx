@@ -39,6 +39,7 @@ export default function BarberDashboard() {
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId');
   const role = localStorage.getItem('role');
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -56,7 +57,6 @@ export default function BarberDashboard() {
         params: { employeeId, date },
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log(`Personel ${employeeId} için gelen dolu saatler:`, response.data);
       setBusySlotsMap(prev => ({ ...prev, [employeeId]: response.data }));
     } catch (err) {
       console.error("Dolu saatler çekilemedi:", err);
@@ -84,7 +84,6 @@ export default function BarberDashboard() {
       const shopRes = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log("Backend'den Gelen Dükkan Verisi:", shopRes.data);
 
       if (shopRes.data?.id) {
         const shopId = shopRes.data.id;
@@ -243,446 +242,923 @@ export default function BarberDashboard() {
     }
   };
 
+  const pendingAppointmentsCount = appointments.filter(app => app.status === 'PENDING').length;
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f6f3ee', color: '#1c1917', fontFamily: "'Inter', system-ui, sans-serif" }}>
-        <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>Yükleniyor...</div>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        backgroundColor: '#FAF8F5', 
+        color: '#A3845B', 
+        fontFamily: "'Inter', sans-serif", 
+        gap: '16px' 
+      }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          border: '3px solid rgba(197, 168, 128, 0.2)',
+          borderTopColor: '#A3845B',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <span style={{ fontSize: '0.9rem', fontWeight: 500, letterSpacing: '0.05em' }}>Yönetici Paneli Yükleniyor...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
+  const shopInitials = (shopDetails?.shopName?.substring(0, 2) || "ML").toUpperCase();
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f6f3ee', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ 
+      display: 'flex', 
+      minHeight: '100vh', 
+      backgroundColor: '#FAF8F5', 
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      color: '#1E1B18'
+    }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        .mkl-side-btn {
+          width: 100%;
+          text-align: left;
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: none;
+          background: transparent;
+          color: #8C8276;
+          font-weight: 500;
+          font-size: 0.92rem;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .mkl-side-btn:hover {
+          color: #FAF8F5;
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .mkl-side-btn.active {
+          color: #C5A880;
+          background-color: rgba(197, 168, 128, 0.08);
+          font-weight: 600;
+        }
+
+        .mkl-side-btn.danger {
+          color: #E08B78;
+          background-color: rgba(224, 139, 120, 0.08);
+          margin-top: 20px;
+        }
+
+        .mkl-side-btn.danger:hover {
+          background-color: rgba(224, 139, 120, 0.15);
+          color: #FF9B85;
+        }
+
+        .mkl-bd-hamburger {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 100;
+          width: 44px;
+          height: 44px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          background-color: #1E1B18;
+          color: #FAF8F5;
+          border: 1px solid rgba(197, 168, 128, 0.2);
+          border-radius: 12px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+          transition: all 0.25s ease;
+        }
 
         .mkl-bd-hamburger:hover {
-          background-color: #b8863b !important;
+          background-color: #A3845B;
         }
 
-        .mkl-bd-nav-btn:hover {
-          background-color: rgba(250, 247, 242, 0.06) !important;
-        }
-
-        .mkl-bd-logout:hover {
-          background-color: rgba(163, 64, 47, 0.15) !important;
+        .mkl-bd-filter-btn {
+          padding: 10px 22px;
+          border-radius: 12px;
+          border: 1px solid rgba(197, 168, 128, 0.25);
+          background: #FFFFFF;
+          color: #8C8276;
+          font-weight: 600;
+          font-size: 0.88rem;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          font-family: inherit;
         }
 
         .mkl-bd-filter-btn:hover {
-          border-color: #b8863b !important;
+          border-color: #A3845B;
+          color: #A3845B;
+        }
+
+        .mkl-bd-filter-btn.active {
+          background: #1E1B18;
+          border-color: #1E1B18;
+          color: #FAF8F5;
+          box-shadow: 0 4px 12px rgba(30, 27, 24, 0.15);
+        }
+
+        .mkl-bd-input {
+          width: 100%;
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: 1px solid rgba(197, 168, 128, 0.25);
+          background-color: #FFFFFF;
+          font-size: 0.95rem;
+          font-family: inherit;
+          color: #1E1B18;
+          outline: none;
+          transition: all 0.25s ease;
         }
 
         .mkl-bd-input:focus {
-          outline: none !important;
-          border-color: #b8863b !important;
-          box-shadow: 0 0 0 3px rgba(184, 134, 59, 0.15);
+          border-color: #A3845B;
+          box-shadow: 0 0 0 3px rgba(163, 132, 91, 0.12);
         }
 
         .mkl-bd-card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+          background: #FFFFFF;
+          border-radius: 20px;
+          border: 1.5px solid rgba(232, 226, 213, 0.8);
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         .mkl-bd-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 22px -10px rgba(28, 25, 23, 0.16);
-          border-color: #e0d3ba;
+          transform: translateY(-3px);
+          border-color: rgba(197, 168, 128, 0.4);
+          box-shadow: 0 16px 30px -10px rgba(163, 132, 91, 0.12);
         }
 
         .mkl-bd-primary-btn {
-          transition: background-color 0.2s ease;
+          width: 100%;
+          background: #1E1B18;
+          color: #FAF8F5;
+          border: none;
+          padding: 13px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          font-family: inherit;
+          transition: all 0.25s ease;
         }
+
         .mkl-bd-primary-btn:hover {
-          background-color: #b8863b !important;
+          background: #A3845B;
+          box-shadow: 0 8px 20px rgba(163, 132, 91, 0.2);
         }
 
-        .mkl-bd-approve-btn:hover {
-          background-color: #b8863b !important;
+        .mkl-action-btn-small {
+          flex: 1;
+          border: none;
+          padding: 10px;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 0.88rem;
+          cursor: pointer;
+          font-family: inherit;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
         }
 
-        .mkl-bd-reject-btn:hover {
-          background-color: #f3ddd6 !important;
+        .mkl-btn-approve {
+          background-color: #1E1B18;
+          color: #FAF8F5;
         }
 
-        .mkl-bd-delete-btn:hover {
-          background-color: #f3ddd6 !important;
+        .mkl-btn-approve:hover {
+          background-color: #A3845B;
+          box-shadow: 0 4px 12px rgba(163, 132, 91, 0.25);
+        }
+
+        .mkl-btn-reject {
+          background-color: rgba(192, 57, 43, 0.05);
+          color: #c0392b;
+          border: 1px solid rgba(192, 57, 43, 0.15);
+        }
+
+        .mkl-btn-reject:hover {
+          background-color: #c0392b;
+          color: #FAF8F5;
+          border-color: #c0392b;
+        }
+
+        .mkl-btn-delete {
+          background-color: rgba(192, 57, 43, 0.05);
+          color: #c0392b;
+          border: 1px solid rgba(192, 57, 43, 0.12);
+          padding: 8px 14px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: 700;
+          font-size: 0.82rem;
+          font-family: inherit;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .mkl-btn-delete:hover {
+          background-color: #c0392b;
+          color: #FAF8F5;
+          border-color: #c0392b;
         }
 
         .mkl-bd-upload-zone {
-          transition: border-color 0.2s ease, background-color 0.2s ease;
+          padding: 24px;
+          border: 2px dashed rgba(197, 168, 128, 0.3);
+          border-radius: 16px;
+          text-align: center;
+          background-color: #FFFFFF;
+          transition: all 0.25s ease;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
         }
+
         .mkl-bd-upload-zone:hover {
-          border-color: #b8863b !important;
+          border-color: #A3845B;
+          background-color: rgba(197, 168, 128, 0.02);
         }
 
         .mkl-bd-slot {
-          transition: transform 0.15s ease;
-        }
-        .mkl-bd-slot:hover {
-          transform: scale(1.05);
+          padding: 10px 0;
+          border-radius: 10px;
+          text-align: center;
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
 
-        @media (max-width: 480px) {
-          .mkl-bd-main {
-            padding: 20px !important;
+        .mkl-bd-slot:hover {
+          transform: translateY(-1px);
+        }
+
+        .mkl-stat-card {
+          flex: 1;
+          minWidth: 200px;
+          background: #FFFFFF;
+          border: 1.5px solid rgba(232, 226, 213, 0.8);
+          border-radius: 20px;
+          padding: 20px 24px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          box-shadow: 0 4px 12px rgba(58, 53, 48, 0.02);
+        }
+
+        @media (max-width: 992px) {
+          .mkl-bd-sidebar {
+            display: ${isSidebarOpen ? 'flex' : 'none'} !important;
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px !important;
+            z-index: 1000;
+            box-shadow: 8px 0 35px rgba(0,0,0,0.15);
+          }
+          .mkl-bd-hamburger {
+            display: flex !important;
           }
         }
       `}</style>
 
       {/* MOBİL HAMBURGER */}
-      <button
-        className="md:hidden mkl-bd-hamburger"
-        style={{ position: 'fixed', top: '15px', left: '15px', zIndex: 99, background: '#1c1917', color: '#faf7f2', border: 'none', padding: '10px 15px', borderRadius: '10px', fontSize: '1.1rem', cursor: 'pointer', transition: 'background-color 0.2s ease' }}
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
-        ☰
+      <button className="mkl-bd-hamburger" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+        {isSidebarOpen ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        )}
       </button>
 
-      {/* SIDEBAR */}
+      {/* SOL SIDEBAR */}
       <div
         ref={sidebarRef}
+        className="mkl-bd-sidebar"
         style={{
-          position: 'fixed', inset: '0', zIndex: 50, width: '280px', backgroundColor: '#1c1917', color: '#faf7f2',
-          transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.3s ease',
-          padding: '40px 20px', display: 'flex', flexDirection: 'column'
-        }} className="md:static md:transform-none">
-        <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.4rem', fontWeight: 600, marginBottom: '40px' }}>
-          Makas<span style={{ fontStyle: 'italic', color: '#c9a267' }}>Lab</span>
-        </h2>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          width: '280px',
+          backgroundColor: '#1E1B18',
+          color: '#FAF8F5',
+          padding: '32px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          borderRight: '1px solid rgba(197, 168, 128, 0.15)',
+          boxShadow: '8px 0 35px rgba(0,0,0,0.08)'
+        }}
+      >
+        {/* Brand Header */}
+        <div style={{ marginBottom: '40px', paddingLeft: '8px' }}>
+          <a href="#" style={{ textDecoration: 'none', color: '#FAF8F5' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
+            <h2 style={{ 
+              margin: 0, 
+              fontFamily: "'Fraunces', serif", 
+              fontSize: '1.45rem', 
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="6" cy="18" r="3" />
+                <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
+                <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
+              </svg>
+              Makas<span>Lab</span>
+            </h2>
+          </a>
+        </div>
+
+        {/* Navigation */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexGrow: 1 }}>
           {[
-            { id: 'appointments', label: 'Randevular' },
-            { id: 'services', label: 'Hizmet Yönetimi' },
-            { id: 'employees', label: 'Personel Yönetimi' },
-            { id: 'settings', label: 'İşletme Ayarları' },
-            { id: 'hours', label: 'Personel Takvimi' }
+            { 
+              id: 'appointments', 
+              label: 'Randevular',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              )
+            },
+            { 
+              id: 'services', 
+              label: 'Hizmet Yönetimi',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              )
+            },
+            { 
+              id: 'employees', 
+              label: 'Personel Yönetimi',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              )
+            },
+            { 
+              id: 'hours', 
+              label: 'Personel Takvimi',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              )
+            },
+            { 
+              id: 'settings', 
+              label: 'İşletme Ayarları',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              )
+            }
           ].map(item => (
             <button
               key={item.id}
-              className="mkl-bd-nav-btn"
+              className={`mkl-side-btn ${activeTab === item.id ? 'active' : ''}`}
               onClick={() => { setActiveTab(item.id as any); setIsSidebarOpen(false); }}
-              style={{
-                width: '100%', padding: '12px 14px', textAlign: 'left',
-                background: activeTab === item.id ? 'rgba(184, 134, 59, 0.16)' : 'transparent',
-                border: 'none',
-                color: activeTab === item.id ? '#d9b579' : '#a89b8a',
-                borderRadius: '10px', cursor: 'pointer', fontWeight: 600,
-                fontFamily: "'Inter', sans-serif", fontSize: '0.92rem',
-                transition: 'background-color 0.2s ease'
-              }}
             >
+              {item.icon}
               {item.label}
             </button>
           ))}
         </nav>
-        <button
-          onClick={handleLogout}
-          className="mkl-bd-logout"
-          style={{
-            marginTop: 'auto',
-            padding: '11px',
-            backgroundColor: 'transparent',
-            border: '1px solid #a3402f',
-            color: '#e08b78',
-            borderRadius: '10px',
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 600,
-            cursor: 'pointer',
-            width: '100%',
-            transition: 'background-color 0.2s ease'
-          }}
-        >
-          Çıkış Yap
-        </button>
+
+        {/* User Card bottom */}
+        <div style={{
+          marginTop: 'auto',
+          paddingTop: '20px',
+          borderTop: '1px solid rgba(197, 168, 128, 0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '8px' }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              backgroundColor: '#C5A880',
+              color: '#1E1B18',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '0.85rem'
+            }}>
+              {shopInitials}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#FAF8F5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {shopDetails?.shopName || 'Yönetici'}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#8C8276', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Salon Sahibi
+              </span>
+            </div>
+          </div>
+
+          <button onClick={handleLogout} className="mkl-side-btn danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Çıkış Yap
+          </button>
+        </div>
       </div>
 
-      {/* ANA İÇERİK */}
-      <main className="mkl-bd-main" style={{ flex: 1, padding: '40px', marginTop: '60px', maxWidth: '1200px', marginInline: 'auto' }}>
-        {activeTab === 'appointments' && (
+      {/* ARKA PLAN MOBİL KARARTICI */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(30,27,24,0.4)', zIndex: 400
+          }}
+        />
+      )}
+
+      {/* ANA İÇERİK ALANI */}
+      <main style={{ 
+        flex: 1, 
+        padding: isMobile ? '80px 20px 40px 20px' : '40px 48px', 
+        maxWidth: '1200px', 
+        marginInline: 'auto',
+        boxSizing: 'border-box'
+      }}>
+        
+        {/* Welcome Banner */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: '28px',
+          borderBottom: '1px solid rgba(197, 168, 128, 0.15)',
+          paddingBottom: '20px'
+        }}>
           <div>
-            <header style={{ marginBottom: '30px' }}>
-              <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.8rem', fontWeight: 600, color: '#1c1917' }}>Randevular</h1>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-                {['past', 'today', 'future'].map((f) => (
-                  <button
-                    key={f}
-                    className="mkl-bd-filter-btn"
-                    onClick={() => setAppFilter(f as any)}
-                    style={{
-                      padding: '10px 22px', borderRadius: '10px', border: appFilter === f ? '1px solid #1c1917' : '1px solid #e4ddd2', cursor: 'pointer', fontWeight: 700,
-                      backgroundColor: appFilter === f ? '#1c1917' : '#fff', color: appFilter === f ? '#faf7f2' : '#78706a',
-                      fontFamily: "'Inter', sans-serif",
-                      boxShadow: '0 2px 4px rgba(28,25,23,0.05)', transition: 'border-color 0.2s ease'
-                    }}
-                  >
-                    {f === 'past' ? 'Geçmiş' : f === 'today' ? 'Bugün' : 'Gelecek'}
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#A3845B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>YÖNETİCİ PANELİ</span>
+            <h1 style={{ margin: '4px 0 0 0', fontFamily: "'Fraunces', serif", fontSize: '2.1rem', fontWeight: 400 }}>
+              {shopDetails?.shopName || 'Salon Yönetimi'}
+            </h1>
+          </div>
+          
+          <button onClick={() => navigate('/')} className="mkl-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Müşteri Görünümü
+          </button>
+        </div>
+
+        {/* Business Stats Grid Bar */}
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '32px' }}>
+          <div className="mkl-stat-card">
+            <div style={{ padding: '10px', borderRadius: '12px', backgroundColor: 'rgba(197, 168, 128, 0.1)', color: '#A3845B' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.78rem', color: '#8C8276', fontWeight: 600, textTransform: 'uppercase' }}>Personel</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 700 }}>{employees.length}</span>
+            </div>
+          </div>
+
+          <div className="mkl-stat-card">
+            <div style={{ padding: '10px', borderRadius: '12px', backgroundColor: 'rgba(197, 168, 128, 0.1)', color: '#A3845B' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="6" cy="18" r="3" />
+                <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
+                <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.78rem', color: '#8C8276', fontWeight: 600, textTransform: 'uppercase' }}>Hizmetler</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 700 }}>{services.length}</span>
+            </div>
+          </div>
+
+          <div className="mkl-stat-card">
+            <div style={{ padding: '10px', borderRadius: '12px', backgroundColor: 'rgba(163, 132, 91, 0.1)', color: '#A3845B' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.78rem', color: '#8C8276', fontWeight: 600, textTransform: 'uppercase' }}>Bekleyen İşler</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 700, color: pendingAppointmentsCount > 0 ? '#d35400' : '#1E1B18' }}>
+                {pendingAppointmentsCount}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* TAB CONTENTS */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          padding: isMobile ? '24px 18px' : '40px',
+          borderRadius: '24px',
+          border: '1.5px solid rgba(232, 226, 213, 0.7)',
+          boxShadow: '0 16px 30px -10px rgba(58, 53, 48, 0.05)'
+        }}>
+
+          {/* TAB 1: appointments */}
+          {activeTab === 'appointments' && (
+            <div>
+              <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500 }}>Randevular</h2>
+                  <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>İşletmenize gelen randevu taleplerini filtreleyin ve onaylayın.</p>
+                </div>
+
+                {/* Filter Capsule */}
+                <div style={{ display: 'flex', gap: '8px', padding: '4px', background: '#FAF8F5', borderRadius: '14px', border: '1px solid rgba(197, 168, 128, 0.15)' }}>
+                  {[
+                    { id: 'past', label: 'Geçmiş' },
+                    { id: 'today', label: 'Bugün' },
+                    { id: 'future', label: 'Gelecek' }
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      className={`mkl-bd-filter-btn ${appFilter === f.id ? 'active' : ''}`}
+                      onClick={() => setAppFilter(f.id as any)}
+                      style={{ border: 'none', borderRadius: '10px', padding: '8px 16px' }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </header>
+
+              {appointments.length === 0 ? (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '60px 24px', 
+                  color: '#8C8276', 
+                  background: '#FAF8F5',
+                  border: '1px dashed rgba(197, 168, 128, 0.3)',
+                  borderRadius: '16px'
+                }}>
+                  Filtreye uygun randevu bulunamadı.
+                </div>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                  gap: '24px'
+                }}>
+                  {appointments.map((app) => {
+                    const getStatusStyle = (status: string) => {
+                      switch (status) {
+                        case 'APPROVED': return { label: 'Onaylandı', color: '#27ae60', bg: '#e8f8f0' };
+                        case 'REJECTED': return { label: 'Reddedildi', color: '#7f8c8d', bg: '#f2f4f4' };
+                        case 'CANCELLED': return { label: 'İptal Edildi', color: '#c0392b', bg: '#fdedec' };
+                        case 'PENDING': return { label: 'Bekliyor', color: '#d35400', bg: '#fdf2e9' };
+                        default: return { label: status, color: '#1E1B18', bg: '#FAF8F5' };
+                      }
+                    };
+
+                    const statusStyle = getStatusStyle(app.status);
+
+                    const updateStatus = async (id: any, status: string) => {
+                      if (!token) return alert('Giriş bilgisi bulunamadı.');
+                      try {
+                        await API.patch(`/api/appointments/${id}/status`, { status }, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (dynamicShopId) {
+                          fetchAppointments(dynamicShopId, appFilter);
+                        }
+                      } catch (err) {
+                        console.error('Randevu durumu güncellenemedi:', err);
+                        alert('Randevu durumu güncellenemedi.');
+                      }
+                    };
+
+                    return (
+                      <div key={app.id} className="mkl-bd-card">
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.15rem', fontWeight: 600, margin: 0, color: '#1E1B18' }}>
+                              {app.customerName}
+                            </h4>
+                            <span style={{ fontSize: '0.78rem', color: '#8C8276', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              {new Date(app.appointmentTime).toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })}
+                            </span>
+                          </div>
+
+                          <span style={{
+                            fontSize: '0.75rem', fontWeight: 700, padding: '5px 12px', borderRadius: '8px',
+                            backgroundColor: statusStyle.bg, color: statusStyle.color
+                          }}>
+                            {statusStyle.label}
+                          </span>
+                        </div>
+
+                        {/* Details container */}
+                        <div style={{ backgroundColor: '#FAF8F5', padding: '14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid rgba(232, 226, 213, 0.6)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#8C8276' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="6" cy="6" r="3" />
+                              <circle cx="6" cy="18" r="3" />
+                              <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
+                            </svg>
+                            <span style={{ fontWeight: 600, color: '#1E1B18' }}>{app.serviceName}</span>
+                            <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#A3845B' }}>{app.price} TL</span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#8C8276' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Uzman: {app.employeeName}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#8C8276' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                            <span>Tel: {app.customerPhone}</span>
+                          </div>
+                        </div>
+
+                        {app.status === 'PENDING' && (
+                          <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+                            <button onClick={() => updateStatus(app.id, 'APPROVED')} className="mkl-action-btn-small mkl-btn-approve">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Onayla
+                            </button>
+                            
+                            <button onClick={() => updateStatus(app.id, 'REJECTED')} className="mkl-action-btn-small mkl-btn-reject">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                              Reddet
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: services */}
+          {activeTab === 'services' && (
+            <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Hizmet Yönetimi</h2>
+                <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Müşterilerinize sunduğunuz saç tasarımı, bakım veya makyaj hizmetlerini yönetin.</p>
+              </div>
+
+              {/* Add Service Box */}
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                padding: '24px',
+                marginBottom: '32px',
+                border: '1.5px solid rgba(232, 226, 213, 0.8)',
+                boxShadow: '0 8px 20px -10px rgba(58, 53, 48, 0.05)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1E1B18' }}>Yeni Hizmet Ekle</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.05em' }}>HİZMET ADI</label>
+                    <input
+                      className="mkl-bd-input"
+                      value={newServiceName}
+                      onChange={e => setNewServiceName(e.target.value)}
+                      placeholder="Örn: Saç Kesimi & Yıkama"
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.05em' }}>ÜCRET (TL)</label>
+                    <input
+                      className="mkl-bd-input"
+                      value={newServicePrice}
+                      onChange={e => setNewServicePrice(e.target.value)}
+                      placeholder="Örn: 250"
+                      type="number"
+                    />
+                  </div>
+
+                  <button onClick={handleAddService} className="mkl-bd-primary-btn" style={{ marginTop: '8px' }}>
+                    Hizmeti Kaydet
                   </button>
+                </div>
+              </div>
+
+              {/* Service List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {services.map(service => (
+                  <div key={service.id} className="mkl-bd-card" style={{
+                    padding: '18px 24px', borderRadius: '16px', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+                  }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1E1B18' }}>{service.name}</h4>
+                      <p style={{ margin: '4px 0 0 0', color: '#A3845B', fontWeight: 700, fontSize: '0.95rem', fontFamily: "'Fraunces', serif" }}>{service.price} TL</p>
+                    </div>
+                    
+                    <button onClick={() => handleDelete('service', service.id)} className="mkl-btn-delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                      Sil
+                    </button>
+                  </div>
                 ))}
               </div>
-            </header>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '20px'
-            }}>
-              {appointments.map((app) => {
-                const getStatusStyle = (status: string) => {
-                  switch (status) {
-                    case 'APPROVED': return { label: 'Onaylandı', color: '#3f7a4e', bg: '#eef6ee' };
-                    case 'REJECTED': return { label: 'Reddedildi', color: '#78706a', bg: '#f2ede3' };
-                    case 'CANCELLED': return { label: 'İptal Edildi', color: '#a3402f', bg: '#fbeeea' };
-                    case 'PENDING': return { label: 'Bekliyor', color: '#a06a24', bg: '#faf3e5' };
-                    default: return { label: status, color: '#3d3630', bg: '#f2ede3' };
-                  }
-                };
-
-                const statusStyle = getStatusStyle(app.status);
-
-                function updateStatus(id: any, status: string): void {
-                  if (!token) {
-                    alert('Giriş bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-                    return;
-                  }
-
-                  (async () => {
-                    try {
-                      await API.patch(`/api/appointments/${id}/status`, { status }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-
-                      if (dynamicShopId) {
-                        await fetchAppointments(dynamicShopId, appFilter);
-                      }
-                    } catch (err) {
-                      console.error('Randevu durumu güncellenemedi:', err);
-                      alert('Randevu durumu güncellenemedi.');
-                    }
-                  })();
-                }
-
-                return (
-                  <div key={app.id} className="mkl-bd-card" style={{
-                    background: '#fff', borderRadius: '16px', padding: '22px', boxShadow: '0 2px 8px -2px rgba(28,25,23,0.06)',
-                    border: '1px solid #ece4d5', display: 'flex', flexDirection: 'column', gap: '14px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1c1917' }}>{app.customerName}</h4>
-
-                      <span style={{
-                        fontSize: '0.75rem', fontWeight: 700, padding: '5px 12px', borderRadius: '8px',
-                        backgroundColor: statusStyle.bg, color: statusStyle.color, fontFamily: "'Inter', sans-serif"
-                      }}>
-                        {statusStyle.label}
-                      </span>
-                    </div>
-
-                    <div style={{ backgroundColor: '#faf8f4', padding: '14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                      <div style={{ fontSize: '0.88rem', color: '#78706a' }}>{new Date(app.appointmentTime).toLocaleString()}</div>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 600, color: '#1c1917' }}>{app.serviceName} - {app.price} TL</div>
-                      <div style={{ fontSize: '0.88rem', color: '#78706a' }}>{app.employeeName}</div>
-                      <div style={{ fontSize: '0.88rem', color: '#78706a' }}>{app.customerPhone}</div>
-                    </div>
-
-                    {app.status === 'PENDING' && (
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={() => updateStatus(app.id, 'APPROVED')} className="mkl-bd-approve-btn" style={{ flex: 1, background: '#1c1917', color: '#faf7f2', border: 'none', padding: '11px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'background-color 0.2s ease' }}>Onayla</button>
-                        <button onClick={() => updateStatus(app.id, 'REJECTED')} className="mkl-bd-reject-btn" style={{ flex: 1, background: '#fbeeea', color: '#a3402f', border: 'none', padding: '11px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'background-color 0.2s ease' }}>Reddet</button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'services' && (
-          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.8rem', fontWeight: 600, color: '#1c1917', marginBottom: '24px' }}>Hizmet Yönetimi</h1>
-
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '18px',
-              padding: '22px',
-              marginBottom: '28px',
-              boxShadow: '0 2px 8px -2px rgba(28,25,23,0.06)',
-              border: '1px solid #ece4d5'
-            }}>
-              <h3 style={{ marginTop: 0, marginBottom: '18px', fontSize: '1.05rem', fontFamily: "'Fraunces', serif", fontWeight: 600, color: '#1c1917' }}>Yeni Hizmet Ekle</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input
-                  className="mkl-bd-input"
-                  value={newServiceName}
-                  onChange={e => setNewServiceName(e.target.value)}
-                  placeholder="Hizmet Adı (örn: Saç Kesimi)"
-                  style={{ padding: '13px 14px', borderRadius: '10px', border: '1px solid #e4ddd2', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif", color: '#1c1917' }}
-                />
-                <input
-                  className="mkl-bd-input"
-                  value={newServicePrice}
-                  onChange={e => setNewServicePrice(e.target.value)}
-                  placeholder="Fiyat (TL)"
-                  type="number"
-                  style={{ padding: '13px 14px', borderRadius: '10px', border: '1px solid #e4ddd2', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif", color: '#1c1917' }}
-                />
-                <button
-                  onClick={handleAddService}
-                  className="mkl-bd-primary-btn"
-                  style={{
-                    backgroundColor: '#1c1917', color: '#faf7f2', border: 'none', padding: '13px',
-                    borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontSize: '0.98rem', marginTop: '4px', fontFamily: "'Inter', sans-serif"
-                  }}
-                >
-                  Hizmeti Kaydet
-                </button>
+          {/* TAB 3: employees */}
+          {activeTab === 'employees' && (
+            <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Personel Yönetimi</h2>
+                <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Salonunuzda çalışan kuaförlerin, ustaların veya stajyerlerin kayıtlarını düzenleyin.</p>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {services.map(service => (
-                <div key={service.id} className="mkl-bd-card" style={{
-                  backgroundColor: '#fff', padding: '18px 20px', borderRadius: '14px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  border: '1px solid #ece4d5', boxShadow: '0 2px 4px rgba(28,25,23,0.02)'
-                }}>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1c1917', fontFamily: "'Inter', sans-serif" }}>{service.name}</h4>
-                    <p style={{ margin: '4px 0 0 0', color: '#b8863b', fontWeight: 700, fontSize: '0.9rem', fontFamily: "'Fraunces', serif" }}>{service.price} TL</p>
+              {/* Add Employee Box */}
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                padding: '24px',
+                marginBottom: '32px',
+                border: '1.5px solid rgba(232, 226, 213, 0.8)',
+                boxShadow: '0 8px 20px -10px rgba(58, 53, 48, 0.05)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1E1B18' }}>Yeni Personel Ekle</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.05em' }}>PERSONEL ADI SOYADI</label>
+                    <input
+                      className="mkl-bd-input"
+                      value={newEmployeeName}
+                      onChange={e => setNewEmployeeName(e.target.value)}
+                      placeholder="Örn: Ahmet Yılmaz"
+                    />
                   </div>
-                  <button
-                    onClick={() => handleDelete('service', service.id)}
-                    className="mkl-bd-delete-btn"
-                    style={{
-                      backgroundColor: '#fbeeea', color: '#a3402f', border: 'none',
-                      padding: '9px 18px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-                      transition: 'background-color 0.2s ease'
-                    }}
-                  >
-                    Sil
+
+                  <button onClick={handleAddEmployee} className="mkl-bd-primary-btn" style={{ marginTop: '8px' }}>
+                    Personeli Kaydet
                   </button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'employees' && (
-          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.8rem', fontWeight: 600, color: '#1c1917', marginBottom: '24px' }}>Personel Yönetimi</h1>
-
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '18px',
-              padding: '22px',
-              marginBottom: '28px',
-              boxShadow: '0 2px 8px -2px rgba(28,25,23,0.06)',
-              border: '1px solid #ece4d5'
-            }}>
-              <h3 style={{ marginTop: 0, marginBottom: '18px', fontSize: '1.05rem', fontFamily: "'Fraunces', serif", fontWeight: 600, color: '#1c1917' }}>Yeni Personel Ekle</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input
-                  className="mkl-bd-input"
-                  value={newEmployeeName}
-                  onChange={e => setNewEmployeeName(e.target.value)}
-                  placeholder="Ad Soyad (örn: Ad Soyad)"
-                  style={{ padding: '13px 14px', borderRadius: '10px', border: '1px solid #e4ddd2', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif", color: '#1c1917' }}
-                />
-                <button
-                  onClick={handleAddEmployee}
-                  className="mkl-bd-primary-btn"
-                  style={{
-                    backgroundColor: '#1c1917', color: '#faf7f2', border: 'none', padding: '13px',
-                    borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontSize: '0.98rem', marginTop: '4px', fontFamily: "'Inter', sans-serif"
-                  }}
-                >
-                  Personeli Kaydet
-                </button>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {employees.map(emp => (
-                <div key={emp.id} className="mkl-bd-card" style={{
-                  backgroundColor: '#fff', padding: '18px 20px', borderRadius: '14px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  border: '1px solid #ece4d5', boxShadow: '0 2px 4px rgba(28,25,23,0.02)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#faf3e5',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#b8863b', fontFamily: "'Fraunces', serif"
+              {/* Employee List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {employees.map(emp => {
+                  const empInitials = `${emp.firstName.charAt(0)}${emp.lastName.charAt(0)}`.toUpperCase();
+                  return (
+                    <div key={emp.id} className="mkl-bd-card" style={{
+                      padding: '16px 24px', borderRadius: '16px', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
                     }}>
-                      {emp.firstName[0]}{emp.lastName[0]}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(197, 168, 128, 0.1)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#A3845B', fontSize: '0.85rem'
+                        }}>
+                          {empInitials}
+                        </div>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1E1B18' }}>
+                          {emp.firstName} {emp.lastName}
+                        </h4>
+                      </div>
+                      
+                      <button onClick={() => handleDelete('employee', emp.id)} className="mkl-btn-delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                        Sil
+                      </button>
                     </div>
-                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1c1917', fontFamily: "'Inter', sans-serif" }}>
-                      {emp.firstName} {emp.lastName}
-                    </h4>
-                  </div>
-                  <button
-                    onClick={() => handleDelete('employee', emp.id)}
-                    className="mkl-bd-delete-btn"
-                    style={{
-                      backgroundColor: '#fbeeea', color: '#a3402f', border: 'none',
-                      padding: '9px 18px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-                      transition: 'background-color 0.2s ease'
-                    }}
-                  >
-                    Sil
-                  </button>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'settings' && (
-          <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '40px' }}>
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.8rem', fontWeight: 600, color: '#1c1917', marginBottom: '24px' }}>Dükkan Ayarları</h1>
+          {/* TAB 4: settings */}
+          {activeTab === 'settings' && (
+            <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Dükkan Ayarları</h2>
+                <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Müşterilerin dükkan kartında göreceği ad, telefon ve galeri görsellerini düzenleyin.</p>
+              </div>
 
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '18px',
-              padding: '28px',
-              boxShadow: '0 2px 8px -2px rgba(28,25,23,0.06)',
-              border: '1px solid #ece4d5'
-            }}>
-              <h3 style={{ marginTop: 0, marginBottom: '22px', fontSize: '1.1rem', fontFamily: "'Fraunces', serif", fontWeight: 600, color: '#1c1917' }}>İşletme Bilgileri</h3>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1.5px solid rgba(232, 226, 213, 0.7)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '24px'
+              }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#3d3630', fontSize: '0.75rem', letterSpacing: '0.05em', fontFamily: "'Inter', sans-serif" }}>DÜKKAN ADI</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DÜKKAN ADI</label>
                   <input
                     className="mkl-bd-input"
                     value={shopDetails?.shopName || ''}
                     onChange={e => setShopDetails(prev => ({ ...prev!, shopName: e.target.value }))}
-                    placeholder="MakasLab"
-                    style={{ width: '100%', padding: '13px 14px', borderRadius: '10px', border: '1px solid #e4ddd2', fontSize: '0.98rem', boxSizing: 'border-box', outline: 'none', fontFamily: "'Inter', sans-serif", color: '#1c1917' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#3d3630', fontSize: '0.75rem', letterSpacing: '0.05em', fontFamily: "'Inter', sans-serif" }}>İLETİŞİM NUMARASI</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>İLETİŞİM NUMARASI</label>
                   <input
                     className="mkl-bd-input"
                     value={shopDetails?.phoneNumber || ''}
                     onChange={e => setShopDetails(prev => ({ ...prev!, phoneNumber: e.target.value }))}
-                    placeholder="05XX XXX XX XX"
-                    style={{ width: '100%', padding: '13px 14px', borderRadius: '10px', border: '1px solid #e4ddd2', fontSize: '0.98rem', boxSizing: 'border-box', outline: 'none', fontFamily: "'Inter', sans-serif", color: '#1c1917' }}
                   />
                 </div>
 
-                {/* Logo Yükleme */}
+                {/* Logo Upload Zone */}
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#3d3630', fontSize: '0.75rem', letterSpacing: '0.05em', fontFamily: "'Inter', sans-serif" }}>DÜKKAN LOGOSU</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DÜKKAN LOGOSU</label>
 
-                  <div className="mkl-bd-upload-zone" style={{ padding: '20px', border: '2px dashed #e4ddd2', borderRadius: '12px', textAlign: 'center', backgroundColor: '#faf8f4', marginBottom: '15px' }}>
-
-                    {(shopDetails?.imageUrl || selectedFile) && (
-                      <div style={{ position: 'relative', display: 'inline-block', marginBottom: '10px' }}>
+                  <div className="mkl-bd-upload-zone" style={{ position: 'relative' }}>
+                    {(shopDetails?.imageUrl || selectedFile) ? (
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img
                           src={selectedFile ? URL.createObjectURL(selectedFile) : shopDetails?.imageUrl}
-                          alt="Dükkan Logosu"
-                          style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #b8863b' }}
+                          alt="Logo"
+                          style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid #C5A880' }}
                         />
                         <button
                           type="button"
@@ -690,27 +1166,43 @@ export default function BarberDashboard() {
                             setSelectedFile(null);
                             setShopDetails(prev => ({ ...prev!, imageUrl: "" }));
                           }}
-                          style={{ position: 'absolute', top: 0, right: 0, background: '#a3402f', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px' }}
-                        >X</button>
+                          style={{
+                            position: 'absolute', top: 0, right: 0, background: '#c0392b', color: 'white',
+                            borderRadius: '50%', border: 'none', cursor: 'pointer', width: '22px', height: '22px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'
+                          }}
+                        >✕</button>
                       </div>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        <span style={{ fontSize: '0.85rem', color: '#8C8276', fontWeight: 500 }}>Logo görseli seçin</span>
+                      </>
                     )}
 
                     <input
                       type="file"
                       accept="image/*"
                       onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                      style={{ display: 'block', margin: '0 auto', fontSize: '0.9rem' }}
+                      style={{ fontSize: '0.82rem', marginTop: '6px' }}
                     />
                   </div>
                 </div>
 
-                {/* Vitrin Görseli Yükleme */}
+                {/* Gallery Upload Zone */}
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#3d3630', fontSize: '0.75rem', letterSpacing: '0.05em', fontFamily: "'Inter', sans-serif" }}>
-                    VİTRİN GÖRSELLERİ
-                  </label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>VİTRİN GÖRSELLERİ</label>
 
-                  <div className="mkl-bd-upload-zone" style={{ padding: '20px', border: '2px dashed #e4ddd2', borderRadius: '12px', textAlign: 'center', backgroundColor: '#faf8f4', marginBottom: '15px' }}>
+                  <div className="mkl-bd-upload-zone">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span style={{ fontSize: '0.85rem', color: '#8C8276', fontWeight: 500 }}>Birden fazla görsel yükleyebilirsiniz</span>
+                    
                     <input
                       type="file"
                       multiple
@@ -721,136 +1213,144 @@ export default function BarberDashboard() {
                           setVitrinFiles(prev => [...prev, ...newFiles]);
                         }
                       }}
+                      style={{ fontSize: '0.82rem', marginTop: '4px' }}
                     />
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-
-                      {shopDetails?.vitrinImageUrls?.map((url, index) => (
-                        <div key={`db-${index}`} style={{ position: 'relative' }}>
-                          <img src={url} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover' }} />
-                          <button
-                            type="button"
-                            onClick={() => setShopDetails(prev => {
-                              if (!prev) return prev;
-                              return {
-                                ...prev,
-                                vitrinImageUrls: prev.vitrinImageUrls?.filter((_, i) => i !== index) ?? []
-                              };
-                            })}
-                            style={{ position: 'absolute', top: -5, right: -5, background: '#a3402f', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px' }}
-                          >X</button>
-                        </div>
-                      ))}
-
-                      {vitrinFiles.map((file, index) => (
-                        <div key={`new-${index}`} style={{ position: 'relative' }}>
-                          <img src={URL.createObjectURL(file)} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', border: '2px solid #b8863b' }} />
-                          <button
-                            type="button"
-                            onClick={() => setVitrinFiles(prev => prev.filter((_, i) => i !== index))}
-                            style={{ position: 'absolute', top: -5, right: -5, background: '#a3402f', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px' }}
-                          >X</button>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {/* Thumbnail Previews */}
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+                    {/* Database Existing Images */}
+                    {shopDetails?.vitrinImageUrls?.map((url, index) => (
+                      <div key={`db-${index}`} style={{ position: 'relative', width: '74px', height: '74px' }}>
+                        <img src={url} style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(197, 168, 128, 0.2)' }} />
+                        <button
+                          type="button"
+                          onClick={() => setShopDetails(prev => {
+                            if (!prev) return prev;
+                            return {
+                              ...prev,
+                              vitrinImageUrls: prev.vitrinImageUrls?.filter((_, i) => i !== index) ?? []
+                            };
+                          })}
+                          style={{
+                            position: 'absolute', top: -5, right: -5, background: '#c0392b', color: 'white',
+                            borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px'
+                          }}
+                        >✕</button>
+                      </div>
+                    ))}
+
+                    {/* New Upload Files */}
                     {vitrinFiles.map((file, index) => (
-                      <div key={index} style={{ position: 'relative', width: '80px', height: '80px' }}>
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt="preview"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-                        />
+                      <div key={`new-${index}`} style={{ position: 'relative', width: '74px', height: '74px' }}>
+                        <img src={URL.createObjectURL(file)} style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover', border: '2.5px solid #C5A880' }} />
                         <button
                           type="button"
                           onClick={() => removeFile(index)}
                           style={{
-                            position: 'absolute', top: '-5px', right: '-5px', background: '#a3402f',
-                            color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px',
-                            cursor: 'pointer', fontSize: '12px', lineHeight: '20px'
+                            position: 'absolute', top: -5, right: -5, background: '#c0392b', color: 'white',
+                            borderRadius: '50%', border: 'none', cursor: 'pointer', width: '20px', height: '20px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px'
                           }}
-                        >
-                          ×
-                        </button>
+                        >✕</button>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <button
-                  onClick={handleUpdateShop}
-                  className="mkl-bd-primary-btn"
-                  style={{
-                    marginTop: '12px', backgroundColor: '#1c1917', color: '#faf7f2', border: 'none',
-                    padding: '15px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontSize: '0.98rem', fontFamily: "'Inter', sans-serif", transition: 'background-color 0.2s ease'
-                  }}
-                >
+                <button onClick={handleUpdateShop} className="mkl-bd-primary-btn" style={{ marginTop: '12px' }}>
                   Değişiklikleri Kaydet
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'hours' && (
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.8rem', fontWeight: 600, color: '#1c1917', marginBottom: '24px' }}>Personel Takvimi</h1>
+          {/* TAB 5: hours */}
+          {activeTab === 'hours' && (
+            <div>
+              <div style={{ marginBottom: '24px' }}>
+                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Personel Takvimi</h2>
+                <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Personellerin çalışma saatlerini bloklayarak veya müsait kılarak randevu takvimini düzenleyin.</p>
+              </div>
 
-            <div style={{ marginBottom: '28px', backgroundColor: '#fff', padding: '14px 22px', borderRadius: '14px', border: '1px solid #ece4d5', display: 'inline-block' }}>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={e => setSelectedDate(e.target.value)}
-                style={{ border: 'none', fontSize: '0.98rem', fontWeight: 600, color: '#b8863b', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
-              />
-            </div>
+              {/* Date Input */}
+              <div style={{ marginBottom: '28px', backgroundColor: '#FAF8F5', padding: '12px 20px', borderRadius: '14px', border: '1px solid rgba(197, 168, 128, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                </svg>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={e => setSelectedDate(e.target.value)}
+                  style={{ border: 'none', background: 'transparent', fontSize: '0.98rem', fontWeight: 600, color: '#A3845B', cursor: 'pointer', outline: 'none', fontFamily: 'inherit' }}
+                />
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {employees.map(emp => (
-                <div key={emp.id} style={{
-                  backgroundColor: '#fff', padding: '22px', borderRadius: '16px',
-                  border: '1px solid #ece4d5', boxShadow: '0 2px 8px -2px rgba(28,25,23,0.06)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#f2ede3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#78706a', fontFamily: "'Fraunces', serif" }}>
-                      {emp.firstName[0]}{emp.lastName[0]}
-                    </div>
-                    <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1c1917', fontFamily: "'Inter', sans-serif" }}>{emp.firstName} {emp.lastName}</h4>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px' }}>
-                    {timeSlots.map(time => {
-                      const isBusy = (busySlotsMap[emp.id] || []).includes(time);
-                      return (
-                        <div
-                          key={time}
-                          className="mkl-bd-slot"
-                          onClick={() => toggleSlotStatus(emp.id, time)}
-                          style={{
-                            padding: '10px 0',
-                            borderRadius: '8px',
-                            textAlign: 'center',
-                            fontSize: '0.82rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            fontFamily: "'Inter', sans-serif",
-                            backgroundColor: isBusy ? '#fbeeea' : '#eef6ee',
-                            color: isBusy ? '#a3402f' : '#3f7a4e',
-                            border: `1px solid ${isBusy ? '#e3b6a8' : '#c3ddc7'}`
-                          }}
-                        >
-                          {time}
-                        </div>
-                      );
-                    })}
-                  </div>
+              {/* Status Legend */}
+              <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '20px', paddingLeft: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#27ae60' }} />
+                  <span>Müsait Saat (Randevu Alınabilir)</span>
                 </div>
-              ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#c0392b' }} />
+                  <span>Bloklu / Dolu Saat</span>
+                </div>
+              </div>
+
+              {/* Staff Grid Schedules */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {employees.map(emp => {
+                  const initials = `${emp.firstName.charAt(0)}${emp.lastName.charAt(0)}`.toUpperCase();
+                  return (
+                    <div key={emp.id} style={{
+                      backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '20px',
+                      border: '1.5px solid rgba(232, 226, 213, 0.7)', boxShadow: '0 4px 12px rgba(58, 53, 48, 0.02)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+                        <div style={{ 
+                          width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(197, 168, 128, 0.1)', 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#A3845B', fontSize: '0.85rem'
+                        }}>
+                          {initials}
+                        </div>
+                        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1E1B18' }}>
+                          {emp.firstName} {emp.lastName}
+                        </h4>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(78px, 1fr))', gap: '8px' }}>
+                        {timeSlots.map(time => {
+                          const isBusy = (busySlotsMap[emp.id] || []).includes(time);
+                          return (
+                            <div
+                              key={time}
+                              className="mkl-bd-slot"
+                              onClick={() => toggleSlotStatus(emp.id, time)}
+                              style={{
+                                backgroundColor: isBusy ? 'rgba(192, 57, 43, 0.05)' : 'rgba(39, 174, 96, 0.05)',
+                                color: isBusy ? '#c0392b' : '#27ae60',
+                                border: `1.5px solid ${isBusy ? 'rgba(192, 57, 43, 0.25)' : 'rgba(39, 174, 96, 0.25)'}`
+                              }}
+                            >
+                              {time}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+        </div>
       </main>
+      
     </div>
   );
 }

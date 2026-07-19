@@ -118,237 +118,697 @@ export default function BookAppointment() {
     }
   };
 
+  // Find selected objects for the summary panel
+  const currentEmployee = employees.find(emp => String(emp.id) === selectedEmployee);
+  const currentService = services.find(s => String(s.id) === selectedService);
+
   if (loading) {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: '#f6f3ee',
+        backgroundColor: '#FAF8F5',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Inter', system-ui, sans-serif",
-        color: '#8a7f6e',
-        fontSize: '0.95rem'
+        fontFamily: "'Inter', sans-serif",
+        color: '#A3845B',
+        gap: '16px'
       }}>
-        Yükleniyor...
+        {/* Loading Spinner */}
+        <div className="mkl-loader" style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid rgba(197, 168, 128, 0.2)',
+          borderTopColor: '#A3845B',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <span style={{ fontSize: '0.92rem', fontWeight: 500, letterSpacing: '0.05em' }}>Salon Bilgileri Yükleniyor...</span>
+        
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#f6f3ee', minHeight: '100vh', display: 'flex', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ 
+      padding: '40px 24px 80px 24px', 
+      backgroundColor: '#FAF8F5', 
+      minHeight: '100vh', 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'flex-start',
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      color: '#1E1B18'
+    }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
+        /* Swiper styling */
         .mkl-swiper-wrap .swiper-button-next,
         .mkl-swiper-wrap .swiper-button-prev {
-          color: #faf7f2;
-          transform: scale(0.6);
-          background: rgba(28, 25, 23, 0.35);
+          color: #FAF8F5;
+          transform: scale(0.65);
+          background: rgba(30, 27, 24, 0.6);
+          backdrop-filter: blur(4px);
           border-radius: 50%;
-          width: 34px !important;
-          height: 34px !important;
-          margin-top: -17px;
+          width: 40px !important;
+          height: 40px !important;
+          margin-top: -20px;
+          transition: all 0.2s ease;
+        }
+        .mkl-swiper-wrap .swiper-button-next:hover,
+        .mkl-swiper-wrap .swiper-button-prev:hover {
+          background: #A3845B;
         }
         .mkl-swiper-wrap .swiper-button-next::after,
         .mkl-swiper-wrap .swiper-button-prev::after {
           font-size: 14px !important;
+          font-weight: bold;
         }
         .mkl-swiper-wrap .swiper-pagination-bullet {
-          background: #faf7f2;
-          opacity: 0.6;
+          background: #FAF8F5;
+          opacity: 0.5;
         }
         .mkl-swiper-wrap .swiper-pagination-bullet-active {
-          background: #b8863b;
+          background: #C5A880;
           opacity: 1;
         }
 
-        .mkl-field:focus {
-          outline: none !important;
-          border-color: #b8863b !important;
-          box-shadow: 0 0 0 3px rgba(184, 134, 59, 0.15);
+        /* Selection styles */
+        .mkl-select-card {
+          border: 1px solid rgba(197, 168, 128, 0.2);
+          border-radius: 16px;
+          background: #FFFFFF;
+          padding: 14px 18px;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          position: relative;
         }
 
-        .mkl-phone-link:hover {
-          text-decoration: underline !important;
+        .mkl-select-card:hover {
+          border-color: #A3845B;
+          background: rgba(197, 168, 128, 0.03);
+          transform: translateY(-2px);
         }
 
-        .mkl-submit-btn {
-          transition: background-color 0.2s ease, transform 0.15s ease;
+        .mkl-select-card.active {
+          border-color: #1E1B18;
+          background: #1E1B18;
+          color: #FAF8F5;
+          box-shadow: 0 8px 20px rgba(30, 27, 24, 0.12);
         }
-        .mkl-submit-btn:hover:not(:disabled) {
-          background-color: #b8863b !important;
+
+        /* Service Row Item */
+        .mkl-service-item {
+          border: 1.5px solid rgba(232, 226, 213, 0.7);
+          border-radius: 16px;
+          background: #FFFFFF;
+          padding: 16px 20px;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
-        .mkl-submit-btn:active:not(:disabled) {
-          transform: scale(0.98);
+
+        .mkl-service-item:hover {
+          border-color: #A3845B;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 15px rgba(163, 132, 91, 0.06);
         }
-        .mkl-submit-btn:disabled {
-          opacity: 0.6;
+
+        .mkl-service-item.active {
+          border-color: #C5A880;
+          background: rgba(197, 168, 128, 0.05);
+        }
+
+        /* Time slots grid */
+        .mkl-time-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+          gap: 10px;
+        }
+
+        .mkl-time-slot {
+          padding: 10px;
+          border-radius: 12px;
+          border: 1px solid rgba(197, 168, 128, 0.25);
+          background: #FFFFFF;
+          color: #1E1B18;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-align: center;
+        }
+
+        .mkl-time-slot:hover:not(:disabled) {
+          border-color: #A3845B;
+          color: #A3845B;
+          background: rgba(197, 168, 128, 0.05);
+          transform: translateY(-1px);
+        }
+
+        .mkl-time-slot.active {
+          background: #1E1B18;
+          color: #FAF8F5;
+          border-color: #1E1B18;
+        }
+
+        .mkl-time-slot:disabled {
+          background: #FAF8F5;
+          border-color: rgba(232, 226, 213, 0.5);
+          color: #C5A880;
+          opacity: 0.4;
           cursor: not-allowed;
+          text-decoration: line-through;
+        }
+
+        /* Custom inputs */
+        .mkl-custom-date {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 14px;
+          border: 1px solid rgba(197, 168, 128, 0.25);
+          background: #FFFFFF;
+          font-size: 0.95rem;
+          color: #1E1B18;
+          font-family: inherit;
+          outline: none;
+          transition: border-color 0.2s ease;
+        }
+
+        .mkl-custom-date:focus {
+          border-color: #A3845B;
+          box-shadow: 0 0 0 3px rgba(163, 132, 91, 0.12);
+        }
+
+        /* Responsive Columns */
+        .mkl-booking-layout {
+          display: flex;
+          flex-direction: row;
+          gap: 32px;
+          width: 100%;
+          maxWidth: 960px;
+        }
+
+        @media (max-width: 820px) {
+          .mkl-booking-layout {
+            flex-direction: column;
+            gap: 24px;
+          }
+          .mkl-sticky-panel {
+            position: static !important;
+            width: 100% !important;
+          }
+        }
+
+        /* Floating summary panel */
+        .mkl-sticky-panel {
+          position: sticky;
+          top: 100px;
+          width: 360px;
+          flex-shrink: 0;
         }
       `}</style>
 
-      <div style={{
-        width: '100%',
-        maxWidth: '500px',
-        backgroundColor: '#fff',
-        padding: '30px',
-        borderRadius: '20px',
-        boxShadow: '0 16px 32px -12px rgba(28, 25, 23, 0.14)',
-        border: '1px solid #ece4d5'
-      }}>
-
-        {shopDetails && (
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <div className="mkl-swiper-wrap" style={{
-              width: '100%',
-              marginBottom: '24px',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: '0 4px 12px rgba(28,25,23,0.12)'
-            }}>
-              <Swiper
-                modules={[Navigation, Pagination, Autoplay]}
-                navigation={true}
-                pagination={{ clickable: true }}
-                autoplay={{ delay: 3500 }}
-                style={{ height: '280px' }}
-              >
-                {shopDetails.vitrinImageUrls && shopDetails.vitrinImageUrls.length > 0 ? (
-                  shopDetails.vitrinImageUrls.map((url, index) => (
-                    <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f0e4' }}>
-                      <img src={url} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </SwiperSlide>
-                  ))
-                ) : shopDetails.vitrinImageUrl ? (
-                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f0e4' }}>
-                    <img src={shopDetails.vitrinImageUrl} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </SwiperSlide>
-                ) : (
-                  <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f0e4' }}>
-                    <span style={{ fontFamily: "'Fraunces', serif", fontSize: '2.2rem', color: '#b8863b' }}>
-                      {shopDetails.shopName?.charAt(0).toUpperCase()}
-                    </span>
-                  </SwiperSlide>
-                )}
-              </Swiper>
-            </div>
-
-            <h2 style={{
-              marginTop: '0',
-              marginBottom: '6px',
-              fontFamily: "'Fraunces', serif",
-              fontWeight: 600,
-              fontSize: '1.4rem',
-              color: '#1c1917'
-            }}>
-              {shopDetails.shopName}
-            </h2>
-            <p style={{ color: '#78706a', fontSize: '0.9rem', marginBottom: '10px' }}>
-              {shopDetails.addressText}
-            </p>
-
-            <a
-              className="mkl-phone-link"
-              href={shopDetails.phoneNumber ? `tel:${shopDetails.phoneNumber}` : '#'}
-              style={{
-                color: shopDetails.phoneNumber ? '#b8863b' : '#b3a692',
-                fontWeight: 700,
-                fontSize: '1rem',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: shopDetails.phoneNumber ? 'pointer' : 'default'
-              }}
-            >
-              {shopDetails.phoneNumber || 'Telefon bilgisi yok'}
-            </a>
-
+      <div className="mkl-booking-layout">
+        
+        {/* Left Side / Top: Shop Showcase & Forms */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Shop Card */}
+          {shopDetails && (
             <div style={{
-              width: '48px',
-              height: '3px',
-              margin: '20px auto 0 auto',
-              borderRadius: '3px',
-              background: 'linear-gradient(90deg, #b8863b 0%, #b8863b 45%, #7a2e2e 55%, #7a2e2e 100%)'
-            }} />
-          </div>
-        )}
+              backgroundColor: '#FFFFFF',
+              borderRadius: '24px',
+              border: '1px solid rgba(232, 226, 213, 0.7)',
+              padding: '24px',
+              boxShadow: '0 12px 24px -10px rgba(58, 53, 48, 0.06)'
+            }}>
+              
+              {/* Swiper Vitrin */}
+              <div className="mkl-swiper-wrap" style={{
+                width: '100%',
+                marginBottom: '20px',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <Swiper
+                  modules={[Navigation, Pagination, Autoplay]}
+                  navigation={true}
+                  pagination={{ clickable: true }}
+                  autoplay={{ delay: 4000 }}
+                  style={{ height: '240px' }}
+                >
+                  {shopDetails.vitrinImageUrls && shopDetails.vitrinImageUrls.length > 0 ? (
+                    shopDetails.vitrinImageUrls.map((url, index) => (
+                      <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F0E6' }}>
+                        <img src={url} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </SwiperSlide>
+                    ))
+                  ) : shopDetails.vitrinImageUrl ? (
+                    <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F0E6' }}>
+                      <img src={shopDetails.vitrinImageUrl} alt={shopDetails.shopName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </SwiperSlide>
+                  ) : (
+                    <SwiperSlide style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F0E6' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#A3845B', gap: '8px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+                          <path d="M12 22a7 7 0 0 0 7-7c0-4.3-3-7-7-7s-7 2.7-7 7a7 7 0 0 0 7 7z" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 600 }}>
+                          {shopDetails.shopName}
+                        </span>
+                      </div>
+                    </SwiperSlide>
+                  )}
+                </Swiper>
+              </div>
 
-        <h2 style={{
-          fontFamily: "'Fraunces', serif",
-          fontWeight: 600,
-          fontSize: '1.2rem',
-          color: '#1c1917',
-          marginBottom: '18px'
-        }}>
-          Randevu Planlama
-        </h2>
+              {/* Shop info */}
+              <h1 style={{
+                margin: '0 0 6px 0',
+                fontFamily: "'Fraunces', serif",
+                fontWeight: 500,
+                fontSize: '1.5rem',
+                color: '#1E1B18'
+              }}>
+                {shopDetails.shopName}
+              </h1>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#8C8276', fontSize: '0.88rem', marginBottom: '14px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span>{shopDetails.addressText}</span>
+              </div>
 
-          <select className="mkl-field" value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)} style={inputStyle}>
-            <option value="">Personel Seçin</option>
-            {employees.map(emp => (
-              <option key={emp.id} value={emp.id}>
-                {(emp.firstName || emp.lastName) ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : 'İsimsiz Personel'}
-              </option>
-            ))}
-          </select>
-
-          <select className="mkl-field" value={selectedService} onChange={(e) => setSelectedService(e.target.value)} style={inputStyle}>
-            <option value="">Hizmet Seçin</option>
-            {services.map(s => <option key={s.id} value={s.id}>{`${s.name} - ${s.price} TL`}</option>)}
-          </select>
-
-          <input className="mkl-field" type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} style={inputStyle} />
-
-          <select className="mkl-field" value={appointmentTime} onChange={(e) => setAppointmentTime(e.target.value)} style={inputStyle}>
-            <option value="">Saat Seçin</option>
-            {allPossibleSlots.map(slot => (
-              <option key={slot} value={slot} disabled={takenSlots.includes(slot)} style={{ color: takenSlots.includes(slot) ? '#c0392b' : '#1c1917' }}>
-                {slot} {takenSlots.includes(slot) ? '(Dolu)' : ''}
-              </option>
-            ))}
-          </select>
-
-          {!localStorage.getItem('token') && (
-            <p style={{ color: '#a3402f', fontSize: '0.8rem', textAlign: 'center', marginTop: '-4px' }}>
-              * Randevuyu onaylamak için giriş yapmanız gerekecektir.
-            </p>
+              {shopDetails.phoneNumber && (
+                <a
+                  href={`tel:${shopDetails.phoneNumber}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: '#A3845B',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    textDecoration: 'none',
+                    border: '1px solid rgba(197, 168, 128, 0.3)',
+                    padding: '8px 16px',
+                    borderRadius: '30px',
+                    background: 'rgba(197, 168, 128, 0.05)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A3845B'; e.currentTarget.style.background = 'rgba(197, 168, 128, 0.1)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(197, 168, 128, 0.3)'; e.currentTarget.style.background = 'rgba(197, 168, 128, 0.05)'; }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  {shopDetails.phoneNumber}
+                </a>
+              )}
+            </div>
           )}
 
-          <button type="submit" disabled={submitting} className="mkl-submit-btn" style={buttonStyle}>
-            {submitting ? "Oturum Kaydediliyor..." : "Randevuyu Onayla"}
-          </button>
-        </form>
+          {/* Booking interactive form */}
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '24px',
+            border: '1px solid rgba(232, 226, 213, 0.7)',
+            padding: '28px',
+            boxShadow: '0 12px 24px -10px rgba(58, 53, 48, 0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '28px'
+          }}>
+            
+            {/* Step 1: Specialist Selection */}
+            <div>
+              <h3 style={{
+                margin: '0 0 14px 0',
+                fontFamily: "'Fraunces', serif",
+                fontSize: '1.15rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', background: '#1E1B18', color: '#FAF8F5', fontSize: '0.75rem', fontWeight: 700 }}>1</span>
+                Uzman Seçin
+              </h3>
+              
+              {employees.length === 0 ? (
+                <p style={{ color: '#8C8276', fontSize: '0.88rem', margin: 0 }}>Bu salonda çalışan personel bulunmamaktadır.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {employees.map(emp => {
+                    const isSelected = String(emp.id) === selectedEmployee;
+                    const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'İsimsiz Personel';
+                    const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+                    return (
+                      <div
+                        key={emp.id}
+                        className={`mkl-select-card ${isSelected ? 'active' : ''}`}
+                        onClick={() => setSelectedEmployee(String(emp.id))}
+                      >
+                        {/* Custom avatar placeholder */}
+                        <div style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '50%',
+                          backgroundColor: isSelected ? '#C5A880' : '#F5F0E6',
+                          color: isSelected ? '#1E1B18' : '#A3845B',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          boxShadow: isSelected ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
+                        }}>
+                          {initials}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{fullName}</span>
+                          <span style={{ fontSize: '0.75rem', opacity: 0.8, color: isSelected ? '#E8E2D5' : '#8C8276' }}>
+                            {emp.title || 'Kuaför / Uzman'}
+                          </span>
+                        </div>
+
+                        {isSelected && (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Step 2: Service Selection */}
+            <div>
+              <h3 style={{
+                margin: '0 0 14px 0',
+                fontFamily: "'Fraunces', serif",
+                fontSize: '1.15rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', background: '#1E1B18', color: '#FAF8F5', fontSize: '0.75rem', fontWeight: 700 }}>2</span>
+                Hizmet Seçin
+              </h3>
+
+              {services.length === 0 ? (
+                <p style={{ color: '#8C8276', fontSize: '0.88rem', margin: 0 }}>Bu salona ait hizmet bulunmamaktadır.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {services.map(s => {
+                    const isSelected = String(s.id) === selectedService;
+                    return (
+                      <div
+                        key={s.id}
+                        className={`mkl-service-item ${isSelected ? 'active' : ''}`}
+                        onClick={() => setSelectedService(String(s.id))}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#1E1B18' }}>{s.name}</span>
+                          <span style={{ fontSize: '0.78rem', color: '#8C8276', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            {s.durationMinutes} dakika
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontWeight: 700, color: '#A3845B', fontSize: '1rem' }}>{s.price} TL</span>
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            border: '1.5px solid ' + (isSelected ? '#A3845B' : '#E8E2D5'),
+                            background: isSelected ? '#A3845B' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                          }}>
+                            {isSelected && (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FAF8F5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Step 3: Date & Time Selection */}
+            <div>
+              <h3 style={{
+                margin: '0 0 14px 0',
+                fontFamily: "'Fraunces', serif",
+                fontSize: '1.15rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', background: '#1E1B18', color: '#FAF8F5', fontSize: '0.75rem', fontWeight: 700 }}>3</span>
+                Tarih ve Saat
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    className="mkl-custom-date"
+                    type="date"
+                    value={appointmentDate}
+                    onChange={(e) => {
+                      setAppointmentDate(e.target.value);
+                      setAppointmentTime(''); // Reset time when date changes
+                    }}
+                  />
+                </div>
+
+                {appointmentDate && selectedEmployee && (
+                  <div style={{ borderTop: '1px solid rgba(197, 168, 128, 0.15)', paddingTop: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A3845B', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      Müsait Saatler
+                    </div>
+                    
+                    <div className="mkl-time-grid">
+                      {allPossibleSlots.map(slot => {
+                        const isTaken = takenSlots.includes(slot);
+                        const isSelected = slot === appointmentTime;
+
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            disabled={isTaken}
+                            className={`mkl-time-slot ${isSelected ? 'active' : ''}`}
+                            onClick={() => setAppointmentTime(slot)}
+                          >
+                            {slot}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {appointmentDate && !selectedEmployee && (
+                  <div style={{ fontSize: '0.82rem', color: '#8C8276', padding: '8px 12px', background: 'rgba(197, 168, 128, 0.05)', borderRadius: '8px', border: '1px solid rgba(197, 168, 128, 0.15)' }}>
+                    * Saat aralıklarını listelemek için lütfen yukarıdan bir personel seçin.
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Right Side: Sticky Summary Panel */}
+        <div className="mkl-sticky-panel">
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '24px',
+            border: '1px solid rgba(232, 226, 213, 0.7)',
+            padding: '28px',
+            boxShadow: '0 16px 35px -10px rgba(163, 132, 91, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px'
+          }}>
+            <h3 style={{
+              margin: 0,
+              fontFamily: "'Fraunces', serif",
+              fontSize: '1.25rem',
+              fontWeight: 500,
+              borderBottom: '1px solid rgba(197, 168, 128, 0.15)',
+              paddingBottom: '12px'
+            }}>
+              Randevu Özeti
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.88rem' }}>
+              
+              {/* Specialist summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: '#8C8276' }}>Uzman:</span>
+                <span style={{ fontWeight: 600 }}>
+                  {currentEmployee ? `${currentEmployee.firstName} ${currentEmployee.lastName}` : '- Seçilmedi -'}
+                </span>
+              </div>
+
+              {/* Service summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: '#8C8276' }}>Hizmet:</span>
+                <span style={{ fontWeight: 600 }}>
+                  {currentService ? currentService.name : '- Seçilmedi -'}
+                </span>
+              </div>
+
+              {/* Duration summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: '#8C8276' }}>Süre:</span>
+                <span style={{ fontWeight: 600 }}>
+                  {currentService ? `${currentService.durationMinutes} dk` : '-'}
+                </span>
+              </div>
+
+              {/* Date & Time summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: '#8C8276' }}>Tarih / Saat:</span>
+                <span style={{ fontWeight: 600 }}>
+                  {appointmentDate ? appointmentDate.split('-').reverse().join('.') : ''} 
+                  {appointmentTime ? ` @ ${appointmentTime}` : (!appointmentDate && !appointmentTime ? '-' : '')}
+                </span>
+              </div>
+
+              <div style={{
+                height: '1px',
+                background: 'rgba(197, 168, 128, 0.15)',
+                margin: '8px 0'
+              }} />
+
+              {/* Price summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: '#1E1B18', fontWeight: 600, fontSize: '0.95rem' }}>Toplam Ücret:</span>
+                <span style={{ fontWeight: 700, color: '#A3845B', fontSize: '1.25rem' }}>
+                  {currentService ? `${currentService.price} TL` : '0 TL'}
+                </span>
+              </div>
+
+            </div>
+
+            {/* Submit Action */}
+            <form onSubmit={handleSubmit} style={{ marginTop: '8px' }}>
+              {!localStorage.getItem('token') && (
+                <div style={{ 
+                  color: '#a3402f', 
+                  fontSize: '0.78rem', 
+                  textAlign: 'center', 
+                  marginBottom: '12px',
+                  background: 'rgba(163, 64, 47, 0.05)',
+                  border: '1px solid rgba(163, 64, 47, 0.15)',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  lineHeight: '1.4'
+                }}>
+                  * Randevuyu onaylamak için üye girişi yapmanız gerekecektir.
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting || !selectedEmployee || !selectedService || !appointmentDate || !appointmentTime}
+                className="mkl-submit-btn"
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  background: '#1E1B18',
+                  color: '#FAF8F5',
+                  border: 'none',
+                  borderRadius: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                {submitting ? (
+                  <>
+                    <div style={{
+                      width: '14px',
+                      height: '14px',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#FFFFFF',
+                      borderRadius: '50%',
+                      animation: 'spin 0.6s linear infinite'
+                    }} />
+                    Randevu Alınıyor...
+                  </>
+                ) : (
+                  "Randevuyu Onayla"
+                )}
+              </button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              style={{
+                width: '100%',
+                background: 'none',
+                border: 'none',
+                color: '#8C8276',
+                fontWeight: 500,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                textAlign: 'center',
+                textDecoration: 'underline'
+              }}
+            >
+              Geri Dön
+            </button>
+
+          </div>
+        </div>
+
       </div>
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: '13px 14px',
-  borderRadius: '10px',
-  border: '1px solid #e4ddd2',
-  backgroundColor: '#faf8f4',
-  fontSize: '0.95rem',
-  fontFamily: "'Inter', sans-serif",
-  color: '#1c1917',
-  outline: 'none',
-  transition: 'border-color 0.2s ease'
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: '14px',
-  background: '#1c1917',
-  color: '#faf7f2',
-  border: 'none',
-  borderRadius: '10px',
-  cursor: 'pointer',
-  fontWeight: 700,
-  fontSize: '1rem',
-  fontFamily: "'Inter', sans-serif",
-  marginTop: '6px'
-};
