@@ -9,7 +9,17 @@ import 'swiper/css/pagination';
 
 interface Employee { id: number; firstName: string; lastName: string; title: string; }
 interface Service { id: number; name: string; price: number; durationMinutes: number; }
-interface ShopDetails { id: number; shopName: string; addressText: string; phoneNumber: string; imageUrl: string; vitrinImageUrls: string[]; vitrinImageUrl?: string;}
+interface ShopDetails { 
+  id: number; 
+  shopName: string; 
+  addressText: string; 
+  phoneNumber: string; 
+  imageUrl: string; 
+  vitrinImageUrls: string[]; 
+  vitrinImageUrl?: string;
+  latitude?: number;
+  longitude?: number;
+}
 
 export default function BookAppointment() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -464,13 +474,37 @@ export default function BookAppointment() {
                 {shopDetails.shopName}
               </h1>
 
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#8C8276', fontSize: '0.88rem', marginBottom: '14px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <span>{shopDetails.addressText}</span>
-              </div>
+              {/* Tıklanabilir Konum Linki */}
+              {shopDetails.addressText && (
+                <a
+                  href={
+                    shopDetails.latitude && shopDetails.longitude
+                      ? `https://www.google.com/maps/search/?api=1&query=${shopDetails.latitude},${shopDetails.longitude}`
+                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopDetails.addressText + ' ' + shopDetails.shopName)}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '6px',
+                    color: '#8C8276',
+                    fontSize: '0.88rem',
+                    marginBottom: '14px',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#A3845B'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#8C8276'; }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <span style={{ textDecoration: 'underline' }}>{shopDetails.addressText}</span>
+                </a>
+              )}
 
               {shopDetails.phoneNumber && (
                 <a
