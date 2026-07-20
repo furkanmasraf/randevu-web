@@ -1,5 +1,6 @@
 // src/components/NotificationToast.tsx
-// Bu bileşen artık işlevini GlobalNotification'a devrettiği için boş render edilir.
-export default function NotificationToast() {
-  return null; 
+
+// props: any ekleyerek TypeScript derleme hatasını çözüyoruz
+export default function NotificationToast(_props: any) {
+  return null;
 }
