@@ -8,6 +8,8 @@ import BookAppointment from './pages/BookAppointment';
 import CustomerDashboard from './pages/CustomerDashboard';
 import BarberDashboard from './pages/BarberDashboard';
 import ProtectedRoute from './pages/ProtectedRoute';
+import './utils/customAlert';
+import GlobalNotification from './components/GlobalNotification';
 
 function App() {
   return (
@@ -22,20 +24,21 @@ function App() {
         
         {/* KORUMALI ROTALAR (Sadece giriş yapmış kullanıcılar) */}
         <Route element={<ProtectedRoute />}>
-        {/* Müşteri Paneli */}
-        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-        <Route path="/my-appointments" element={<CustomerDashboard />} />
-  
-        {/* Dükkan Sahibi Paneli */}
-        <Route path="/barber-dashboard" element={<BarberDashboard />} />
-        <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
-  
-         <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
-      </Route>
+          {/* Müşteri Paneli */}
+          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+          <Route path="/my-appointments" element={<CustomerDashboard />} />
+    
+          {/* Dükkan Sahibi Paneli */}
+          <Route path="/barber-dashboard" element={<BarberDashboard />} />
+          <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
+    
+          <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
+        </Route>
 
         {/* CATCH-ALL (Tanımsız rotalar için ana sayfaya yönlendir) */}
         <Route path="*" element={<Home />} />
       </Routes>
+      <GlobalNotification />
     </Router>
   );
 }
