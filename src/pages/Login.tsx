@@ -62,7 +62,6 @@ const Login: React.FC = () => {
     }
   };
 
-
   return (
     <div style={{
       display: 'flex',
@@ -182,9 +181,9 @@ const Login: React.FC = () => {
         }
 
         .mkl-glass-card {
-          background: rgba(250, 248, 245, 0.08);
+          background: rgba(30, 27, 24, 0.55);
           backdrop-filter: blur(16px);
-          border: 1px solid rgba(250, 248, 245, 0.18);
+          border: 1px solid rgba(197, 168, 128, 0.25);
           border-radius: 24px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
           transition: all 0.3s ease;
@@ -221,7 +220,7 @@ const Login: React.FC = () => {
       <div style={{
         flex: isMobile ? 'none' : 1.2,
         height: isMobile ? '280px' : '100vh',
-        backgroundImage: `url('/kuaforsalonu.jpg')`,
+        backgroundImage: `url('/unisex_salon_hero.jpg')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         position: 'relative',
@@ -234,7 +233,7 @@ const Login: React.FC = () => {
         <div style={{ 
           position: 'absolute', 
           inset: 0, 
-          background: 'linear-gradient(135deg, rgba(30,27,24,0.5) 0%, rgba(30,27,24,0.85) 100%)' 
+          background: 'linear-gradient(135deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.8) 100%)' 
         }}></div>
 
         {/* Small Brand Logo in Top Left (Desktop only) */}
@@ -316,7 +315,7 @@ const Login: React.FC = () => {
             lineHeight: 1.5, 
             margin: 0 
           }}>
-            Premium kuaför deneyimi şimdi dijital dünyada. Sıradaki randevunuzu saniyeler içinde planlayın veya salonunuzu yönetin.
+            Premium kuaför ve güzellik salonu deneyimi dijital dünyada. Sıradaki randevunuzu saniyeler içinde planlayın veya salonunuzu profesyonelce yönetin.
           </p>
         </div>
       </div>
@@ -353,7 +352,7 @@ const Login: React.FC = () => {
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); handleLoginClick(); }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <NotificationToast notification={notification} />
+            <NotificationToast notification={notification} />
             
             {/* Email Input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

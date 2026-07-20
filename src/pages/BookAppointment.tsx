@@ -26,13 +26,12 @@ export default function BookAppointment() {
   const [appointmentDate, setAppointmentDate] = useState<string>('');
   const [appointmentTime, setAppointmentTime] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
-  // Component içine ekleyin
-const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<string | null>(null);
 
-const showNotification = (msg: string) => {
-  setNotification(msg);
-  setTimeout(() => setNotification(null), 3000); // 3 saniye sonra kaybolsun
-};
+  const showNotification = (msg: string) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(() => {
     if (selectedEmployee && appointmentDate) {
@@ -130,7 +129,6 @@ const showNotification = (msg: string) => {
     }
   };
 
-  // Find selected objects for the summary panel
   const currentEmployee = employees.find(emp => String(emp.id) === selectedEmployee);
   const currentService = services.find(s => String(s.id) === selectedService);
 
@@ -147,10 +145,9 @@ const showNotification = (msg: string) => {
         color: '#A3845B',
         gap: '16px'
       }}>
-        {/* Loading Spinner */}
-        <div className="mkl-loader" style={{
-          width: '40px',
-          height: '40px',
+        <div style={{
+          width: '36px',
+          height: '36px',
           border: '3px solid rgba(197, 168, 128, 0.2)',
           borderTopColor: '#A3845B',
           borderRadius: '50%',
@@ -180,7 +177,7 @@ const showNotification = (msg: string) => {
     }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         /* Swiper styling */
         .mkl-swiper-wrap .swiper-button-next,
@@ -358,7 +355,7 @@ const showNotification = (msg: string) => {
           flex-direction: row;
           gap: 32px;
           width: 100%;
-          maxWidth: 960px;
+          max-width: 960px;
         }
 
         @media (max-width: 820px) {
@@ -380,22 +377,26 @@ const showNotification = (msg: string) => {
           flex-shrink: 0;
         }
       `}</style>
+
       {notification && (
-  <div style={{
-    position: 'fixed',
-    top: '20px',
-    right: '20px',
-    zIndex: 9999,
-    background: '#1E1B18',
-    color: '#FAF8F5',
-    padding: '16px 24px',
-    borderRadius: '12px',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-    fontFamily: "'Inter', sans-serif"
-  }}>
-    {notification}
-  </div>
-)}
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 9999,
+          background: 'rgba(30, 27, 24, 0.95)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(197, 168, 128, 0.25)',
+          color: '#FAF8F5',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 20px 45px rgba(0,0,0,0.18)',
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          {notification}
+        </div>
+      )}
 
       <div className="mkl-booking-layout">
         
@@ -444,7 +445,7 @@ const showNotification = (msg: string) => {
                           <path d="M12 22a7 7 0 0 0 7-7c0-4.3-3-7-7-7s-7 2.7-7 7a7 7 0 0 0 7 7z" />
                           <circle cx="12" cy="7" r="4" />
                         </svg>
-                        <span style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 600 }}>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 600 }}>
                           {shopDetails.shopName}
                         </span>
                       </div>
@@ -456,8 +457,7 @@ const showNotification = (msg: string) => {
               {/* Shop info */}
               <h1 style={{
                 margin: '0 0 6px 0',
-                fontFamily: "'Fraunces', serif",
-                fontWeight: 500,
+                fontWeight: 600,
                 fontSize: '1.5rem',
                 color: '#1E1B18'
               }}>
@@ -493,7 +493,7 @@ const showNotification = (msg: string) => {
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(197, 168, 128, 0.3)'; e.currentTarget.style.background = 'rgba(197, 168, 128, 0.05)'; }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72a12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                   {shopDetails.phoneNumber}
                 </a>
@@ -517,9 +517,8 @@ const showNotification = (msg: string) => {
             <div>
               <h3 style={{
                 margin: '0 0 14px 0',
-                fontFamily: "'Fraunces', serif",
                 fontSize: '1.15rem',
-                fontWeight: 500,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -583,9 +582,8 @@ const showNotification = (msg: string) => {
             <div>
               <h3 style={{
                 margin: '0 0 14px 0',
-                fontFamily: "'Fraunces', serif",
                 fontSize: '1.15rem',
-                fontWeight: 500,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -648,9 +646,8 @@ const showNotification = (msg: string) => {
             <div>
               <h3 style={{
                 margin: '0 0 14px 0',
-                fontFamily: "'Fraunces', serif",
                 fontSize: '1.15rem',
-                fontWeight: 500,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -667,7 +664,7 @@ const showNotification = (msg: string) => {
                     value={appointmentDate}
                     onChange={(e) => {
                       setAppointmentDate(e.target.value);
-                      setAppointmentTime(''); // Reset time when date changes
+                      setAppointmentTime('');
                     }}
                   />
                 </div>
@@ -724,9 +721,8 @@ const showNotification = (msg: string) => {
           }}>
             <h3 style={{
               margin: 0,
-              fontFamily: "'Fraunces', serif",
               fontSize: '1.25rem',
-              fontWeight: 500,
+              fontWeight: 600,
               borderBottom: '1px solid rgba(197, 168, 128, 0.15)',
               paddingBottom: '12px'
             }}>
@@ -802,33 +798,31 @@ const showNotification = (msg: string) => {
                 </div>
               )}
 
-             <button
+              <button
                 type="submit"
-                  disabled={submitting}
-                  className="mkl-submit-btn"
-                    style={{
-              
-              
-              opacity: submitting ? 0.6 : 1,
-              cursor: submitting ? 'not-allowed' : 'pointer'
-            }}
->
-              {submitting ? (
-    <>
-      <div style={{
-        width: '14px',
-        height: '14px',
-        border: '2px solid rgba(255,255,255,0.2)',
-        borderTopColor: '#FFFFFF',
-        borderRadius: '50%',
-        animation: 'spin 0.6s linear infinite'
-      }} />
-      Randevu Alınıyor...
-    </>
-  ) : (
-    "Randevuyu Onayla"
-  )}
-</button>
+                disabled={submitting}
+                className="mkl-submit-btn"
+                style={{
+                  opacity: submitting ? 0.6 : 1,
+                  cursor: submitting ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {submitting ? (
+                  <>
+                    <div style={{
+                      width: '14px',
+                      height: '14px',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#FFFFFF',
+                      borderRadius: '50%',
+                      animation: 'spin 0.6s linear infinite'
+                    }} />
+                    Randevu Alınıyor...
+                  </>
+                ) : (
+                  "Randevuyu Onayla"
+                )}
+              </button>
             </form>
 
             <button

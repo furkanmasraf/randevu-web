@@ -159,7 +159,7 @@ export default function BarberDashboard() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isSidebarOpen && window.innerWidth < 768 && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+      if (isSidebarOpen && window.innerWidth < 992 && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
         setIsSidebarOpen(false);
       }
     };
@@ -286,7 +286,7 @@ export default function BarberDashboard() {
     }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         .mkl-side-btn {
           width: 100%;
@@ -319,7 +319,7 @@ export default function BarberDashboard() {
         .mkl-side-btn.danger {
           color: #E08B78;
           background-color: rgba(224, 139, 120, 0.08);
-          margin-top: 20px;
+          margin-top: 14px;
         }
 
         .mkl-side-btn.danger:hover {
@@ -331,7 +331,7 @@ export default function BarberDashboard() {
           position: fixed;
           top: 20px;
           right: 20px;
-          z-index: 100;
+          z-index: 1100;
           width: 44px;
           height: 44px;
           display: none;
@@ -348,6 +348,21 @@ export default function BarberDashboard() {
 
         .mkl-bd-hamburger:hover {
           background-color: #A3845B;
+        }
+
+        .mkl-bd-sidebar {
+          width: 280px;
+          background-color: #1E1B18;
+          color: #FAF8F5;
+          padding: 32px 24px;
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+          border-right: 1px solid rgba(197, 168, 128, 0.15);
+          box-shadow: 8px 0 35px rgba(0,0,0,0.08);
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+          overflow-y: auto;
+          max-height: 100vh;
         }
 
         .mkl-bd-filter-btn {
@@ -524,7 +539,7 @@ export default function BarberDashboard() {
 
         .mkl-stat-card {
           flex: 1;
-          minWidth: 200px;
+          min-width: 200px;
           background: #FFFFFF;
           border: 1.5px solid rgba(232, 226, 213, 0.8);
           border-radius: 20px;
@@ -537,14 +552,17 @@ export default function BarberDashboard() {
 
         @media (max-width: 992px) {
           .mkl-bd-sidebar {
-            display: ${isSidebarOpen ? 'flex' : 'none'} !important;
             position: fixed !important;
             top: 0;
             left: 0;
             height: 100vh;
             width: 280px !important;
-            z-index: 1000;
+            z-index: 1050;
             box-shadow: 8px 0 35px rgba(0,0,0,0.15);
+            transform: translateX(-100%);
+          }
+          .mkl-bd-sidebar.open {
+            transform: translateX(0);
           }
           .mkl-bd-hamburger {
             display: flex !important;
@@ -569,9 +587,8 @@ export default function BarberDashboard() {
       {/* SOL SIDEBAR */}
       <div
         ref={sidebarRef}
-        className="mkl-bd-sidebar"
+        className={`mkl-bd-sidebar ${isSidebarOpen ? 'open' : ''}`}
         style={{
-          width: '280px',
           backgroundColor: '#1E1B18',
           color: '#FAF8F5',
           padding: '32px 24px',
@@ -587,7 +604,6 @@ export default function BarberDashboard() {
           <a href="#" style={{ textDecoration: 'none', color: '#FAF8F5' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
             <h2 style={{ 
               margin: 0, 
-              fontFamily: "'Fraunces', serif", 
               fontSize: '1.45rem', 
               fontWeight: 700,
               display: 'flex',
@@ -676,14 +692,16 @@ export default function BarberDashboard() {
           ))}
         </nav>
 
-        {/* User Card bottom */}
+        {/* User Card bottom (Margin ve padding düzenlendi) */}
         <div style={{
-          marginTop: 'auto',
+          marginTop: '24px',
           paddingTop: '20px',
+          paddingBottom: '20px',
           borderTop: '1px solid rgba(197, 168, 128, 0.15)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '14px'
+          gap: '14px',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '8px' }}>
             <div style={{
@@ -721,13 +739,17 @@ export default function BarberDashboard() {
         </div>
       </div>
 
-      {/* ARKA PLAN MOBİL KARARTICI */}
+      {/* ARKA PLAN MOBİL KARARTICI & BLUR (Düzeltildi) */}
       {isSidebarOpen && (
         <div
           onClick={() => setIsSidebarOpen(false)}
           style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            backgroundColor: 'rgba(30,27,24,0.4)', zIndex: 400
+            backgroundColor: 'rgba(30,27,24,0.3)', 
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 1000,
+            transition: 'all 0.3s ease'
           }}
         />
       )}
@@ -738,32 +760,27 @@ export default function BarberDashboard() {
         padding: isMobile ? '80px 20px 40px 20px' : '40px 48px', 
         maxWidth: '1200px', 
         marginInline: 'auto',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        minWidth: 0
       }}>
         
-        {/* Welcome Banner */}
+        {/* Welcome Banner (Müşteri Görünümü kaldırıldı) */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
           marginBottom: '28px',
           borderBottom: '1px solid rgba(197, 168, 128, 0.15)',
-          paddingBottom: '20px'
+          paddingBottom: '20px',
+          flexWrap: 'wrap',
+          gap: '16px'
         }}>
           <div>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#A3845B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>YÖNETİCİ PANELİ</span>
-            <h1 style={{ margin: '4px 0 0 0', fontFamily: "'Fraunces', serif", fontSize: '2.1rem', fontWeight: 400 }}>
+            <h1 style={{ margin: '4px 0 0 0', fontSize: '2.1rem', fontWeight: 600 }}>
               {shopDetails?.shopName || 'Salon Yönetimi'}
             </h1>
           </div>
-          
-          <button onClick={() => navigate('/')} className="mkl-back-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            Müşteri Görünümü
-          </button>
         </div>
 
         {/* Business Stats Grid Bar */}
@@ -783,7 +800,7 @@ export default function BarberDashboard() {
 
           <div className="mkl-stat-card">
             <div style={{ padding: '10px', borderRadius: '12px', backgroundColor: 'rgba(197, 168, 128, 0.1)', color: '#A3845B' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
                 <circle cx="6" cy="6" r="3" />
                 <circle cx="6" cy="18" r="3" />
                 <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
@@ -826,7 +843,7 @@ export default function BarberDashboard() {
             <div>
               <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500 }}>Randevular</h2>
+                  <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 500 }}>Randevular</h2>
                   <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>İşletmenize gelen randevu taleplerini filtreleyin ve onaylayın.</p>
                 </div>
 
@@ -902,7 +919,7 @@ export default function BarberDashboard() {
                         
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div>
-                            <h4 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.15rem', fontWeight: 600, margin: 0, color: '#1E1B18' }}>
+                            <h4 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0, color: '#1E1B18' }}>
                               {app.customerName}
                             </h4>
                             <span style={{ fontSize: '0.78rem', color: '#8C8276', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
@@ -929,6 +946,7 @@ export default function BarberDashboard() {
                               <circle cx="6" cy="6" r="3" />
                               <circle cx="6" cy="18" r="3" />
                               <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
+                              <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
                             </svg>
                             <span style={{ fontWeight: 600, color: '#1E1B18' }}>{app.serviceName}</span>
                             <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#A3845B' }}>{app.price} TL</span>
@@ -979,7 +997,7 @@ export default function BarberDashboard() {
           {activeTab === 'services' && (
             <div style={{ maxWidth: '640px', margin: '0 auto' }}>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Hizmet Yönetimi</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Hizmet Yönetimi</h2>
                 <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Müşterilerinize sunduğunuz saç tasarımı, bakım veya makyaj hizmetlerini yönetin.</p>
               </div>
 
@@ -995,7 +1013,7 @@ export default function BarberDashboard() {
                 flexDirection: 'column',
                 gap: '16px'
               }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1E1B18' }}>Yeni Hizmet Ekle</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 500, color: '#1E1B18' }}>Yeni Hizmet Ekle</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1033,7 +1051,7 @@ export default function BarberDashboard() {
                   }}>
                     <div>
                       <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1E1B18' }}>{service.name}</h4>
-                      <p style={{ margin: '4px 0 0 0', color: '#A3845B', fontWeight: 700, fontSize: '0.95rem', fontFamily: "'Fraunces', serif" }}>{service.price} TL</p>
+                      <p style={{ margin: '4px 0 0 0', color: '#A3845B', fontWeight: 700, fontSize: '0.95rem' }}>{service.price} TL</p>
                     </div>
                     
                     <button onClick={() => handleDelete('service', service.id)} className="mkl-btn-delete">
@@ -1052,7 +1070,7 @@ export default function BarberDashboard() {
           {activeTab === 'employees' && (
             <div style={{ maxWidth: '640px', margin: '0 auto' }}>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Personel Yönetimi</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Personel Yönetimi</h2>
                 <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Salonunuzda çalışan kuaförlerin, ustaların veya stajyerlerin kayıtlarını düzenleyin.</p>
               </div>
 
@@ -1068,7 +1086,7 @@ export default function BarberDashboard() {
                 flexDirection: 'column',
                 gap: '16px'
               }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: "'Fraunces', serif", fontWeight: 500, color: '#1E1B18' }}>Yeni Personel Ekle</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 500, color: '#1E1B18' }}>Yeni Personel Ekle</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1124,7 +1142,7 @@ export default function BarberDashboard() {
           {activeTab === 'settings' && (
             <div style={{ maxWidth: '640px', margin: '0 auto' }}>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Dükkan Ayarları</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Dükkan Ayarları</h2>
                 <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Müşterilerin dükkan kartında göreceği ad, telefon ve galeri görsellerini düzenleyin.</p>
               </div>
 
@@ -1277,7 +1295,7 @@ export default function BarberDashboard() {
           {activeTab === 'hours' && (
             <div>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Personel Takvimi</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 500, color: '#1E1B18', margin: 0 }}>Personel Takvimi</h2>
                 <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>Personellerin çalışma saatlerini bloklayarak veya müsait kılarak randevu takvimini düzenleyin.</p>
               </div>
 

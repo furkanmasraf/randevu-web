@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import NotificationToast from '../components/NotificationToast';
@@ -32,6 +32,7 @@ export default function CustomerDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notification, showNotification } = useNotification();
   const [cancelPendingId, setCancelPendingId] = useState<number | null>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -79,6 +80,17 @@ export default function CustomerDashboard() {
 
     fetchAllData();
   }, [navigate]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isSidebarOpen && window.innerWidth < 992 && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
 
   const requestCancel = (appointmentId: number) => {
     setCancelPendingId(appointmentId);
@@ -237,7 +249,7 @@ export default function CustomerDashboard() {
     }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         /* Sidebar ana stilleri */
         .mkl-sidebar {
@@ -250,8 +262,10 @@ export default function CustomerDashboard() {
           flex-shrink: 0;
           border-right: 1px solid rgba(197, 168, 128, 0.15);
           box-shadow: 8px 0 35px rgba(0,0,0,0.08);
-          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
           box-sizing: border-box;
+          overflow-y: auto;
+          max-height: 100vh;
         }
 
         .mkl-side-btn {
@@ -285,7 +299,7 @@ export default function CustomerDashboard() {
         .mkl-side-btn.danger {
           color: #E08B78;
           background-color: rgba(224, 139, 120, 0.08);
-          margin-top: 20px;
+          margin-top: 14px;
         }
 
         .mkl-side-btn.danger:hover {
@@ -293,7 +307,6 @@ export default function CustomerDashboard() {
           color: #FF9B85;
         }
 
-        /* DÜZELTİLDİ: zIndex -> z-index */
         .mkl-hamburger {
           position: fixed;
           top: 20px;
@@ -460,11 +473,12 @@ export default function CustomerDashboard() {
             left: 0;
             height: 100vh;
             width: 280px !important;
-            z-index: 1000;
-            transform: translateX(-100%); /* Başlangıçta gizli */
+            z-index: 1050;
+            transform: translateX(-100%);
+            box-shadow: 8px 0 35px rgba(0,0,0,0.15);
           }
           .mkl-sidebar.open {
-            transform: translateX(0); /* Menü açıldığında görünür */
+            transform: translateX(0);
           }
           .mkl-hamburger {
             display: flex !important;
@@ -486,14 +500,13 @@ export default function CustomerDashboard() {
       </button>
 
       {/* SOL SIDEBAR */}
-      <div className={`mkl-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      <div ref={sidebarRef} className={`mkl-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         {/* Brand Header */}
         <div style={{ marginBottom: '40px', paddingLeft: '8px' }}>
           <a href="#" style={{ textDecoration: 'none', color: '#FAF8F5' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
             <h2 style={{ 
               margin: 0, 
-              fontFamily: "'Fraunces', serif", 
-              fontSize: '1.5rem', 
+              fontSize: '1.45rem', 
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
@@ -505,7 +518,7 @@ export default function CustomerDashboard() {
                 <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
                 <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
               </svg>
-              Makas<span style={{ fontStyle: 'italic', color: '#C5A880', fontWeight: 300 }}>Lab</span>
+              Makas<span>Lab</span>
             </h2>
           </a>
         </div>
@@ -537,14 +550,16 @@ export default function CustomerDashboard() {
           </button>
         </div>
 
-        {/* User Card at Sidebar Bottom */}
+        {/* User Card at Sidebar Bottom (Margin, Padding & flexShrink düzenlendi) */}
         <div style={{
-          marginTop: 'auto',
+          marginTop: '24px',
           paddingTop: '20px',
+          paddingBottom: '20px',
           borderTop: '1px solid rgba(197, 168, 128, 0.15)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '14px'
+          gap: '14px',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '8px' }}>
             <div style={{
@@ -585,13 +600,17 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
-      {/* ARKA PLAN MOBİL KARARTICI */}
+      {/* ARKA PLAN MOBİL KARARTICI & BLUR (Düzeltildi) */}
       {isSidebarOpen && (
         <div
           onClick={() => setIsSidebarOpen(false)}
           style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            backgroundColor: 'rgba(30,27,24,0.4)', zIndex: 900
+            backgroundColor: 'rgba(30,27,24,0.3)', 
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 1000,
+            transition: 'all 0.3s ease'
           }}
         />
       )}
@@ -620,8 +639,8 @@ export default function CustomerDashboard() {
         }}>
           <div>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#A3845B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MÜŞTERİ PANELİ</span>
-            <h1 style={{ margin: '4px 0 0 0', fontFamily: "'Fraunces', serif", fontSize: '2.1rem', fontWeight: 400 }}>
-              Merhaba, <span style={{ fontStyle: 'italic', fontWeight: 300, color: '#A3845B' }}>{profileData.firstName}</span>
+            <h1 style={{ margin: '4px 0 0 0', fontSize: '2.1rem', fontWeight: 600 }}>
+              Merhaba, <span style={{ fontWeight: 500, color: '#A3845B' }}>{profileData.firstName}</span>
             </h1>
           </div>
 
@@ -647,7 +666,7 @@ export default function CustomerDashboard() {
           {activeTab === 'appointments' && (
             <div>
               <div style={{ marginBottom: '32px' }}>
-                <h2 style={{ margin: 0, fontFamily: "'Fraunces', serif", color: '#1E1B18', fontSize: '1.5rem', fontWeight: 500 }}>
+                <h2 style={{ margin: 0, color: '#1E1B18', fontSize: '1.5rem', fontWeight: 500 }}>
                   Randevularım
                 </h2>
                 <p style={{ margin: '6px 0 0 0', color: '#8C8276', fontSize: '0.9rem' }}>
@@ -692,7 +711,7 @@ export default function CustomerDashboard() {
                   {upcomingAppointments.length > 0 && (
                     <div>
                       <h3 style={{ 
-                        fontFamily: "'Fraunces', serif", fontSize: '1.2rem', fontWeight: 500, 
+                        fontSize: '1.2rem', fontWeight: 600, 
                         marginBottom: '16px', borderBottom: '1px solid rgba(197, 168, 128, 0.15)', 
                         paddingBottom: '8px', color: '#A3845B' 
                       }}>
@@ -710,7 +729,7 @@ export default function CustomerDashboard() {
                             {/* Card Header */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
                               <div>
-                                <h4 style={{ margin: 0, fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.15rem', color: '#1E1B18' }}>
+                                <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1.15rem', color: '#1E1B18' }}>
                                   {app.shopName}
                                 </h4>
                                 <span style={{ fontSize: '0.78rem', color: '#8C8276', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
@@ -739,7 +758,7 @@ export default function CustomerDashboard() {
                               {app.shopPhone && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#8C8276' }}>
                                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72(12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72" />
                                   </svg>
                                   <span>{app.shopPhone}</span>
                                 </div>
@@ -767,7 +786,7 @@ export default function CustomerDashboard() {
                               
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '4px' }}>
                                 <span style={{ color: '#8C8276', fontWeight: 500 }}>Hizmet Tutarı:</span>
-                                <span style={{ fontWeight: 700, color: '#A3845B', fontSize: '1.2rem', fontFamily: "'Fraunces', serif" }}>
+                                <span style={{ fontWeight: 700, color: '#A3845B', fontSize: '1.2rem' }}>
                                   {app.price} TL
                                 </span>
                               </div>
@@ -790,7 +809,7 @@ export default function CustomerDashboard() {
                   {pastAppointments.length > 0 && (
                     <div>
                       <h3 style={{ 
-                        fontFamily: "'Fraunces', serif", fontSize: '1.2rem', fontWeight: 500, 
+                        fontSize: '1.2rem', fontWeight: 600, 
                         marginBottom: '16px', borderBottom: '1px solid rgba(197, 168, 128, 0.15)', 
                         paddingBottom: '8px', color: '#8C8276' 
                       }}>
@@ -808,7 +827,7 @@ export default function CustomerDashboard() {
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
                               <div>
-                                <h4 style={{ margin: 0, fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.15rem', color: '#555' }}>
+                                <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1.15rem', color: '#555' }}>
                                   {app.shopName}
                                 </h4>
                                 <span style={{ fontSize: '0.78rem', color: '#8C8276', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
@@ -924,7 +943,7 @@ export default function CustomerDashboard() {
             <div style={{ maxWidth: '640px' }}>
 
               <div style={{ marginBottom: '32px' }}>
-                <h2 style={{ color: '#1E1B18', fontFamily: "'Fraunces', serif", fontSize: '1.5rem', fontWeight: 500, margin: 0 }}>
+                <h2 style={{ color: '#1E1B18', fontSize: '1.5rem', fontWeight: 500, margin: 0 }}>
                   Profil Bilgilerini Güncelle
                 </h2>
                 <p style={{ color: '#8C8276', margin: '6px 0 0 0', fontSize: '0.9rem' }}>
@@ -1001,7 +1020,7 @@ export default function CustomerDashboard() {
                   <div className="mkl-form-group">
                     <span className="mkl-form-icon-left">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72a12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72" />
                       </svg>
                     </span>
                     <input 

@@ -83,17 +83,17 @@ export default function Home() {
   }, [navigate]);
 
   const filteredShops = shops.filter((shop) => {
-  const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
-  const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
+    const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
 
-  // Artık sadece backend'den gelen kategori bilgisini kontrol ediyoruz
-  let matchesCategory = true;
-  if (selectedCategory !== 'Tümü') {
-    matchesCategory = shop.category === selectedCategory;
-  }
-  
-  return matchesCity && matchesSearch && matchesCategory;
-});
+    let matchesCategory = true;
+    if (selectedCategory !== 'Tümü') {
+      // Backend'den gelen kategori bilgisini case-insensitive olarak kontrol ediyoruz
+      matchesCategory = shop.category?.toLowerCase() === selectedCategory.toLowerCase();
+    }
+    
+    return matchesCity && matchesSearch && matchesCategory;
+  });
 
   const handleProfileClick = () => {
     const token = localStorage.getItem('token');
@@ -526,7 +526,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - UPDATED with Unisex Salon Hero Image */}
       <header style={{
         position: 'relative',
         height: '460px',
@@ -536,7 +536,7 @@ export default function Home() {
         alignItems: 'center',
         textAlign: 'center',
         color: '#FAF8F5',
-        background: 'linear-gradient(180deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.85) 100%), url("/kuaforsalonu.jpg")',
+        background: 'linear-gradient(180deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.85) 100%), url("/unisex_salon_hero.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'scroll',

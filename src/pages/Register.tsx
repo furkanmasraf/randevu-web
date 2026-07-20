@@ -60,7 +60,6 @@ export default function Register() {
     }
   };
 
-
   return (
     <div style={{
       display: 'flex',
@@ -156,6 +155,7 @@ export default function Register() {
           align-items: center;
           justify-content: center;
           gap: 6px;
+          color: #8C8276;
         }
 
         .mkl-role-card:hover {
@@ -167,7 +167,7 @@ export default function Register() {
         .mkl-role-card.active {
           border-color: #1E1B18;
           background-color: #1E1B18;
-          color: #FAF8F5;
+          color: #C5A880;
           box-shadow: 0 6px 16px rgba(30, 27, 24, 0.1);
         }
 
@@ -208,9 +208,9 @@ export default function Register() {
         }
 
         .mkl-glass-card {
-          background: rgba(250, 248, 245, 0.08);
+          background: rgba(30, 27, 24, 0.55);
           backdrop-filter: blur(16px);
-          border: 1px solid rgba(250, 248, 245, 0.18);
+          border: 1px solid rgba(197, 168, 128, 0.25);
           border-radius: 24px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         }
@@ -260,7 +260,7 @@ export default function Register() {
       <div style={{
         flex: isMobile ? 'none' : 1.1,
         height: isMobile ? '200px' : '100vh',
-        backgroundImage: `url('/kuaforsalonu.jpg')`,
+        backgroundImage: `url('/unisex_salon_hero.jpg')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         position: 'relative',
@@ -273,7 +273,7 @@ export default function Register() {
         <div style={{ 
           position: 'absolute', 
           inset: 0, 
-          background: 'linear-gradient(135deg, rgba(30,27,24,0.55) 0%, rgba(30,27,24,0.85) 100%)' 
+          background: 'linear-gradient(135deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.8) 100%)' 
         }}></div>
 
         {/* Small Brand Logo in Top Left (Desktop only) */}
@@ -361,28 +361,27 @@ export default function Register() {
         </div>
       </div>
 
-      {/* SAĞ ALAN: Kayıt Formu */}
+      {/* SAĞ ALAN: Kayıt Formu (Düzeltilmiş Scroll ve Dikey Hizalama) */}
       <div style={{
         flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        padding: isMobile ? '32px 24px' : '40px 60px',
-        justifyContent: 'center',
-        backgroundColor: '#FFFFFF',
-        overflowY: 'auto',
         height: isMobile ? 'auto' : '100vh',
+        overflowY: 'auto',
+        backgroundColor: '#FFFFFF',
+        display: 'flex',
+        flexDirection: 'column',
         boxSizing: 'border-box'
       }}>
         <div className="animate-fade-up" style={{
           width: '100%',
           maxWidth: '420px',
-          paddingTop: '20px',
-          paddingBottom: '20px'
+          margin: 'auto',
+          padding: isMobile ? '32px 24px' : '60px 40px',
+          boxSizing: 'border-box'
         }}>
 
           <div style={{ marginBottom: '28px' }}>
             <NotificationToast notification={notification} />
-          <h2 style={{
+            <h2 style={{
               fontFamily: "'Fraunces', serif",
               fontSize: '1.85rem',
               fontWeight: 500,
