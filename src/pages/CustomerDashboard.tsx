@@ -186,7 +186,6 @@ export default function CustomerDashboard() {
     }
   };
 
-  // Group appointments into upcoming and past
   const now = new Date().getTime();
   const upcomingAppointments = appointments.filter(app => {
     const time = new Date(app.appointmentTime).getTime();
@@ -240,7 +239,21 @@ export default function CustomerDashboard() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
-        /* Custom transitions */
+        /* Sidebar ana stilleri */
+        .mkl-sidebar {
+          width: 280px;
+          background-color: #1E1B18;
+          color: #FAF8F5;
+          padding: 32px 24px;
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+          border-right: 1px solid rgba(197, 168, 128, 0.15);
+          box-shadow: 8px 0 35px rgba(0,0,0,0.08);
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          box-sizing: border-box;
+        }
+
         .mkl-side-btn {
           width: 100%;
           text-align: left;
@@ -280,11 +293,12 @@ export default function CustomerDashboard() {
           color: #FF9B85;
         }
 
+        /* DÜZELTİLDİ: zIndex -> z-index */
         .mkl-hamburger {
           position: fixed;
           top: 20px;
           right: 20px;
-          zIndex: 1100;
+          z-index: 1100;
           width: 44px;
           height: 44px;
           display: none;
@@ -438,16 +452,19 @@ export default function CustomerDashboard() {
           align-items: center;
         }
 
-        /* Responsive */
+        /* Mobil Uyumlu Düzenlemeler */
         @media (max-width: 992px) {
           .mkl-sidebar {
-            display: ${isSidebarOpen ? 'flex' : 'none'} !important;
             position: fixed !important;
             top: 0;
             left: 0;
             height: 100vh;
             width: 280px !important;
             z-index: 1000;
+            transform: translateX(-100%); /* Başlangıçta gizli */
+          }
+          .mkl-sidebar.open {
+            transform: translateX(0); /* Menü açıldığında görünür */
           }
           .mkl-hamburger {
             display: flex !important;
@@ -469,20 +486,7 @@ export default function CustomerDashboard() {
       </button>
 
       {/* SOL SIDEBAR */}
-      <div 
-        className="mkl-sidebar"
-        style={{
-          width: '280px',
-          backgroundColor: '#1E1B18',
-          color: '#FAF8F5',
-          padding: '32px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-          borderRight: '1px solid rgba(197, 168, 128, 0.15)',
-          boxShadow: '8px 0 35px rgba(0,0,0,0.08)'
-        }}
-      >
+      <div className={`mkl-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         {/* Brand Header */}
         <div style={{ marginBottom: '40px', paddingLeft: '8px' }}>
           <a href="#" style={{ textDecoration: 'none', color: '#FAF8F5' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
@@ -735,7 +739,7 @@ export default function CustomerDashboard() {
                               {app.shopPhone && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#8C8276' }}>
                                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72(12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                   </svg>
                                   <span>{app.shopPhone}</span>
                                 </div>
@@ -855,7 +859,7 @@ export default function CustomerDashboard() {
             </div>
           )}
 
-          {/* TAB 2: PROFİL AYARLARIM */}
+          {/* CANCEL PENDING MODAL/BANNER */}
           {cancelPendingId !== null && (
             <div style={{
               marginBottom: '24px',
@@ -914,6 +918,8 @@ export default function CustomerDashboard() {
               </div>
             </div>
           )}
+
+          {/* TAB 2: PROFİL AYARLARIM */}
           {activeTab === 'profile' && (
             <div style={{ maxWidth: '640px' }}>
 
@@ -995,7 +1001,7 @@ export default function CustomerDashboard() {
                   <div className="mkl-form-group">
                     <span className="mkl-form-icon-left">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72a12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                       </svg>
                     </span>
                     <input 
