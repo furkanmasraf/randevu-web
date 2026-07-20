@@ -1095,7 +1095,7 @@ export default function BarberDashboard() {
                       className="mkl-bd-input"
                       value={newEmployeeName}
                       onChange={e => setNewEmployeeName(e.target.value)}
-                      placeholder="Örn: Ahmet Yılmaz"
+                      placeholder="Örn: Ad Soyad"
                     />
                   </div>
 
