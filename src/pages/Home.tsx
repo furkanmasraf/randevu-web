@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { 
+  Search, 
+  MapPin, 
+  Scissors, 
+  User, 
+  Sparkles, 
+  Clock, 
+  ArrowRight, 
+  Building2, 
+  Star,
+  CheckCircle2,
+  Calendar,
+  Phone,
+  Navigation
+} from 'lucide-react';
 
 interface Shop {
   id: number;
@@ -8,47 +23,80 @@ interface Shop {
   city: string;
   district: string;
   addressText: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   subscribed: boolean;
   imageUrl?: string;
   category?: string;
   phoneNumber?: string;
+  distanceKm?: number;
 }
 
-const CITIES = ["Tümü", "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya"];
+const TURKEY_CITIES = [
+  "Tümü",
+  "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan",
+  "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu",
+  "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ",
+  "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Iğdır", "Isparta",
+  "İstanbul", "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kırıkkale", "Kırklareli",
+  "Kırşehir", "Kilis", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla",
+  "Muş", "Nevşehir", "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop",
+  "Sivas", "Şanlıurfa", "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova",
+  "Yozgat", "Zonguldak"
+];
+
+const TURKEY_DISTRICTS: Record<string, string[]> = {
+  "İstanbul": [
+    "Tümü", "Adalar", "Arnavutköy", "Ataşehir", "Avcılar", "Bağcılar", "Bahçelievler", "Bakırköy", 
+    "Başakşehir", "Bayrampaşa", "Beşiktaş", "Beykoz", "Beylikdüzü", "Beyoğlu", "Büyükçekmece", "Çatalca", 
+    "Çekmeköy", "Esenler", "Esenyurt", "Eyüpsultan", "Fatih", "Gaziosmanpaşa", "Güngören", "Kadıköy", 
+    "Kağıthane", "Kartal", "Küçükçekmece", "Maltepe", "Pendik", "Sancaktepe", "Sarıyer", "Silivri", 
+    "Sultanbeyli", "Sultangazi", "Şile", "Şişli", "Tuzla", "Ümraniye", "Üsküdar", "Zeytinburnu"
+  ],
+  "Ankara": [
+    "Tümü", "Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya", "Çubuk", 
+    "Elmadağ", "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana", "Kahramankazan", "Kalecik", 
+    "Keçiören", "Kızılcahamam", "Mamak", "Nallıhan", "Polatlı", "Pursaklar", "Sincan", "Şereflikoçhisar", "Yenimahalle"
+  ],
+  "İzmir": [
+    "Tümü", "Aliağa", "Balçova", "Bayındır", "Bayraklı", "Bergama", "Beydağ", "Bornova", "Buca", 
+    "Çeşme", "Çiğli", "Dikili", "Foça", "Gaziemir", "Güzelbahçe", "Karabağlar", "Karaburun", "Karşıyaka", 
+    "Kemalpaşa", "Kınık", "Kiraz", "Konak", "Menderes", "Menemen", "Narlıdere", "Ödemiş", "Seferihisar", 
+    "Selçuk", "Tire", "Torbalı", "Urla"
+  ],
+  "Bursa": [
+    "Tümü", "Büyükorhan", "Gemlik", "Gürsu", "Harmancık", "İnegöl", "İznik", "Karacabey", "Keles", 
+    "Kestel", "Mudanya", "Mustafakemalpaşa", "Nilüfer", "Orhaneli", "Orhangazi", "Osmangazi", "Yenişehir", "Yıldırım"
+  ],
+  "Antalya": [
+    "Tümü", "Akseki", "Aksu", "Alanya", "Demre", "Döşemealtı", "Elmalı", "Finike", "Gazipaşa", 
+    "Gündoğmuş", "İbradı", "Kaş", "Kemer", "Kepez", "Konyaaltı", "Korkuteli", "Kumluca", "Manavgat", "Muratpaşa", "Serik"
+  ],
+  "Adana": [
+    "Tümü", "Aladağ", "Ceyhan", "Çukurova", "Feke", "İmamoğlu", "Karaisalı", "Karataş", "Kozan", 
+    "Pozantı", "Saimbeyli", "Sarıçam", "Seyhan", "Tufanbeyli", "Yumurtalık", "Yüreğir"
+  ]
+};
 
 const CATEGORIES = [
-  { id: 'Tümü', label: 'Tümü', icon: (active: boolean) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={active ? '#1c1917' : '#8c8276'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      <path d="M2 12h20" />
-    </svg>
-  )},
-  { id: 'Erkek Kuaförü', label: 'Erkek Kuaförü', icon: (active: boolean) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={active ? '#1c1917' : '#8c8276'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 22V4c0-.5.2-1 .6-1.4C5 2.2 5.5 2 6 2h12c.5 0 1 .2 1.4.6.4.4.6.9.6 1.4v18" />
-      <path d="M18 14H6" />
-      <path d="M6 10h12" />
-      <circle cx="12" cy="6" r="1" />
-    </svg>
-  )},
-  { id: 'Kadın Kuaförü', label: 'Kadın Kuaförü', icon: (active: boolean) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={active ? '#1c1917' : '#8c8276'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22a7 7 0 0 0 7-7c0-4.3-3-7-7-7s-7 2.7-7 7a7 7 0 0 0 7 7z" />
-      <path d="M12 2a5 5 0 0 0-5 5c0 1 .5 2.5 1.5 3.5" />
-      <path d="M12 2a5 5 0 0 1 5 5c0 1-.5 2.5-1.5 3.5" />
-      <path d="M8 14h8" />
-    </svg>
-  )},
-  { id: 'Güzellik Salonu', label: 'Güzellik Salonu', icon: (active: boolean) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={active ? '#1c1917' : '#8c8276'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2s8 3 8 10-8 10-8 10-8-3-8-10 8-10 8-10z" />
-      <path d="M12 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" />
-    </svg>
-  )}
+  { id: 'Tümü', label: 'Tümü', icon: Scissors },
+  { id: 'Erkek Kuaförü', label: 'Erkek Kuaförü', icon: User },
+  { id: 'Kadın Kuaförü', label: 'Kadın Kuaförü', icon: Sparkles },
+  { id: 'Güzellik Salonu', label: 'Güzellik Salonu', icon: Star },
 ];
+
+// Haversine formula to calculate distance in KM between two coordinates
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function Home() {
   const navigate = useNavigate();
@@ -56,24 +104,29 @@ export default function Home() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('Tümü');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('Tümü');
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü');
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState<boolean>(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
-    if (token && role && role.toUpperCase() === 'SHOP_OWNER') {
-      navigate('/barber-dashboard');
-      return;
+    if (token) {
+      setIsLoggedIn(true);
+      if (role && role.toUpperCase() === 'SHOP_OWNER') {
+        navigate('/barber-dashboard');
+        return;
+      }
     }
 
     const fetchShops = async () => {
       try {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const response = await API.get('https://randevu-sistemi-dv33.onrender.com/api/shops', {
-          headers: headers
-        });
-        setShops(response.data);
+        const response = await API.get('/api/shops', { headers });
+        setShops(response.data || []);
       } catch (error) {
         console.error("Dükkanlar yüklenirken hata oluştu:", error);
       }
@@ -82,17 +135,62 @@ export default function Home() {
     fetchShops();
   }, [navigate]);
 
+  // Handle geolocation detection
+  const handleFindNearMe = () => {
+    if (!navigator.geolocation) {
+      alert("Tarayıcınız konum servisini desteklemiyor.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserLocation({ lat, lng });
+
+        // Calculate distance for all shops
+        const shopsWithDistance = shops.map(shop => {
+          if (shop.latitude && shop.longitude) {
+            const dist = calculateDistanceKm(lat, lng, shop.latitude, shop.longitude);
+            return { ...shop, distanceKm: Math.round(dist * 10) / 10 };
+          }
+          return shop;
+        });
+
+        // Sort by distance if available
+        shopsWithDistance.sort((a, b) => (a.distanceKm || 9999) - (b.distanceKm || 9999));
+        setShops(shopsWithDistance);
+        setLocating(false);
+      },
+      (err) => {
+        console.error("Konum alınamadı:", err);
+        alert("Konumunuza erişilemedi. Lütfen izinleri kontrol edin.");
+        setLocating(false);
+      }
+    );
+  };
+
+  const availableDistricts = selectedCity !== 'Tümü' && TURKEY_DISTRICTS[selectedCity] 
+    ? TURKEY_DISTRICTS[selectedCity] 
+    : [];
+
   const filteredShops = shops.filter((shop) => {
-    const matchesCity = selectedCity === 'Tümü' || shop.city.toLowerCase() === selectedCity.toLowerCase();
-    const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCity = selectedCity === 'Tümü' || (shop.city && shop.city.toLowerCase() === selectedCity.toLowerCase());
+    const matchesDistrict = selectedDistrict === 'Tümü' || (shop.district && shop.district.toLowerCase() === selectedDistrict.toLowerCase());
+
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || 
+      shop.name.toLowerCase().includes(query) ||
+      (shop.district && shop.district.toLowerCase().includes(query)) ||
+      (shop.addressText && shop.addressText.toLowerCase().includes(query)) ||
+      (shop.city && shop.city.toLowerCase().includes(query));
 
     let matchesCategory = true;
     if (selectedCategory !== 'Tümü') {
-      // Backend'den gelen kategori bilgisini case-insensitive olarak kontrol ediyoruz
       matchesCategory = shop.category?.toLowerCase() === selectedCategory.toLowerCase();
     }
     
-    return matchesCity && matchesSearch && matchesCategory;
+    return matchesCity && matchesDistrict && matchesSearch && matchesCategory;
   });
 
   const handleProfileClick = () => {
@@ -111,769 +209,419 @@ export default function Home() {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#FAF8F5', 
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif", 
-      paddingBottom: '100px',
-      color: '#1E1B18'
-    }}>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-          background: #FAF8F5;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #E8E2D5;
-          border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #C5A880;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes goldGlow {
-          0%, 100% { box-shadow: 0 0 10px rgba(197, 168, 128, 0.2); }
-          50% { box-shadow: 0 0 20px rgba(197, 168, 128, 0.45); }
-        }
-
-        .animate-fade-in {
-          animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        .animate-fade-up {
-          animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        /* Interactive Elements */
-        .mkl-navbar {
-          background: rgba(250, 248, 245, 0.8);
-          backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(197, 168, 128, 0.15);
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          transition: all 0.3s ease;
-        }
-
-        .mkl-logo {
-          font-family: 'Fraunces', serif;
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1E1B18;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .mkl-logo span {
-          font-style: italic;
-          color: #A3845B;
-        }
-
-        .mkl-nav-btn {
-          padding: 8px 20px;
-          border-radius: 40px;
-          border: 1px solid #C5A880;
-          background: transparent;
-          color: #A3845B;
-          font-weight: 500;
-          font-size: 0.88rem;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .mkl-nav-btn:hover {
-          background: #A3845B;
-          color: #FAF8F5;
-          border-color: #A3845B;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(163, 132, 91, 0.2);
-        }
-
-        .mkl-search-bar {
-          background: #FFFFFF;
-          border: 1px solid rgba(197, 168, 128, 0.25);
-          border-radius: 24px;
-          box-shadow: 0 16px 40px -10px rgba(58, 53, 48, 0.08);
-          transition: all 0.3s ease;
-        }
-
-        .mkl-search-bar:focus-within {
-          border-color: #A3845B;
-          box-shadow: 0 16px 40px -10px rgba(163, 132, 91, 0.15);
-        }
-
-        .mkl-input-group {
-          position: relative;
-          display: flex;
-          align-items: center;
-          flex: 1;
-        }
-
-        .mkl-input-icon {
-          position: absolute;
-          left: 16px;
-          color: #A3845B;
-          display: flex;
-          align-items: center;
-          pointer-events: none;
-        }
-
-        .mkl-input-field {
-          width: 100%;
-          padding: 16px 16px 16px 44px;
-          border: none;
-          background: transparent;
-          font-size: 0.95rem;
-          color: #1E1B18;
-          font-family: inherit;
-        }
-
-        .mkl-input-field:focus {
-          outline: none;
-        }
-
-        .mkl-divider {
-          width: 1px;
-          height: 32px;
-          background: rgba(197, 168, 128, 0.25);
-        }
-
-        @media (max-width: 768px) {
-          .mkl-search-bar {
-            flex-direction: column;
-            border-radius: 20px;
-            padding: 8px;
-          }
-          .mkl-divider {
-            width: 100%;
-            height: 1px;
-            margin: 4px 0;
-          }
-          .mkl-input-field {
-            padding: 12px 12px 12px 40px;
-          }
-          .mkl-input-icon {
-            left: 12px;
-          }
-        }
-
-        /* Category tabs */
-        .mkl-categories-container {
-          display: flex;
-          justify-content: center;
-          gap: 12px;
-          margin-bottom: 40px;
-          overflow-x: auto;
-          padding: 4px;
-          scrollbar-width: none; /* Firefox */
-        }
-        .mkl-categories-container::-webkit-scrollbar {
-          display: none; /* Safari and Chrome */
-        }
-
-        .mkl-category-tab {
-          padding: 10px 20px;
-          border-radius: 30px;
-          border: 1px solid rgba(197, 168, 128, 0.2);
-          background: #FFFFFF;
-          color: #8C8276;
-          cursor: pointer;
-          font-weight: 500;
-          font-size: 0.88rem;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          white-space: nowrap;
-        }
-
-        .mkl-category-tab:hover {
-          border-color: #A3845B;
-          color: #A3845B;
-          background: rgba(197, 168, 128, 0.05);
-          transform: translateY(-1px);
-        }
-
-        .mkl-category-tab.active {
-          background: #1E1B18;
-          color: #FAF8F5;
-          border-color: #1E1B18;
-          box-shadow: 0 6px 16px rgba(30, 27, 24, 0.15);
-        }
-
-        /* Premium Shop Card */
-        .mkl-card {
-          background: #FFFFFF;
-          border: 1px solid rgba(232, 226, 213, 0.7);
-          border-radius: 24px;
-          overflow: hidden;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          display: flex;
-          flex-direction: column;
-          position: relative;
-        }
-
-        .mkl-card:hover {
-          transform: translateY(-6px);
-          border-color: rgba(197, 168, 128, 0.4);
-          box-shadow: 0 20px 35px -10px rgba(163, 132, 91, 0.12);
-        }
-
-        .mkl-card.premium {
-          animation: goldGlow 3s infinite ease-in-out;
-          border: 1.5px solid rgba(197, 168, 128, 0.5);
-        }
-
-        .mkl-card.premium::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #C5A880, #A3845B, #C5A880);
-          z-index: 5;
-        }
-
-        .mkl-image-container {
-          position: relative;
-          height: 200px;
-          overflow: hidden;
-          background: #F5F0E6;
-        }
-
-        .mkl-card-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .mkl-card:hover .mkl-card-img {
-          transform: scale(1.06);
-        }
-
-        .mkl-badge-premium {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          background: linear-gradient(135deg, #1E1B18 0%, #3A3530 100%);
-          color: #C5A880;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          padding: 6px 12px;
-          border-radius: 30px;
-          border: 1px solid rgba(197, 168, 128, 0.3);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          z-index: 2;
-        }
-
-        .mkl-badge-city {
-          position: absolute;
-          bottom: 16px;
-          left: 16px;
-          background: rgba(250, 248, 245, 0.9);
-          backdrop-filter: blur(8px);
-          color: #1E1B18;
-          font-size: 0.78rem;
-          font-weight: 600;
-          padding: 4px 12px;
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          z-index: 2;
-        }
-
-        .mkl-card-body {
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          flex-grow: 1;
-        }
-
-        .mkl-card-title {
-          font-family: 'Fraunces', serif;
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #1E1B18;
-          margin: 0 0 10px 0;
-          line-height: 1.3;
-        }
-
-        .mkl-info-row {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          color: #8C8276;
-          font-size: 0.85rem;
-          margin-bottom: 8px;
-          line-height: 1.4;
-        }
-
-        .mkl-info-icon {
-          flex-shrink: 0;
-          color: #A3845B;
-          margin-top: 2px;
-        }
-
-        .mkl-card-action {
-          margin-top: auto;
-          padding-top: 20px;
-        }
-
-        .mkl-btn-primary {
-          width: 100%;
-          background: #1E1B18;
-          color: #FAF8F5;
-          border: 1px solid #1E1B18;
-          padding: 12px;
-          border-radius: 14px;
-          font-weight: 600;
-          font-size: 0.92rem;
-          cursor: pointer;
-          transition: all 0.25s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .mkl-btn-primary:hover {
-          background: #A3845B;
-          border-color: #A3845B;
-          color: #FAF8F5;
-          transform: translateY(-1px);
-          box-shadow: 0 8px 20px rgba(163, 132, 91, 0.2);
-        }
-
-        .mkl-btn-primary:active {
-          transform: translateY(0);
-        }
-
-        .mkl-premium-border {
-          position: absolute;
-          inset: 0;
-          border-radius: 24px;
-          pointer-events: none;
-          border: 2px solid transparent;
-          transition: border-color 0.3s ease;
-        }
-
-        .mkl-card.premium:hover .mkl-premium-border {
-          border-color: #C5A880;
-        }
-      `}</style>
-
-      {/* Modern Premium Navbar */}
-      <nav className="mkl-navbar">
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '16px 24px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <a href="#" className="mkl-logo" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A3845B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#FAF8F5', color: '#1E1B18', display: 'flex', flexDirection: 'column', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      
+      {/* HEADER / NAVIGATION */}
+      <header className="glass-nav" style={{ padding: '16px 32px' }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          
+          {/* Logo */}
+          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
               <circle cx="6" cy="6" r="3" />
               <circle cx="6" cy="18" r="3" />
               <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
               <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
             </svg>
-            Makas<span>Lab</span>
-          </a>
-
-          <button className="mkl-nav-btn" onClick={handleProfileClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            Profilim
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero Section - UPDATED with Unisex Salon Hero Image */}
-      <header style={{
-        position: 'relative',
-        height: '460px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        color: '#FAF8F5',
-        background: 'linear-gradient(180deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.85) 100%), url("/unisex_salon_hero.jpg")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'scroll',
-        overflow: 'hidden',
-        padding: '0 24px'
-      }}>
-        {/* Soft Gold Ambient Glow inside Hero */}
-        <div style={{
-          position: 'absolute',
-          bottom: '-10%',
-          width: '600px',
-          height: '250px',
-          background: 'radial-gradient(ellipse at center, rgba(197, 168, 128, 0.15) 0%, rgba(0,0,0,0) 70%)',
-          pointerEvents: 'none'
-        }} />
-
-        <div className="animate-fade-up" style={{ zIndex: 2, maxWidth: '640px' }}>
-          <div style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            letterSpacing: '0.3em',
-            textTransform: 'uppercase',
-            color: '#C5A880',
-            marginBottom: '16px'
-          }}>
-            Lüks &amp; Güzellik Deneyimi
+            <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1E1B18' }}>
+              Makas<span style={{ color: '#A3845B', fontWeight: 700 }}>Lab</span>
+            </span>
           </div>
 
-          <h1 style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: 'clamp(2.5rem, 7vw, 4.2rem)',
-            fontWeight: 400,
-            lineHeight: 1.1,
-            margin: '0 0 20px 0',
-            letterSpacing: '-0.02em'
-          }}>
-            Tarzınızı Keşfedin,<br />
-            <span style={{ fontStyle: 'italic', color: '#C5A880', fontWeight: 300 }}>Kendinizi Şımartın.</span>
-          </h1>
+          {/* Nav Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button 
+              onClick={() => navigate('/register?role=SHOP_OWNER')} 
+              className="btn-secondary" 
+              style={{ fontSize: '0.85rem', padding: '10px 18px' }}
+            >
+              <Building2 size={16} /> Salonunuzu Ekleyin
+            </button>
 
-          <p style={{
-            fontSize: '1.05rem',
-            color: '#E8E2D5',
-            lineHeight: 1.6,
-            fontWeight: 300,
-            margin: '0 auto',
-            maxWidth: '500px'
-          }}>
-            Şehrin en iyi ve en seçkin kuaför salonlarından dilediğiniz saatte randevunuzu saniyeler içinde planlayın.
-          </p>
+            <button 
+              onClick={handleProfileClick} 
+              className="btn-primary" 
+              style={{ fontSize: '0.85rem', padding: '10px 20px' }}
+            >
+              <User size={16} /> {isLoggedIn ? 'Hesabım' : 'Giriş Yap'}
+            </button>
+          </div>
+
         </div>
       </header>
 
-      {/* Main Search and Layout Container */}
-      <div style={{ 
-        maxWidth: '1100px', 
-        margin: '-60px auto 0 auto', 
-        padding: '0 24px', 
-        position: 'relative', 
-        zIndex: 10 
+      {/* HERO SECTION */}
+      <section style={{ 
+        background: 'linear-gradient(135deg, #1E1B18 0%, #322D28 100%)', 
+        color: '#FAF8F5', 
+        padding: '72px 24px 80px 24px', 
+        textAlign: 'center',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        
-        {/* Search capsule */}
-        <div className="mkl-search-bar animate-fade-up" style={{
-          display: 'flex',
-          padding: '10px',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '40px'
-        }}>
-          <div className="mkl-input-group">
-            <span className="mkl-input-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </span>
-            <input
-              className="mkl-input-field"
-              type="text"
-              placeholder="Salon veya kuaför adı ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <div style={{ maxWidth: '960px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
+          
+          <span style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '6px', 
+            background: 'rgba(197, 168, 128, 0.15)', 
+            color: '#C5A880', 
+            border: '1px solid rgba(197, 168, 128, 0.3)',
+            padding: '6px 16px', 
+            borderRadius: '30px', 
+            fontSize: '0.82rem', 
+            fontWeight: 700, 
+            marginBottom: '20px' 
+          }}>
+            <Sparkles size={14} /> Premium Kuaför ve Salon Deneyimi
+          </span>
 
-          <div className="mkl-divider" />
+          <h1 style={{ fontSize: '2.8rem', fontWeight: 800, color: '#FAF8F5', lineHeight: 1.2, marginBottom: '16px', letterSpacing: '-0.02em' }}>
+            İstediğiniz Şehir ve İlçede <br />
+            <span style={{ color: '#C5A880', fontWeight: 800 }}>Yakınınızdaki Kuaförü Anında Bulun</span>
+          </h1>
 
-          <div className="mkl-input-group">
-            <span className="mkl-input-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-            </span>
-            <select
-              className="mkl-input-field"
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              style={{ 
-                cursor: 'pointer',
-                appearance: 'none',
-                WebkitAppearance: 'none'
-              }}
+          <p style={{ fontSize: '1.05rem', color: '#E8E2D5', maxWidth: '660px', margin: '0 auto 36px auto', lineHeight: 1.6, fontWeight: 500 }}>
+            Şehir ve ilçe seçerek veya konumunuzu kullanarak etrafınızdaki en seçkin salonları görün.
+          </p>
+
+          {/* SEARCH & FILTER BAR WITH CITY + DISTRICT + GEOLOCATION */}
+          <div style={{ 
+            background: '#FFFFFF', 
+            padding: '10px', 
+            borderRadius: '20px', 
+            display: 'flex', 
+            gap: '8px', 
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', 
+            flexWrap: 'wrap',
+            maxWidth: '920px',
+            margin: '0 auto',
+            border: '1px solid rgba(197, 168, 128, 0.3)'
+          }}>
+            {/* Search Input (Searches name, district, address) */}
+            <div style={{ flex: '2 1 200px', display: 'flex', alignItems: 'center', position: 'relative' }}>
+              <Search size={18} color="#A3845B" style={{ position: 'absolute', left: '14px' }} />
+              <input
+                type="text"
+                placeholder="Salon adı, ilçe veya adres..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ 
+                  width: '100%', 
+                  paddingLeft: '42px', 
+                  border: 'none', 
+                  fontSize: '0.92rem',
+                  background: 'transparent',
+                  color: '#1E1B18'
+                }}
+              />
+            </div>
+
+            {/* City Selector */}
+            <div style={{ flex: '1 1 130px', display: 'flex', alignItems: 'center', position: 'relative' }}>
+              <MapPin size={18} color="#A3845B" style={{ position: 'absolute', left: '10px' }} />
+              <select
+                value={selectedCity}
+                onChange={e => {
+                  setSelectedCity(e.target.value);
+                  setSelectedDistrict('Tümü');
+                }}
+                style={{ 
+                  width: '100%', 
+                  paddingLeft: '34px', 
+                  border: 'none', 
+                  background: '#FAF8F5',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  color: '#1E1B18',
+                  cursor: 'pointer'
+                }}
+              >
+                {TURKEY_CITIES.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* District Selector (Enabled if city has districts) */}
+            {availableDistricts.length > 0 && (
+              <div style={{ flex: '1 1 130px', display: 'flex', alignItems: 'center', position: 'relative' }}>
+                <MapPin size={18} color="#A3845B" style={{ position: 'absolute', left: '10px' }} />
+                <select
+                  value={selectedDistrict}
+                  onChange={e => setSelectedDistrict(e.target.value)}
+                  style={{ 
+                    width: '100%', 
+                    paddingLeft: '34px', 
+                    border: 'none', 
+                    background: '#FAF8F5',
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                    color: '#1E1B18',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {availableDistricts.map(dist => (
+                    <option key={dist} value={dist}>{dist === 'Tümü' ? `Tüm İlçeler` : dist}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Find Near Me Geolocation Button */}
+            <button
+              onClick={handleFindNearMe}
+              disabled={locating}
+              className="btn-secondary"
+              title="Mevcut konumunuza göre en yakın salonları sıralayın"
+              style={{ padding: '12px 16px', fontSize: '0.85rem' }}
             >
-              {CITIES.map(c => (
-                <option key={c} value={c} style={{ color: '#1E1B18', background: '#FAF8F5' }}>
-                  {c === 'Tümü' ? 'Tüm Şehirler' : c}
-                </option>
-              ))}
-            </select>
-            {/* Custom Arrow for Select */}
-            <span style={{ position: 'absolute', right: '16px', color: '#A3845B', pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </span>
-          </div>
-        </div>
+              <Navigation size={16} color="#A3845B" /> {locating ? 'Konum Alınıyor...' : 'Yakınımda Bul'}
+            </button>
 
-        {/* Category Badges Tabs */}
-        <div className="mkl-categories-container animate-fade-in">
-          {CATEGORIES.map(category => {
-            const isActive = selectedCategory === category.id;
+            {/* Search Button */}
+            <button className="btn-primary" style={{ padding: '12px 24px' }}>
+              Salon Bul <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {userLocation && (
+            <div style={{ marginTop: '16px', fontSize: '0.85rem', color: '#C5A880', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <Navigation size={14} /> Konumunuza göre yakınlıklara göre sıralandı
+            </div>
+          )}
+
+        </div>
+      </section>
+
+      {/* CATEGORY SELECTOR & MAIN CONTENT */}
+      <main style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '48px 24px 80px 24px' }}>
+        
+        {/* Category Filter Pills */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '40px' }}>
+          {CATEGORIES.map(cat => {
+            const Icon = cat.icon;
+            const isSelected = selectedCategory === cat.id;
             return (
               <button
-                key={category.id}
-                className={`mkl-category-tab ${isActive ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category.id)}
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '12px',
+                  border: isSelected ? '2px solid #1E1B18' : '1px solid rgba(197, 168, 128, 0.3)',
+                  background: isSelected ? '#1E1B18' : '#FFFFFF',
+                  color: isSelected ? '#C5A880' : '#8C8276',
+                  fontWeight: isSelected ? 700 : 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 6px rgba(30, 27, 24, 0.02)'
+                }}
               >
-                {category.icon(isActive)}
-                {category.label}
+                <Icon size={16} color={isSelected ? '#C5A880' : '#8C8276'} />
+                {cat.label}
               </button>
             );
           })}
         </div>
 
-        {/* Section Title */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          marginBottom: '24px',
-          borderBottom: '1px solid rgba(197, 168, 128, 0.15)',
-          paddingBottom: '12px'
-        }}>
-          <h2 style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: '1.75rem',
-            fontWeight: 500,
-            margin: 0
-          }}>
-            Seçkin Salonlar
-          </h2>
-          <span style={{ fontSize: '0.85rem', color: '#8C8276', fontWeight: 500 }}>
-            {filteredShops.length} dükkan listeleniyor
-          </span>
+        {/* Section Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1E1B18', margin: 0 }}>
+              {selectedCategory === 'Tümü' ? 'Öne Çıkan Salonlar' : selectedCategory}
+            </h2>
+            <p style={{ fontSize: '0.9rem', color: '#8C8276', marginTop: '4px' }}>
+              {selectedCity !== 'Tümü' ? `${selectedCity} ${selectedDistrict !== 'Tümü' ? `/ ${selectedDistrict}` : ''} konumunda ` : ''}
+              Toplam {filteredShops.length} işletme listeleniyor
+            </p>
+          </div>
         </div>
 
-        {/* Shops Grid */}
-        <main>
-          {filteredShops.length === 0 ? (
-            <div className="animate-fade-in" style={{
-              textAlign: 'center',
-              padding: '80px 24px',
-              color: '#8C8276',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '16px',
-              background: '#FFFFFF',
-              borderRadius: '24px',
-              border: '1px dashed rgba(197, 168, 128, 0.3)'
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
-              <div style={{ fontSize: '1.1rem', fontWeight: 500, color: '#1E1B18' }}>
-                Eşleşen Salon Bulunamadı
-              </div>
-              <p style={{ margin: 0, fontSize: '0.88rem', maxWidth: '340px', lineHeight: 1.5 }}>
-                Arama kriterlerinizi değiştirmeyi veya farklı bir filtre seçmeyi deneyebilirsiniz.
-              </p>
-              <button 
-                onClick={() => { setSearchQuery(''); setSelectedCity('Tümü'); setSelectedCategory('Tümü'); }}
+        {/* SALON CARDS GRID */}
+        {filteredShops.length === 0 ? (
+          <div style={{ background: '#FFFFFF', padding: '64px', borderRadius: '20px', textAlign: 'center', border: '1px solid rgba(197, 168, 128, 0.3)', color: '#8C8276' }}>
+            <Building2 size={48} color="#A3845B" style={{ margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>Aradığınız Kriterlerde Salon Bulunamadı</h3>
+            <p style={{ fontSize: '0.9rem', color: '#8C8276' }}>Lütfen ilçe veya şehir aramasını değiştirip tekrar deneyin.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
+            {filteredShops.map(shop => (
+              <div 
+                key={shop.id}
+                className="card-hover"
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#A3845B',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  marginTop: '8px'
+                  background: '#FFFFFF',
+                  borderRadius: '20px',
+                  border: '1.5px solid rgba(232, 226, 213, 0.8)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
                 }}
               >
-                Tüm Filtreleri Temizle
-              </button>
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
-              gap: '28px'
-            }}>
-              {filteredShops.map((shop, index) => {
-                // Determine display category based on name/category
-                const displayCategory = shop.category || (
-                  shop.name.toLowerCase().includes("erkek") ? "Erkek Kuaförü" :
-                  (shop.name.toLowerCase().includes("kadın") || shop.name.toLowerCase().includes("bayan")) ? "Kadın Kuaförü" :
-                  shop.name.toLowerCase().includes("güzellik") ? "Güzellik Salonu" : "Kuaför & Güzellik"
-                );
-
-                return (
-                  <div
-                    key={shop.id}
-                    className={`mkl-card ${shop.subscribed ? 'premium' : ''} animate-fade-up`}
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="mkl-premium-border" />
-                    
-                    {/* Image Area */}
-                    <div className="mkl-image-container">
-                      {shop.subscribed && (
-                        <div className="mkl-badge-premium">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                          Öne Çıkan
-                        </div>
-                      )}
-                      
-                      <div className="mkl-badge-city">
-                        {shop.city}
-                      </div>
-
-                      {shop.imageUrl && shop.imageUrl.trim() !== "" ? (
-                        <img
-                          src={shop.imageUrl}
-                          alt={shop.name}
-                          className="mkl-card-img"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          background: 'linear-gradient(135deg, #F5F0E6 0%, #E8E2D5 100%)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#A3845B',
-                          gap: '12px'
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                            <path d="M12 22a7 7 0 0 0 7-7c0-4.3-3-7-7-7s-7 2.7-7 7a7 7 0 0 0 7 7z" />
-                            <circle cx="12" cy="7" r="4" />
-                          </svg>
-                          <span style={{
-                            fontFamily: "'Fraunces', serif",
-                            fontSize: '1rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.05em'
-                          }}>
-                            {shop.name.charAt(0).toUpperCase() + shop.name.slice(1, 4)}
-                          </span>
-                        </div>
-                      )}
+                {/* Shop Image Header */}
+                <div style={{ height: '180px', position: 'relative', overflow: 'hidden', background: '#FAF8F5' }}>
+                  <img 
+                    src={shop.imageUrl || '/kuaforsalonu.jpg'} 
+                    alt={shop.name} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  {shop.distanceKm !== undefined && (
+                    <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(30, 27, 24, 0.85)', color: '#C5A880', backdropFilter: 'blur(4px)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Navigation size={12} /> {shop.distanceKm} km yakınınızda
                     </div>
+                  )}
+                  {shop.category && (
+                    <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#FFFFFF', color: '#1E1B18', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid rgba(197, 168, 128, 0.3)' }}>
+                      {shop.category}
+                    </div>
+                  )}
+                </div>
 
-                    {/* Card Content */}
-                    <div className="mkl-card-body">
-                      {/* Shop Category Tag */}
-                      <span style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        color: '#A3845B',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        marginBottom: '6px',
-                        display: 'inline-block'
-                      }}>
-                        {displayCategory}
-                      </span>
-
-                      <h3 className="mkl-card-title">
-                        {shop.name}
-                      </h3>
-
-                      {/* Info lines */}
-                      <div style={{ marginBottom: '16px' }}>
-                        <div className="mkl-info-row">
-                          <span className="mkl-info-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                          </span>
-                          <span>{shop.district}, {shop.addressText}</span>
-                        </div>
-
-                        <div className="mkl-info-row">
-                          <span className="mkl-info-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                            </svg>
-                          </span>
-                          <span style={{ fontWeight: 500, color: '#3A3530' }}>
-                            {shop.phoneNumber || 'Telefon bilgisi yok'}
-                          </span>
-                        </div>
+                {/* Shop Content */}
+                <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>
+                      {shop.name}
+                    </h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.88rem', color: '#8C8276', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <MapPin size={15} color="#A3845B" />
+                        <span style={{ fontWeight: 600, color: '#1E1B18' }}>
+                          {shop.district ? `${shop.district}, ` : ''}{shop.city}
+                        </span>
                       </div>
-
-                      {/* Action Button */}
-                      <div className="mkl-card-action">
-                        <button
-                          className="mkl-btn-primary"
-                          onClick={() => navigate(`/book-appointment/${shop.id}`)}
-                        >
-                          Randevu Al
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                          </svg>
-                        </button>
-                      </div>
+                      {shop.addressText && (
+                        <div style={{ fontSize: '0.82rem', color: '#8C8276', paddingLeft: '21px' }}>
+                          {shop.addressText}
+                        </div>
+                      )}
+                      {shop.phoneNumber && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                          <Phone size={15} color="#A3845B" />
+                          <span>{shop.phoneNumber}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+
+                  <button
+                    onClick={() => navigate(`/book-appointment/${shop.id}`)}
+                    className="btn-primary"
+                    style={{ width: '100%', padding: '12px' }}
+                  >
+                    <Calendar size={16} /> Randevu Al
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* WHY US SECTION */}
+        <section style={{ marginTop: '96px', borderTop: '1px solid rgba(197, 168, 128, 0.2)', paddingTop: '64px' }}>
+          <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 48px auto' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#A3845B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              NEDEN MAKASLAB?
+            </span>
+            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1E1B18', marginTop: '6px' }}>
+              Randevu Almanın En Kolay ve Güvenli Yolu
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+            <div style={{ background: '#FFFFFF', padding: '32px 24px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Clock size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>7/24 Anında Onaylı Randevu</h3>
+              <p style={{ fontSize: '0.88rem', color: '#8C8276', lineHeight: 1.6 }}>Telefonla aramaya son. Müsait saatleri canlı görün ve saniyeler içinde randevunuzu tamamlayın.</p>
             </div>
-          )}
-        </main>
-      </div>
+
+            <div style={{ background: '#FFFFFF', padding: '32px 24px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <CheckCircle2 size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>Şeffaf Fiyat ve Hizmetler</h3>
+              <p style={{ fontSize: '0.88rem', color: '#8C8276', lineHeight: 1.6 }}>Sürpriz ücretlerle karşılaşmayın. Salonların sunduğu hizmetlerin fiyatını ve süresini önceden görün.</p>
+            </div>
+
+            <div style={{ background: '#FFFFFF', padding: '32px 24px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Star size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>Gerçek Müşteri Yorumları</h3>
+              <p style={{ fontSize: '0.88rem', color: '#8C8276', lineHeight: 1.6 }}>Sadece randevusunu tamamlayan gerçek müşterilerin değerlendirmelerini ve puanlarını inceleyin.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* PARTNER CTA BANNER */}
+        <section style={{ 
+          marginTop: '80px', 
+          background: '#1E1B18', 
+          borderRadius: '24px', 
+          padding: '48px', 
+          color: '#FAF8F5',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '24px',
+          border: '1px solid rgba(197, 168, 128, 0.2)'
+        }}>
+          <div>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#C5A880', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SALON SAHİPLERİ İÇİN</span>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FAF8F5', marginTop: '6px', marginBottom: '8px' }}>
+              Salonunuzu MakasLab'e Ekleyin, Müşterilerinizi Büyütün
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: '#E8E2D5', maxWidth: '540px', fontWeight: 500 }}>
+              Randevu takibini dijitalleştirin, boş koltuk kalmasın. Ücretsiz işletme profilinizi hemen oluşturun.
+            </p>
+          </div>
+
+          <button 
+            onClick={() => navigate('/register?role=SHOP_OWNER')}
+            className="btn-accent"
+            style={{ padding: '14px 28px', fontSize: '1rem' }}
+          >
+            <Building2 size={18} /> Ücretsiz Başlayın
+          </button>
+        </section>
+
+      </main>
+
+      {/* FOOTER */}
+      <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(197, 168, 128, 0.2)', padding: '40px 24px', marginTop: 'auto' }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
+              <circle cx="6" cy="6" r="3" />
+              <circle cx="6" cy="18" r="3" />
+              <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
+              <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
+            </svg>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E1B18' }}>
+              Makas<span style={{ color: '#A3845B', fontWeight: 700 }}>Lab</span>
+            </span>
+          </div>
+
+          <p style={{ fontSize: '0.85rem', color: '#8C8276' }}>
+            © 2026 MakasLab Inc. Tüm hakları saklıdır. Kuaför ve Salon Yönetim Platformu.
+          </p>
+
+        </div>
+      </footer>
+
     </div>
   );
 }

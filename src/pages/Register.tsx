@@ -1,11 +1,12 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../services/api';
 import NotificationToast from '../components/NotificationToast';
 import useNotification from '../hooks/useNotification';
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -13,7 +14,13 @@ export default function Register() {
     email: '',
     password: '',
     phoneNumber: '',
-    role: 'CUSTOMER'
+    role: 'CUSTOMER',
+    // Shop Registration Fields
+    shopName: '',
+    city: '',
+    district: '',
+    addressText: '',
+    category: 'Erkek Kuaförü'
   });
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -21,15 +28,18 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const { notification, showNotification } = useNotification();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    // URL query string checking for ?role=SHOP_OWNER or ?role=shop_owner
+    const searchParams = new URLSearchParams(location.search);
+    const roleParam = searchParams.get('role');
+    if (roleParam && roleParam.toUpperCase() === 'SHOP_OWNER') {
+      setFormData(prev => ({ ...prev, role: 'SHOP_OWNER' }));
+    }
+  }, [location]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -39,22 +49,69 @@ export default function Register() {
     setError('');
     setLoading(true);
 
-    const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      password: formData.password,
-      phoneNumber: formData.phoneNumber,
-      role: formData.role.toUpperCase()
-    };
+    const isShopOwner = formData.role === 'SHOP_OWNER';
+
+    if (isShopOwner) {
+      if (!formData.shopName.trim() || !formData.city.trim() || !formData.district.trim() || !formData.addressText.trim()) {
+        setError('Lütfen işletmeniz için gerekli tüm salon bilgilerini doldurun.');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
-      await API.post('/api/auth/register', payload);
-      showNotification('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.', 'success');
-      setTimeout(() => navigate('/login'), 1200);
+      // Step 1: User Registration
+      const userPayload = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phoneNumber: formData.phoneNumber,
+        role: formData.role.toUpperCase()
+      };
+
+      await API.post('/api/auth/register', userPayload);
+
+      // Step 2: If SHOP_OWNER, login to obtain token and create shop
+      if (isShopOwner) {
+        try {
+          const loginRes = await API.post('/api/auth/login', {
+            email: formData.email,
+            password: formData.password
+          });
+
+          const token = loginRes.data.token;
+          const userId = loginRes.data.id;
+
+          const shopPayload = {
+            name: formData.shopName,
+            city: formData.city,
+            district: formData.district,
+            addressText: formData.addressText,
+            category: formData.category,
+            ownerId: parseInt(userId)
+          };
+
+          await API.post('/api/shops/register', shopPayload, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (shopErr: any) {
+          console.error("Dükkan kaydı oluşturulurken hata:", shopErr);
+        }
+      }
+
+      showNotification(
+        isShopOwner 
+          ? 'Kullanıcı ve salon kaydınız başarıyla tamamlandı! Giriş yapabilirsiniz.' 
+          : 'Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.', 
+        'success'
+      );
+      setTimeout(() => navigate('/login'), 1400);
     } catch (err: any) {
       console.error('Kayıt hatası:', err);
-      setError(err.response?.data?.message || 'Kayıt olurken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
+      const msg = err.response?.data?.message || 'Kayıt olurken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.';
+      setError(msg);
+      showNotification(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -77,14 +134,8 @@ export default function Register() {
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .animate-fade-up {
@@ -102,12 +153,12 @@ export default function Register() {
           background-color: #FFFFFF;
           color: #1E1B18;
           transition: all 0.25s ease;
+          box-sizing: border-box;
         }
 
         .mkl-login-input:focus {
           border-color: #A3845B;
           box-shadow: 0 0 0 3px rgba(163, 132, 91, 0.12);
-          background-color: #FFFFFF;
         }
 
         .mkl-input-wrapper {
@@ -195,18 +246,6 @@ export default function Register() {
           box-shadow: 0 8px 20px rgba(163, 132, 91, 0.2);
         }
 
-        .mkl-btn-submit:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .mkl-btn-submit:disabled {
-          background-color: #E8E2D5;
-          border-color: #E8E2D5;
-          color: #8C8276;
-          cursor: not-allowed;
-          box-shadow: none;
-        }
-
         .mkl-glass-card {
           background: rgba(30, 27, 24, 0.55);
           backdrop-filter: blur(16px);
@@ -219,27 +258,7 @@ export default function Register() {
           font-weight: 700;
           color: #A3845B;
           text-decoration: none;
-          position: relative;
-          padding-bottom: 2px;
           cursor: pointer;
-        }
-
-        .mkl-link-highlight::after {
-          content: '';
-          position: absolute;
-          width: 100%;
-          transform: scaleX(0);
-          height: 1.5px;
-          bottom: 0;
-          left: 0;
-          background-color: #A3845B;
-          transform-origin: bottom right;
-          transition: transform 0.25s ease-out;
-        }
-
-        .mkl-link-highlight:hover::after {
-          transform: scaleX(1);
-          transform-origin: bottom left;
         }
 
         .mkl-name-row {
@@ -269,28 +288,30 @@ export default function Register() {
         justifyContent: 'center',
         padding: '24px'
       }}>
-        {/* Dark Luxury Overlay */}
         <div style={{ 
           position: 'absolute', 
           inset: 0, 
           background: 'linear-gradient(135deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.8) 100%)' 
         }}></div>
 
-        {/* Small Brand Logo in Top Left (Desktop only) */}
         {!isMobile && (
-          <div style={{
-            position: 'absolute',
-            top: '32px',
-            left: '32px',
-            color: '#FAF8F5',
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontFamily: "'Fraunces', serif",
-            fontSize: '1.25rem',
-            fontWeight: 700
-          }}>
+          <div 
+            onClick={() => navigate('/')}
+            style={{
+              position: 'absolute',
+              top: '32px',
+              left: '32px',
+              color: '#FAF8F5',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontFamily: "'Fraunces', serif",
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
               <circle cx="6" cy="6" r="3" />
               <circle cx="6" cy="18" r="3" />
@@ -309,27 +330,6 @@ export default function Register() {
           maxWidth: '440px',
           width: '100%'
         }}>
-          {isMobile && (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              color: '#FAF8F5',
-              fontFamily: "'Fraunces', serif",
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              marginBottom: '12px'
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
-                <circle cx="6" cy="6" r="3" />
-                <circle cx="6" cy="18" r="3" />
-                <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
-                <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
-              </svg>
-              Makas<span style={{ fontStyle: 'italic', color: '#C5A880', fontWeight: 300 }}>Lab</span>
-            </div>
-          )}
-
           <h1 style={{
             fontFamily: "'Fraunces', serif",
             fontSize: isMobile ? '1.7rem' : '2.6rem',
@@ -356,12 +356,15 @@ export default function Register() {
             lineHeight: 1.5, 
             margin: 0 
           }}>
-            Tarzınıza en uygun randevuyu saniyeler içinde alın veya salonunuzu dijitalleştirip kolayca yönetmeye başlayın.
+            {formData.role === 'SHOP_OWNER' 
+              ? 'Salonunuzu ekleyin, müşteri kitlenizi büyütün ve randevularınızı dijitalden yönetin.'
+              : 'Tarzınıza en uygun randevuyu saniyeler içinde alın veya salonunuzu kolayca yönetin.'
+            }
           </p>
         </div>
       </div>
 
-      {/* SAĞ ALAN: Kayıt Formu (Düzeltilmiş Scroll ve Dikey Hizalama) */}
+      {/* SAĞ ALAN: Kayıt Formu */}
       <div style={{
         flex: 1,
         height: isMobile ? 'auto' : '100vh',
@@ -373,13 +376,13 @@ export default function Register() {
       }}>
         <div className="animate-fade-up" style={{
           width: '100%',
-          maxWidth: '420px',
+          maxWidth: '460px',
           margin: 'auto',
-          padding: isMobile ? '32px 24px' : '60px 40px',
+          padding: isMobile ? '32px 24px' : '48px 40px',
           boxSizing: 'border-box'
         }}>
 
-          <div style={{ marginBottom: '28px' }}>
+          <div style={{ marginBottom: '24px' }}>
             <NotificationToast notification={notification} />
             <h2 style={{
               fontFamily: "'Fraunces', serif",
@@ -389,10 +392,10 @@ export default function Register() {
               margin: '0 0 8px 0',
               letterSpacing: '-0.01em'
             }}>
-              Yeni Hesap Oluştur
+              {formData.role === 'SHOP_OWNER' ? 'İşletme Kayıt Formu' : 'Yeni Hesap Oluştur'}
             </h2>
             <p style={{ fontSize: '0.92rem', color: '#8C8276', margin: 0, fontWeight: 400 }}>
-              Hemen kaydolun ve MakasLab deneyimine adım atın.
+              {formData.role === 'SHOP_OWNER' ? 'Kullanıcı ve salon bilgilerinizi doldurun.' : 'Hemen kaydolun ve MakasLab deneyimine adım atın.'}
             </p>
           </div>
 
@@ -402,7 +405,7 @@ export default function Register() {
               color: '#a3402f', 
               padding: '12px 14px', 
               borderRadius: '12px', 
-              marginBottom: '24px', 
+              marginBottom: '20px', 
               fontSize: '0.88rem', 
               fontWeight: 600, 
               border: '1px solid rgba(163, 64, 47, 0.15)' 
@@ -411,7 +414,39 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* Role Selection */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Hesap Türü</label>
+              <div style={{ display: 'flex', gap: '14px' }}>
+                
+                <div
+                  className={`mkl-role-card ${formData.role === 'CUSTOMER' ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'CUSTOMER' }))}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Müşteriyim</span>
+                </div>
+
+                <div
+                  className={`mkl-role-card ${formData.role === 'SHOP_OWNER' ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'SHOP_OWNER' }))}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
+                    <circle cx="6" cy="6" r="3" />
+                    <circle cx="6" cy="18" r="3" />
+                    <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
+                    <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
+                  </svg>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>İşletmeyim (Salon Sahibi)</span>
+                </div>
+
+              </div>
+            </div>
             
             {/* Name and Surname Row */}
             <div className="mkl-name-row">
@@ -542,37 +577,92 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Role Card Selection */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Hesap Türü</label>
-              <div style={{ display: 'flex', gap: '14px' }}>
-                
-                <div
-                  className={`mkl-role-card ${formData.role === 'CUSTOMER' ? 'active' : ''}`}
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'CUSTOMER' }))}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Müşteriyim</span>
+            {/* IF SHOP OWNER: EXTRA SALON DETAILS SECTION */}
+            {formData.role === 'SHOP_OWNER' && (
+              <div style={{
+                marginTop: '8px',
+                padding: '20px',
+                borderRadius: '16px',
+                backgroundColor: '#FAF8F5',
+                border: '1px solid rgba(197, 168, 128, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <div style={{ borderBottom: '1px solid rgba(197, 168, 128, 0.2)', paddingBottom: '8px' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#1E1B18' }}>Salon Bilgileriniz</h4>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#8C8276' }}>Müşterilerinizin sizi bulması için detayları girin.</p>
                 </div>
 
-                <div
-                  className={`mkl-role-card ${formData.role === 'SHOP_OWNER' ? 'active' : ''}`}
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'SHOP_OWNER' }))}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
-                    <circle cx="6" cy="6" r="3" />
-                    <circle cx="6" cy="18" r="3" />
-                    <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
-                    <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
-                  </svg>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>İşletmeyim</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Dükkan / Salon Adı</label>
+                  <input
+                    type="text"
+                    name="shopName"
+                    required
+                    value={formData.shopName}
+                    onChange={handleChange}
+                    placeholder="Örn: Beyoğlu Saç Tasarım"
+                    style={{ width: '100%', padding: '12px' }}
+                  />
                 </div>
 
+                <div className="mkl-name-row">
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Şehir</label>
+                    <input
+                      type="text"
+                      name="city"
+                      required
+                      value={formData.city}
+                      onChange={handleChange}
+                      placeholder="İstanbul"
+                      style={{ width: '100%', padding: '12px' }}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>İlçe</label>
+                    <input
+                      type="text"
+                      name="district"
+                      required
+                      value={formData.district}
+                      onChange={handleChange}
+                      placeholder="Beyoğlu"
+                      style={{ width: '100%', padding: '12px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Detaylı Adres Metni</label>
+                  <textarea
+                    name="addressText"
+                    required
+                    rows={2}
+                    value={formData.addressText}
+                    onChange={handleChange}
+                    placeholder="İstiklal Cad. No:78..."
+                    style={{ width: '100%', padding: '12px', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B18', letterSpacing: '0.08em', textTransform: 'uppercase' }}>İşletme Kategorisi</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '12px' }}
+                  >
+                    <option value="Erkek Kuaförü">Erkek Kuaförü</option>
+                    <option value="Kadın Kuaförü">Kadın Kuaförü</option>
+                    <option value="Güzellik Salonu">Güzellik Salonu</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Register Submit Button */}
             <button
@@ -591,10 +681,10 @@ export default function Register() {
                     borderRadius: '50%',
                     animation: 'spin 0.6s linear infinite'
                   }} />
-                  Hesap Oluşturuluyor...
+                  Kayıt Oluşturuluyor...
                 </>
               ) : (
-                "Kayıt Ol"
+                formData.role === 'SHOP_OWNER' ? 'İşletmeyi Kaydet & Başla' : 'Kayıt Ol'
               )}
             </button>
           </form>
@@ -610,7 +700,6 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Embedded loader animation */}
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }

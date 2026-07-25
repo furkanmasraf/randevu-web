@@ -1,62 +1,59 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, ChangeEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import NotificationToast from '../components/NotificationToast';
 import useNotification from '../hooks/useNotification';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showPassword, setShowPassword] = useState<boolean>(false);
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { notification, showNotification } = useNotification();
+  const navigate = useNavigate();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handleLoginClick = async (): Promise<void> => {
-    localStorage.clear();
-    if (!email || !password) {
-      showNotification('Lütfen e-posta ve şifre alanlarını doldurun.', 'error');
+  const handleLoginClick = async () => {
+    if (!email.trim() || !password.trim()) {
+      showNotification('Lütfen e-posta ve şifrenizi girin.', 'error');
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      const response = await API.post('api/auth/login', { email, password }, {
-        headers: { 'Content-Type': 'application/json' }
+      setIsLoading(true);
+
+      const response = await API.post('/api/auth/login', {
+        email,
+        password
       });
 
-      let { token, userId, role } = response.data;
+      const { token, id, role } = response.data;
 
-      if (token) {
-        token = token.replace(/^['"]|['"]$/g, '');
+      if (token && id) {
         localStorage.setItem('token', token);
-        localStorage.setItem('userId', userId);
+        localStorage.setItem('userId', id);
         localStorage.setItem('role', role);
 
-        if (role && role.toUpperCase() === 'SHOP_OWNER') {
-          try {
-            await API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            window.location.href = '/shop-owner/dashboard';
-          } catch (shopErr) {
-            window.location.href = '/shop-owner/register-shop';
+        showNotification('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
+
+        setTimeout(() => {
+          if (role === 'SHOP_OWNER') {
+            navigate('/barber-dashboard');
+          } else if (role === 'CUSTOMER') {
+            navigate('/customer-dashboard');
+          } else {
+            navigate('/');
           }
-        } else {
-          window.location.href = '/';
-        }
+        }, 800);
+      } else {
+        showNotification('Giriş cevabında eksik bilgi alındı.', 'error');
       }
     } catch (err: any) {
-      console.error("Giriş esnasında hata oluştu:", err);
-      showNotification('Hatalı e-posta veya şifre!', 'error');
+      console.error("Giriş hatası:", err);
+      const errorMessage = err.response?.data?.message || 'Giriş yapılamadı. Bilgilerinizi kontrol edip tekrar deneyin.';
+      showNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -68,158 +65,17 @@ const Login: React.FC = () => {
       flexDirection: isMobile ? 'column' : 'row',
       minHeight: '100vh',
       width: '100vw',
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
       backgroundColor: '#FAF8F5',
       margin: 0,
       overflowX: 'hidden',
       color: '#1E1B18'
     }}>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap');
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-up {
-          animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .mkl-login-input {
-          width: 100%;
-          padding: 14px 16px 14px 44px;
-          border-radius: 12px;
-          border: 1px solid rgba(197, 168, 128, 0.25);
-          font-size: 0.95rem;
-          font-family: inherit;
-          outline: none;
-          background-color: #FFFFFF;
-          color: #1E1B18;
-          transition: all 0.25s ease;
-        }
-
-        .mkl-login-input:focus {
-          border-color: #A3845B;
-          box-shadow: 0 0 0 3px rgba(163, 132, 91, 0.12);
-          background-color: #FFFFFF;
-        }
-
-        .mkl-input-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .mkl-input-icon-left {
-          position: absolute;
-          left: 14px;
-          color: #A3845B;
-          pointer-events: none;
-          display: flex;
-          align-items: center;
-        }
-
-        .mkl-password-toggle {
-          position: absolute;
-          right: 14px;
-          color: #8C8276;
-          cursor: pointer;
-          background: none;
-          border: none;
-          display: flex;
-          align-items: center;
-          padding: 0;
-          transition: color 0.2s ease;
-        }
-
-        .mkl-password-toggle:hover {
-          color: #A3845B;
-        }
-
-        .mkl-btn-submit {
-          padding: 16px;
-          border-radius: 14px;
-          border: 1px solid #1E1B18;
-          background-color: #1E1B18;
-          color: #FAF8F5;
-          font-size: 0.95rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.25s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          box-shadow: 0 4px 12px rgba(30, 27, 24, 0.1);
-        }
-
-        .mkl-btn-submit:hover:not(:disabled) {
-          background-color: #A3845B;
-          border-color: #A3845B;
-          transform: translateY(-1px);
-          box-shadow: 0 8px 20px rgba(163, 132, 91, 0.2);
-        }
-
-        .mkl-btn-submit:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .mkl-btn-submit:disabled {
-          background-color: #E8E2D5;
-          border-color: #E8E2D5;
-          color: #8C8276;
-          cursor: not-allowed;
-          box-shadow: none;
-        }
-
-        .mkl-glass-card {
-          background: rgba(30, 27, 24, 0.55);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(197, 168, 128, 0.25);
-          border-radius: 24px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-          transition: all 0.3s ease;
-        }
-
-        .mkl-link-highlight {
-          font-weight: 600;
-          color: #A3845B;
-          text-decoration: none;
-          position: relative;
-          padding-bottom: 2px;
-        }
-
-        .mkl-link-highlight::after {
-          content: '';
-          position: absolute;
-          width: 100%;
-          transform: scaleX(0);
-          height: 1.5px;
-          bottom: 0;
-          left: 0;
-          background-color: #A3845B;
-          transform-origin: bottom right;
-          transition: transform 0.25s ease-out;
-        }
-
-        .mkl-link-highlight:hover::after {
-          transform: scaleX(1);
-          transform-origin: bottom left;
-        }
-      `}</style>
-
       {/* SOL ALAN: Görsel & Cam Efektli Bilgi Paneli */}
       <div style={{
         flex: isMobile ? 'none' : 1.2,
-        height: isMobile ? '280px' : '100vh',
+        height: isMobile ? '260px' : '100vh',
         backgroundImage: `url('/unisex_salon_hero.jpg')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -229,74 +85,82 @@ const Login: React.FC = () => {
         justifyContent: 'center',
         padding: '24px'
       }}>
-        {/* Dark Luxury Overlay */}
+        {/* Dark Overlay */}
         <div style={{ 
           position: 'absolute', 
           inset: 0, 
-          background: 'linear-gradient(135deg, rgba(30,27,24,0.45) 0%, rgba(30,27,24,0.8) 100%)' 
+          background: 'linear-gradient(135deg, rgba(30,27,24,0.55) 0%, rgba(30,27,24,0.85) 100%)' 
         }}></div>
 
         {/* Small Brand Logo in Top Left (Desktop only) */}
         {!isMobile && (
-          <div style={{
-            position: 'absolute',
-            top: '32px',
-            left: '32px',
-            color: '#FAF8F5',
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontFamily: "'Fraunces', serif",
-            fontSize: '1.25rem',
-            fontWeight: 700
-          }}>
+          <div 
+            onClick={() => navigate('/')}
+            style={{
+              position: 'absolute',
+              top: '32px',
+              left: '32px',
+              color: '#FAF8F5',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '1.25rem',
+              fontWeight: 800,
+              cursor: 'pointer'
+            }}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
               <circle cx="6" cy="6" r="3" />
               <circle cx="6" cy="18" r="3" />
               <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
               <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
             </svg>
-            Makas<span style={{ fontStyle: 'italic', color: '#C5A880', fontWeight: 300 }}>Lab</span>
+            Makas<span style={{ color: '#C5A880', fontWeight: 700 }}>Lab</span>
           </div>
         )}
 
-        <div className="mkl-glass-card" style={{
+        <div style={{
           position: 'relative',
           zIndex: 10,
           textAlign: 'center',
-          padding: isMobile ? '24px 20px' : '56px 40px',
-          maxWidth: '460px',
-          width: '100%'
+          padding: isMobile ? '24px 20px' : '48px 40px',
+          maxWidth: '440px',
+          width: '100%',
+          background: 'rgba(30, 27, 24, 0.65)',
+          backdropFilter: 'blur(16px)',
+          borderRadius: '20px',
+          border: '1px solid rgba(197, 168, 128, 0.25)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.25)'
         }}>
           {isMobile && (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              color: '#FAF8F5',
-              fontFamily: "'Fraunces', serif",
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              marginBottom: '12px'
-            }}>
+            <div 
+              onClick={() => navigate('/')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#FAF8F5',
+                fontSize: '1.1rem',
+                fontWeight: 800,
+                marginBottom: '12px'
+              }}
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
                 <circle cx="6" cy="6" r="3" />
                 <circle cx="6" cy="18" r="3" />
                 <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
                 <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
               </svg>
-              Makas<span style={{ fontStyle: 'italic', color: '#C5A880', fontWeight: 300 }}>Lab</span>
+              Makas<span style={{ color: '#C5A880', fontWeight: 700 }}>Lab</span>
             </div>
           )}
 
           <h1 style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: isMobile ? '1.8rem' : '2.8rem',
-            fontWeight: 400,
+            fontSize: isMobile ? '1.8rem' : '2.4rem',
+            fontWeight: 800,
             color: '#FAF8F5',
-            margin: '0 0 12px 0',
-            letterSpacing: '-0.02em'
+            margin: '0 0 12px 0'
           }}>
             Hoş Geldiniz
           </h1>
@@ -304,18 +168,19 @@ const Login: React.FC = () => {
           <div style={{
             width: '40px',
             height: '2px',
-            margin: '0 auto 18px auto',
-            background: 'linear-gradient(90deg, #C5A880 0%, #A3845B 100%)'
+            margin: '0 auto 16px auto',
+            background: '#C5A880',
+            borderRadius: '2px'
           }} />
 
           <p style={{ 
-            fontSize: isMobile ? '0.88rem' : '1.02rem', 
+            fontSize: isMobile ? '0.88rem' : '0.98rem', 
             color: '#E8E2D5', 
-            fontWeight: 300, 
-            lineHeight: 1.5, 
+            fontWeight: 500, 
+            lineHeight: 1.6, 
             margin: 0 
           }}>
-            Premium kuaför ve güzellik salonu deneyimi dijital dünyada. Sıradaki randevunuzu saniyeler içinde planlayın veya salonunuzu profesyonelce yönetin.
+            Prestijli salon randevularınızı dijital dünyada saniyeler içinde planlayın veya salonunuzu profesyonelce yönetin.
           </p>
         </div>
       </div>
@@ -330,24 +195,22 @@ const Login: React.FC = () => {
         backgroundColor: '#FFFFFF',
         overflowY: 'auto'
       }}>
-        <div className="animate-fade-up" style={{
+        <div style={{
           width: '100%',
           maxWidth: '380px'
         }}>
 
-          <div style={{ marginBottom: '36px' }}>
+          <div style={{ marginBottom: '32px' }}>
             <h2 style={{
-              fontFamily: "'Fraunces', serif",
-              fontSize: '1.85rem',
-              fontWeight: 500,
+              fontSize: '1.8rem',
+              fontWeight: 800,
               color: '#1E1B18',
-              margin: '0 0 8px 0',
-              letterSpacing: '-0.01em'
+              margin: '0 0 8px 0'
             }}>
               Hesabınıza Giriş Yapın
             </h2>
-            <p style={{ fontSize: '0.92rem', color: '#8C8276', margin: 0, fontWeight: 400 }}>
-              Randevularınızı takip etmek ve yeni seanslar almak için bilgilerinizi girin.
+            <p style={{ fontSize: '0.9rem', color: '#8C8276', margin: 0, fontWeight: 500 }}>
+              Randevularınızı takip etmek için bilgilerinizi girin.
             </p>
           </div>
 
@@ -360,26 +223,32 @@ const Login: React.FC = () => {
                 fontSize: '0.75rem', 
                 fontWeight: 700, 
                 color: '#1E1B18', 
-                letterSpacing: '0.08em',
+                letterSpacing: '0.05em',
                 textTransform: 'uppercase'
               }}>
                 E-posta Adresi
               </label>
               
-              <div className="mkl-input-wrapper">
-                <span className="mkl-input-icon-left">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: '14px', color: '#A3845B', pointerEvents: 'none', display: 'flex' }}>
+                  <Mail size={18} />
                 </span>
                 <input
-                  className="mkl-login-input"
                   type="email"
                   required
                   value={email}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                  placeholder="isim@domain.com"
+                  placeholder="name@example.com"
+                  style={{
+                    width: '100%',
+                    padding: '13px 16px 13px 44px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(197, 168, 128, 0.25)',
+                    fontSize: '0.95rem',
+                    color: '#1E1B18',
+                    outline: 'none',
+                    transition: 'all 0.25s ease'
+                  }}
                 />
               </div>
             </div>
@@ -391,49 +260,54 @@ const Login: React.FC = () => {
                   fontSize: '0.75rem', 
                   fontWeight: 700, 
                   color: '#1E1B18', 
-                  letterSpacing: '0.08em',
+                  letterSpacing: '0.05em',
                   textTransform: 'uppercase'
                 }}>
                   Şifre
                 </label>
-                <a href="/reset-password" style={{ fontSize: '0.78rem', color: '#8C8276', textDecoration: 'none' }}>
+                <a href="/reset-password" style={{ fontSize: '0.8rem', color: '#A3845B', fontWeight: 600, textDecoration: 'none' }}>
                   Şifremi Unuttum?
                 </a>
               </div>
               
-              <div className="mkl-input-wrapper">
-                <span className="mkl-input-icon-left">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: '14px', color: '#A3845B', pointerEvents: 'none', display: 'flex' }}>
+                  <Lock size={18} />
                 </span>
                 <input
-                  className="mkl-login-input"
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  style={{
+                    width: '100%',
+                    padding: '13px 44px 13px 44px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(197, 168, 128, 0.25)',
+                    fontSize: '0.95rem',
+                    color: '#1E1B18',
+                    outline: 'none',
+                    transition: 'all 0.25s ease'
+                  }}
                 />
                 
-                {/* Password Reveal Toggle Button */}
                 <button
                   type="button"
-                  className="mkl-password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '14px',
+                    color: '#8C8276',
+                    cursor: 'pointer',
+                    background: 'none',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0
+                  }}
                 >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
@@ -442,47 +316,24 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !email || !password}
-              className="mkl-btn-submit"
-              style={{ marginTop: '12px' }}
+              className="btn-primary"
+              style={{ marginTop: '8px', padding: '14px', fontSize: '0.95rem' }}
             >
-              {isLoading ? (
-                <>
-                  <div style={{
-                    width: '16px',
-                    height: '16px',
-                    border: '2px solid rgba(255,255,255,0.2)',
-                    borderTopColor: '#FFFFFF',
-                    borderRadius: '50%',
-                    animation: 'spin 0.6s linear infinite'
-                  }} />
-                  Giriş Yapılıyor...
-                </>
-              ) : (
-                "Sisteme Giriş Yap"
-              )}
+              {isLoading ? 'Giriş Yapılıyor...' : <> Giriş Yap <ArrowRight size={16} /> </>}
             </button>
           </form>
 
-          {/* Bottom redirection */}
-          <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#8C8276', marginTop: '36px', fontWeight: 400 }}>
-            Henüz bir hesabınız yok mu?{' '}
-            <Link to="/register" className="mkl-link-highlight">
-              Hemen Kayıt Olun
-            </Link>
+          {/* Switch to Register link */}
+          <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '0.88rem', color: '#8C8276' }}>
+            Hesabınız yok mu?{' '}
+            <a href="/register" style={{ fontWeight: 700, color: '#A3845B', textDecoration: 'underline' }}>
+              Ücretsiz Kayıt Olun
+            </a>
           </div>
 
         </div>
       </div>
 
-      {/* Embedded loader animation for the login button */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
     </div>
   );
-};
-
-export default Login;
+}

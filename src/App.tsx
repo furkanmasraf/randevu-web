@@ -1,8 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
-import RegisterShop from './pages/RegisterShop';
 import ResetPassword from './pages/ResetPassword';
 import BookAppointment from './pages/BookAppointment';
 import CustomerDashboard from './pages/CustomerDashboard';
@@ -19,6 +18,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/register-shop" element={<Navigate to="/register?role=SHOP_OWNER" replace />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/book-appointment/:shopId" element={<BookAppointment />} />
         
@@ -32,7 +32,7 @@ function App() {
           <Route path="/barber-dashboard" element={<BarberDashboard />} />
           <Route path="/shop-owner/dashboard" element={<BarberDashboard />} />
     
-          <Route path="/shop-owner/register-shop" element={<RegisterShop />} />
+          <Route path="/shop-owner/register-shop" element={<Navigate to="/register?role=SHOP_OWNER" replace />} />
         </Route>
 
         {/* CATCH-ALL (Tanımsız rotalar için ana sayfaya yönlendir) */}
