@@ -27,6 +27,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
@@ -34,6 +35,7 @@ html, body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* TYPOGRAPHY */
@@ -65,6 +67,7 @@ a {
   gap: 8px;
   transition: all 0.25s ease;
   box-shadow: 0 4px 12px rgba(30, 27, 24, 0.1);
+  white-space: nowrap;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -88,6 +91,7 @@ a {
   justify-content: center;
   gap: 8px;
   transition: all 0.25s ease;
+  white-space: nowrap;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -110,6 +114,7 @@ a {
   justify-content: center;
   gap: 8px;
   transition: all 0.25s ease;
+  white-space: nowrap;
 }
 
 .btn-accent:hover:not(:disabled) {
@@ -142,7 +147,7 @@ input:focus, select:focus, textarea:focus {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(250, 248, 245, 0.85);
+  background: rgba(250, 248, 245, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
@@ -157,4 +162,69 @@ input:focus, select:focus, textarea:focus {
   transform: translateY(-3px);
   box-shadow: 0 16px 30px -10px rgba(163, 132, 91, 0.12);
   border-color: var(--color-gold) !important;
+}
+
+/* RESPONSIVE MEDIA QUERIES FOR MOBILE DEVICES */
+@media (max-width: 768px) {
+  .glass-nav {
+    padding: 10px 14px !important;
+  }
+
+  .nav-btn-text-mobile {
+    display: none !important;
+  }
+
+  .nav-btn-mobile {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .hero-section-mobile {
+    padding: 36px 16px 44px 16px !important;
+  }
+
+  .hero-title-mobile {
+    font-size: 1.7rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 12px !important;
+  }
+
+  .hero-subtitle-mobile {
+    font-size: 0.9rem !important;
+    margin-bottom: 24px !important;
+  }
+
+  .search-container-mobile {
+    flex-direction: column !important;
+    padding: 12px !important;
+    gap: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .search-item-mobile {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .search-item-mobile input,
+  .search-item-mobile select,
+  .search-item-mobile button {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .main-content-mobile {
+    padding: 28px 16px 48px 16px !important;
+  }
+
+  .partner-banner-mobile {
+    padding: 24px 18px !important;
+    border-radius: 16px !important;
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+
+  .partner-banner-mobile button {
+    width: 100% !important;
+  }
 }

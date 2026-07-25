@@ -85,9 +85,8 @@ const CATEGORIES = [
   { id: 'Güzellik Salonu', label: 'Güzellik Salonu', icon: Star },
 ];
 
-// Haversine formula to calculate distance in KM between two coordinates
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -135,7 +134,6 @@ export default function Home() {
     fetchShops();
   }, [navigate]);
 
-  // Handle geolocation detection
   const handleFindNearMe = () => {
     if (!navigator.geolocation) {
       alert("Tarayıcınız konum servisini desteklemiyor.");
@@ -148,7 +146,6 @@ export default function Home() {
         const lng = position.coords.longitude;
         setUserLocation({ lat, lng });
 
-        // Calculate distance for all shops
         const shopsWithDistance = shops.map(shop => {
           if (shop.latitude && shop.longitude) {
             const dist = calculateDistanceKm(lat, lng, shop.latitude, shop.longitude);
@@ -157,7 +154,6 @@ export default function Home() {
           return shop;
         });
 
-        // Sort by distance if available
         shopsWithDistance.sort((a, b) => (a.distanceKm || 9999) - (b.distanceKm || 9999));
         setShops(shopsWithDistance);
         setLocating(false);
@@ -216,34 +212,34 @@ export default function Home() {
         <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
           {/* Logo */}
-          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
               <circle cx="6" cy="6" r="3" />
               <circle cx="6" cy="18" r="3" />
               <line x1="9.8" y1="8.2" x2="21" y2="12.4" />
               <line x1="9.8" y1="15.8" x2="21" y2="12.4" />
             </svg>
-            <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1E1B18' }}>
+            <span style={{ fontSize: '1.35rem', fontWeight: 800, color: '#1E1B18' }}>
               Makas<span style={{ color: '#A3845B', fontWeight: 700 }}>Lab</span>
             </span>
           </div>
 
           {/* Nav Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button 
               onClick={() => navigate('/register?role=SHOP_OWNER')} 
-              className="btn-secondary" 
-              style={{ fontSize: '0.85rem', padding: '10px 18px' }}
+              className="btn-secondary nav-btn-mobile" 
+              style={{ fontSize: '0.85rem', padding: '10px 14px' }}
             >
-              <Building2 size={16} /> Salonunuzu Ekleyin
+              <Building2 size={16} /> <span className="nav-btn-text-mobile">Salonunuzu Ekleyin</span>
             </button>
 
             <button 
               onClick={handleProfileClick} 
-              className="btn-primary" 
-              style={{ fontSize: '0.85rem', padding: '10px 20px' }}
+              className="btn-primary nav-btn-mobile" 
+              style={{ fontSize: '0.85rem', padding: '10px 16px' }}
             >
-              <User size={16} /> {isLoggedIn ? 'Hesabım' : 'Giriş Yap'}
+              <User size={16} /> <span className="nav-btn-text-mobile">{isLoggedIn ? 'Hesabım' : 'Giriş Yap'}</span>
             </button>
           </div>
 
@@ -251,10 +247,10 @@ export default function Home() {
       </header>
 
       {/* HERO SECTION */}
-      <section style={{ 
+      <section className="hero-section-mobile" style={{ 
         background: 'linear-gradient(135deg, #1E1B18 0%, #322D28 100%)', 
         color: '#FAF8F5', 
-        padding: '72px 24px 80px 24px', 
+        padding: '64px 24px 72px 24px', 
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
@@ -268,39 +264,38 @@ export default function Home() {
             background: 'rgba(197, 168, 128, 0.15)', 
             color: '#C5A880', 
             border: '1px solid rgba(197, 168, 128, 0.3)',
-            padding: '6px 16px', 
+            padding: '6px 14px', 
             borderRadius: '30px', 
-            fontSize: '0.82rem', 
+            fontSize: '0.78rem', 
             fontWeight: 700, 
-            marginBottom: '20px' 
+            marginBottom: '16px' 
           }}>
             <Sparkles size={14} /> Premium Kuaför ve Salon Deneyimi
           </span>
 
-          <h1 style={{ fontSize: '2.8rem', fontWeight: 800, color: '#FAF8F5', lineHeight: 1.2, marginBottom: '16px', letterSpacing: '-0.02em' }}>
+          <h1 className="hero-title-mobile" style={{ fontSize: '2.6rem', fontWeight: 800, color: '#FAF8F5', lineHeight: 1.2, marginBottom: '16px', letterSpacing: '-0.02em' }}>
             İstediğiniz Şehir ve İlçede <br />
             <span style={{ color: '#C5A880', fontWeight: 800 }}>Yakınınızdaki Kuaförü Anında Bulun</span>
           </h1>
 
-          <p style={{ fontSize: '1.05rem', color: '#E8E2D5', maxWidth: '660px', margin: '0 auto 36px auto', lineHeight: 1.6, fontWeight: 500 }}>
+          <p className="hero-subtitle-mobile" style={{ fontSize: '1rem', color: '#E8E2D5', maxWidth: '660px', margin: '0 auto 32px auto', lineHeight: 1.5, fontWeight: 500 }}>
             Şehir ve ilçe seçerek veya konumunuzu kullanarak etrafınızdaki en seçkin salonları görün.
           </p>
 
-          {/* SEARCH & FILTER BAR WITH CITY + DISTRICT + GEOLOCATION */}
-          <div style={{ 
+          {/* SEARCH & FILTER BAR WITH RESPONSIVE FLEX/GRID */}
+          <div className="search-container-mobile" style={{ 
             background: '#FFFFFF', 
             padding: '10px', 
             borderRadius: '20px', 
             display: 'flex', 
             gap: '8px', 
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', 
-            flexWrap: 'wrap',
             maxWidth: '920px',
             margin: '0 auto',
             border: '1px solid rgba(197, 168, 128, 0.3)'
           }}>
-            {/* Search Input (Searches name, district, address) */}
-            <div style={{ flex: '2 1 200px', display: 'flex', alignItems: 'center', position: 'relative' }}>
+            {/* Search Input */}
+            <div className="search-item-mobile" style={{ flex: '2 1 200px', display: 'flex', alignItems: 'center', position: 'relative' }}>
               <Search size={18} color="#A3845B" style={{ position: 'absolute', left: '14px' }} />
               <input
                 type="text"
@@ -319,7 +314,7 @@ export default function Home() {
             </div>
 
             {/* City Selector */}
-            <div style={{ flex: '1 1 130px', display: 'flex', alignItems: 'center', position: 'relative' }}>
+            <div className="search-item-mobile" style={{ flex: '1 1 130px', display: 'flex', alignItems: 'center', position: 'relative' }}>
               <MapPin size={18} color="#A3845B" style={{ position: 'absolute', left: '10px' }} />
               <select
                 value={selectedCity}
@@ -344,9 +339,9 @@ export default function Home() {
               </select>
             </div>
 
-            {/* District Selector (Enabled if city has districts) */}
+            {/* District Selector */}
             {availableDistricts.length > 0 && (
-              <div style={{ flex: '1 1 130px', display: 'flex', alignItems: 'center', position: 'relative' }}>
+              <div className="search-item-mobile" style={{ flex: '1 1 130px', display: 'flex', alignItems: 'center', position: 'relative' }}>
                 <MapPin size={18} color="#A3845B" style={{ position: 'absolute', left: '10px' }} />
                 <select
                   value={selectedDistrict}
@@ -373,7 +368,7 @@ export default function Home() {
             <button
               onClick={handleFindNearMe}
               disabled={locating}
-              className="btn-secondary"
+              className="btn-secondary search-item-mobile"
               title="Mevcut konumunuza göre en yakın salonları sıralayın"
               style={{ padding: '12px 16px', fontSize: '0.85rem' }}
             >
@@ -381,7 +376,7 @@ export default function Home() {
             </button>
 
             {/* Search Button */}
-            <button className="btn-primary" style={{ padding: '12px 24px' }}>
+            <button className="btn-primary search-item-mobile" style={{ padding: '12px 24px' }}>
               Salon Bul <ArrowRight size={16} />
             </button>
           </div>
@@ -396,10 +391,10 @@ export default function Home() {
       </section>
 
       {/* CATEGORY SELECTOR & MAIN CONTENT */}
-      <main style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '48px 24px 80px 24px' }}>
+      <main className="main-content-mobile" style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '48px 24px 80px 24px' }}>
         
         {/* Category Filter Pills */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '32px' }}>
           {CATEGORIES.map(cat => {
             const Icon = cat.icon;
             const isSelected = selectedCategory === cat.id;
@@ -408,22 +403,21 @@ export default function Home() {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 style={{
-                  padding: '10px 20px',
+                  padding: '8px 16px',
                   borderRadius: '12px',
                   border: isSelected ? '2px solid #1E1B18' : '1px solid rgba(197, 168, 128, 0.3)',
                   background: isSelected ? '#1E1B18' : '#FFFFFF',
                   color: isSelected ? '#C5A880' : '#8C8276',
                   fontWeight: isSelected ? 700 : 600,
-                  fontSize: '0.9rem',
+                  fontSize: '0.85rem',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 6px rgba(30, 27, 24, 0.02)'
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <Icon size={16} color={isSelected ? '#C5A880' : '#8C8276'} />
+                <Icon size={15} color={isSelected ? '#C5A880' : '#8C8276'} />
                 {cat.label}
               </button>
             );
@@ -433,10 +427,10 @@ export default function Home() {
         {/* Section Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '24px' }}>
           <div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1E1B18', margin: 0 }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1E1B18', margin: 0 }}>
               {selectedCategory === 'Tümü' ? 'Öne Çıkan Salonlar' : selectedCategory}
             </h2>
-            <p style={{ fontSize: '0.9rem', color: '#8C8276', marginTop: '4px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#8C8276', marginTop: '4px' }}>
               {selectedCity !== 'Tümü' ? `${selectedCity} ${selectedDistrict !== 'Tümü' ? `/ ${selectedDistrict}` : ''} konumunda ` : ''}
               Toplam {filteredShops.length} işletme listeleniyor
             </p>
@@ -445,13 +439,13 @@ export default function Home() {
 
         {/* SALON CARDS GRID */}
         {filteredShops.length === 0 ? (
-          <div style={{ background: '#FFFFFF', padding: '64px', borderRadius: '20px', textAlign: 'center', border: '1px solid rgba(197, 168, 128, 0.3)', color: '#8C8276' }}>
-            <Building2 size={48} color="#A3845B" style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>Aradığınız Kriterlerde Salon Bulunamadı</h3>
-            <p style={{ fontSize: '0.9rem', color: '#8C8276' }}>Lütfen ilçe veya şehir aramasını değiştirip tekrar deneyin.</p>
+          <div style={{ background: '#FFFFFF', padding: '48px 24px', borderRadius: '20px', textAlign: 'center', border: '1px solid rgba(197, 168, 128, 0.3)', color: '#8C8276' }}>
+            <Building2 size={40} color="#A3845B" style={{ margin: '0 auto 14px' }} />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E1B18', marginBottom: '6px' }}>Aradığınız Kriterlerde Salon Bulunamadı</h3>
+            <p style={{ fontSize: '0.88rem', color: '#8C8276' }}>Lütfen ilçe veya şehir aramasını değiştirip tekrar deneyin.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {filteredShops.map(shop => (
               <div 
                 key={shop.id}
@@ -488,7 +482,7 @@ export default function Home() {
                 {/* Shop Content */}
                 <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>
                       {shop.name}
                     </h3>
                     
@@ -527,63 +521,63 @@ export default function Home() {
         )}
 
         {/* WHY US SECTION */}
-        <section style={{ marginTop: '96px', borderTop: '1px solid rgba(197, 168, 128, 0.2)', paddingTop: '64px' }}>
-          <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 48px auto' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#A3845B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <section style={{ marginTop: '72px', borderTop: '1px solid rgba(197, 168, 128, 0.2)', paddingTop: '48px' }}>
+          <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 36px auto' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A3845B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               NEDEN MAKASLAB?
             </span>
-            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1E1B18', marginTop: '6px' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1E1B18', marginTop: '6px' }}>
               Randevu Almanın En Kolay ve Güvenli Yolu
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-            <div style={{ background: '#FFFFFF', padding: '32px 24px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <Clock size={24} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+            <div style={{ background: '#FFFFFF', padding: '24px 20px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <Clock size={22} />
               </div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>7/24 Anında Onaylı Randevu</h3>
-              <p style={{ fontSize: '0.88rem', color: '#8C8276', lineHeight: 1.6 }}>Telefonla aramaya son. Müsait saatleri canlı görün ve saniyeler içinde randevunuzu tamamlayın.</p>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E1B18', marginBottom: '6px' }}>7/24 Anında Onaylı Randevu</h3>
+              <p style={{ fontSize: '0.85rem', color: '#8C8276', lineHeight: 1.5 }}>Telefonla aramaya son. Müsait saatleri canlı görün ve saniyeler içinde randevunuzu tamamlayın.</p>
             </div>
 
-            <div style={{ background: '#FFFFFF', padding: '32px 24px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <CheckCircle2 size={24} />
+            <div style={{ background: '#FFFFFF', padding: '24px 20px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <CheckCircle2 size={22} />
               </div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>Şeffaf Fiyat ve Hizmetler</h3>
-              <p style={{ fontSize: '0.88rem', color: '#8C8276', lineHeight: 1.6 }}>Sürpriz ücretlerle karşılaşmayın. Salonların sunduğu hizmetlerin fiyatını ve süresini önceden görün.</p>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E1B18', marginBottom: '6px' }}>Şeffaf Fiyat ve Hizmetler</h3>
+              <p style={{ fontSize: '0.85rem', color: '#8C8276', lineHeight: 1.5 }}>Sürpriz ücretlerle karşılaşmayın. Salonların sunduğu hizmetlerin fiyatını ve süresini önceden görün.</p>
             </div>
 
-            <div style={{ background: '#FFFFFF', padding: '32px 24px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <Star size={24} />
+            <div style={{ background: '#FFFFFF', padding: '24px 20px', borderRadius: '20px', border: '1.5px solid rgba(232, 226, 213, 0.8)', textAlign: 'center' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(197, 168, 128, 0.1)', color: '#A3845B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <Star size={22} />
               </div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E1B18', marginBottom: '8px' }}>Gerçek Müşteri Yorumları</h3>
-              <p style={{ fontSize: '0.88rem', color: '#8C8276', lineHeight: 1.6 }}>Sadece randevusunu tamamlayan gerçek müşterilerin değerlendirmelerini ve puanlarını inceleyin.</p>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E1B18', marginBottom: '6px' }}>Gerçek Müşteri Yorumları</h3>
+              <p style={{ fontSize: '0.85rem', color: '#8C8276', lineHeight: 1.5 }}>Sadece randevusunu tamamlayan gerçek müşterilerin değerlendirmelerini ve puanlarını inceleyin.</p>
             </div>
           </div>
         </section>
 
         {/* PARTNER CTA BANNER */}
-        <section style={{ 
-          marginTop: '80px', 
+        <section className="partner-banner-mobile" style={{ 
+          marginTop: '64px', 
           background: '#1E1B18', 
           borderRadius: '24px', 
-          padding: '48px', 
+          padding: '40px 32px', 
           color: '#FAF8F5',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '24px',
+          gap: '20px',
           border: '1px solid rgba(197, 168, 128, 0.2)'
         }}>
           <div>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#C5A880', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SALON SAHİPLERİ İÇİN</span>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FAF8F5', marginTop: '6px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#C5A880', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SALON SAHİPLERİ İÇİN</span>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#FAF8F5', marginTop: '6px', marginBottom: '8px' }}>
               Salonunuzu MakasLab'e Ekleyin, Müşterilerinizi Büyütün
             </h2>
-            <p style={{ fontSize: '0.95rem', color: '#E8E2D5', maxWidth: '540px', fontWeight: 500 }}>
+            <p style={{ fontSize: '0.9rem', color: '#E8E2D5', maxWidth: '540px', fontWeight: 500 }}>
               Randevu takibini dijitalleştirin, boş koltuk kalmasın. Ücretsiz işletme profilinizi hemen oluşturun.
             </p>
           </div>
@@ -591,7 +585,7 @@ export default function Home() {
           <button 
             onClick={() => navigate('/register?role=SHOP_OWNER')}
             className="btn-accent"
-            style={{ padding: '14px 28px', fontSize: '1rem' }}
+            style={{ padding: '14px 28px', fontSize: '0.95rem' }}
           >
             <Building2 size={18} /> Ücretsiz Başlayın
           </button>
@@ -600,8 +594,8 @@ export default function Home() {
       </main>
 
       {/* FOOTER */}
-      <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(197, 168, 128, 0.2)', padding: '40px 24px', marginTop: 'auto' }}>
-        <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+      <footer style={{ background: '#FFFFFF', borderTop: '1px solid rgba(197, 168, 128, 0.2)', padding: '32px 24px', marginTop: 'auto' }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-45deg)' }}>
@@ -615,7 +609,7 @@ export default function Home() {
             </span>
           </div>
 
-          <p style={{ fontSize: '0.85rem', color: '#8C8276' }}>
+          <p style={{ fontSize: '0.82rem', color: '#8C8276' }}>
             © 2026 MakasLab Inc. Tüm hakları saklıdır. Kuaför ve Salon Yönetim Platformu.
           </p>
 
