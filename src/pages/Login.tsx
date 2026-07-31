@@ -29,11 +29,11 @@ export default function Login() {
         password
       });
 
-      const { token, id, role } = response.data;
+      const { token, userId, role } = response.data;
 
-      if (token && id) {
+      if (token && userId) {
         localStorage.setItem('token', token);
-        localStorage.setItem('userId', id);
+        localStorage.setItem('userId', userId);
         localStorage.setItem('role', role);
 
         showNotification('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
