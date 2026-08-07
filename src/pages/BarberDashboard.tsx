@@ -183,6 +183,12 @@ export default function BarberDashboard() {
   };
 
   const handleUpdateShop = async () => {
+    // 1. GÜVENLİK KONTROLÜ: ID henüz yüklenmediyse işlemi engelle ve uyar
+    if (!dynamicId) {
+      showNotification("Dükkan bilgileri henüz yüklenmedi, lütfen bekleyin.", "error");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("shopName", shopDetails?.shopName || "");
     formData.append("phoneNumber", shopDetails?.phoneNumber || "");
