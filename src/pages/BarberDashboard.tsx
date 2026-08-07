@@ -31,7 +31,18 @@ export default function BarberDashboard() {
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [shopDetails, setShopDetails] = useState<{ shopName?: string; phoneNumber?: string; imageUrl?: string; vitrinImageUrls?: string[]; latitude?: number; longitude?: number } | null>(null);
+  const [shopDetails, setShopDetails] = useState<{ 
+    shopName?: string; 
+    phoneNumber?: string; 
+    city?: string;
+    district?: string;
+    addressText?: string;
+    category?: string;
+    imageUrl?: string; 
+    vitrinImageUrls?: string[]; 
+    latitude?: number; 
+    longitude?: number 
+  } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [vitrinFiles, setVitrinFiles] = useState<File[]>([]);
@@ -56,7 +67,7 @@ export default function BarberDashboard() {
 
   const fetchBusySlots = async (employeeId: number, date: string) => {
     try {
-      const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/employee-schedule`, {
+      const response = await API.get(`/api/appointments/shop/employee-schedule`, {
         params: { employeeId, date },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -68,7 +79,7 @@ export default function BarberDashboard() {
 
   const fetchAppointments = async (Id: number, filter: string = 'today') => {
     try {
-      const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${Id}/filter`, {
+      const response = await API.get(`/api/appointments/shop/${Id}/filter`, {
         params: { filter },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -84,7 +95,7 @@ export default function BarberDashboard() {
   const fetchAllDashboardData = async () => {
     setLoading(true);
     try {
-      const shopRes = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/owner/${userId}`, {
+      const shopRes = await API.get(`/api/shops/owner/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -95,6 +106,10 @@ export default function BarberDashboard() {
         setShopDetails({
           shopName: shopRes.data.name || '',
           phoneNumber: shopRes.data.phoneNumber || '',
+          city: shopRes.data.city || '',
+          district: shopRes.data.district || '',
+          addressText: shopRes.data.addressText || '',
+          category: shopRes.data.category || 'Erkek Kuaförü',
           imageUrl: shopRes.data.imageUrl || '',
           vitrinImageUrls: shopRes.data.vitrinImageUrls || [],
           latitude: shopRes.data.latitude || 0,
@@ -103,11 +118,11 @@ export default function BarberDashboard() {
 
         await Promise.all([
           fetchAppointments(id, appFilter),
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${id}/employees`, {
+          API.get(`/api/appointments/shop/${id}/employees`, {
             headers: { Authorization: `Bearer ${token}` }
           }).then(res => _setEmployees(res.data)),
 
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/services/shop/${id}`, {
+          API.get(`/api/services/shop/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           }).then(res => _setServices(res.data))
         ]);
@@ -192,6 +207,10 @@ export default function BarberDashboard() {
     const formData = new FormData();
     formData.append("shopName", shopDetails?.shopName || "");
     formData.append("phoneNumber", shopDetails?.phoneNumber || "");
+    formData.append("city", shopDetails?.city || "");
+    formData.append("district", shopDetails?.district || "");
+    formData.append("addressText", shopDetails?.addressText || "");
+    formData.append("category", shopDetails?.category || "");
     formData.append("existingImageUrls", JSON.stringify(shopDetails?.vitrinImageUrls || []));
 
     if (selectedFile) {
@@ -215,7 +234,7 @@ export default function BarberDashboard() {
   const handleDelete = async (type: 'employee' | 'service', id: number) => {
     if (!window.confirm("Emin misin?")) return;
     try {
-      await API.delete(`https://randevu-sistemi-dv33.onrender.com/api/${type}s/${id}`, {
+      await API.delete(`/api/${type}s/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       showNotification("Silindi!", 'success');
@@ -231,12 +250,12 @@ export default function BarberDashboard() {
 
     try {
       if (isBusy) {
-        await API.delete(`https://randevu-sistemi-dv33.onrender.com/api/appointments/unblock`, {
+        await API.delete(`/api/appointments/unblock`, {
           params: { employeeId, appointmentTime: formattedTime },
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await API.post(`https://randevu-sistemi-dv33.onrender.com/api/appointments/block`, {
+        await API.post(`/api/appointments/block`, {
           employeeId,
           appointmentTime: formattedTime
         }, {
@@ -1177,6 +1196,53 @@ export default function BarberDashboard() {
                     value={shopDetails?.phoneNumber || ''}
                     onChange={e => setShopDetails(prev => ({ ...prev!, phoneNumber: e.target.value }))}
                   />
+                </div>
+
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '160px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>ŞEHİR</label>
+                    <input
+                      className="mkl-bd-input"
+                      value={shopDetails?.city || ''}
+                      onChange={e => setShopDetails(prev => ({ ...prev!, city: e.target.value }))}
+                      placeholder="İstanbul"
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: '160px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>İLÇE</label>
+                    <input
+                      className="mkl-bd-input"
+                      value={shopDetails?.district || ''}
+                      onChange={e => setShopDetails(prev => ({ ...prev!, district: e.target.value }))}
+                      placeholder="Beyoğlu"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>DETAYLI ADRES METNİ</label>
+                  <textarea
+                    className="mkl-bd-input"
+                    rows={2}
+                    value={shopDetails?.addressText || ''}
+                    onChange={e => setShopDetails(prev => ({ ...prev!, addressText: e.target.value }))}
+                    placeholder="İstiklal Cad. No:78..."
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#1E1B18', fontSize: '0.75rem', letterSpacing: '0.05em' }}>İŞLETME KATEGORİSİ</label>
+                  <select
+                    className="mkl-bd-input"
+                    value={shopDetails?.category || 'Erkek Kuaförü'}
+                    onChange={e => setShopDetails(prev => ({ ...prev!, category: e.target.value }))}
+                  >
+                    <option value="Erkek Kuaförü">Erkek Kuaförü</option>
+                    <option value="Kadın Kuaförü">Kadın Kuaförü</option>
+                    <option value="Güzellik Salonu">Güzellik Salonu</option>
+                  </select>
                 </div>
 
                 {/* Logo Upload Zone */}

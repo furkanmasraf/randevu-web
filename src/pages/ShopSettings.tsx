@@ -1,28 +1,54 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 import NotificationToast from '../components/NotificationToast';
 import useNotification from '../hooks/useNotification';
 
 export default function ShopSettings() {
   const [shop, setShop] = useState({ shopName: '', address: '', phoneNumber: '', imageUrl: '' });
+  const [shopId, setShopId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const { notification, showNotification } = useNotification();
 
   useEffect(() => {
-    // Backend'de Id'yi muhtemelen login olan kullanıcıdan veya URL'den alıyoruz
-    const id = localStorage.getItem('id'); 
-    API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/details`)
-      .then(res => setShop(res.data))
+    const userId = localStorage.getItem('userId'); 
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    API.get(`/api/shops/owner/${userId}`)
+      .then(res => {
+        if (res.data) {
+          setShopId(res.data.id);
+          setShop({
+            shopName: res.data.name || '',
+            address: res.data.addressText || '',
+            phoneNumber: res.data.phoneNumber || '',
+            imageUrl: res.data.imageUrl || ''
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Dükkan detayları yüklenemedi:", err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = localStorage.getItem('id');
+    if (!shopId) {
+      showNotification('Dükkan kimliği bulunamadı.', 'error');
+      return;
+    }
     try {
-      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/update`, shop);
+      const formData = new FormData();
+      formData.append("shopName", shop.shopName);
+      formData.append("phoneNumber", shop.phoneNumber);
+
+      await API.put(`/api/shops/${shopId}/update-with-image`, formData);
       showNotification('Dükkan bilgileri güncellendi!', 'success');
-    } catch (error) { showNotification('Güncelleme başarısız.', 'error'); }
+    } catch (error) { 
+      showNotification('Güncelleme başarısız.', 'error'); 
+    }
   };
 
   if (loading) return <div>Yükleniyor...</div>;
