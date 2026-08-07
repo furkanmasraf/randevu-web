@@ -24,7 +24,7 @@ export default function BarberDashboard() {
   const [employees, _setEmployees] = useState<EmployeeItem[]>([]);
   const [services, _setServices] = useState<ServiceItem[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [dynamicShopId, setDynamicShopId] = useState<number | null>(null);
+  const [dynamicId, setDynamicId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [appFilter, setAppFilter] = useState<'past' | 'today' | 'future'>('today');
 
@@ -66,9 +66,9 @@ export default function BarberDashboard() {
     }
   };
 
-  const fetchAppointments = async (shopId: number, filter: string = 'today') => {
+  const fetchAppointments = async (Id: number, filter: string = 'today') => {
     try {
-      const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${shopId}/filter`, {
+      const response = await API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${Id}/filter`, {
         params: { filter },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -89,8 +89,8 @@ export default function BarberDashboard() {
       });
 
       if (shopRes.data?.id) {
-        const shopId = shopRes.data.id;
-        setDynamicShopId(shopId);
+        const id = shopRes.data.id;
+        setDynamicId(id);
 
         setShopDetails({
           shopName: shopRes.data.name || '',
@@ -102,12 +102,12 @@ export default function BarberDashboard() {
         });
 
         await Promise.all([
-          fetchAppointments(shopId, appFilter),
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${shopId}/employees`, {
+          fetchAppointments(id, appFilter),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/appointments/shop/${id}/employees`, {
             headers: { Authorization: `Bearer ${token}` }
           }).then(res => _setEmployees(res.data)),
 
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/services/shop/${shopId}`, {
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/services/shop/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           }).then(res => _setServices(res.data))
         ]);
@@ -128,16 +128,16 @@ export default function BarberDashboard() {
   }, [navigate, token, role, userId]);
 
   useEffect(() => {
-    if (dynamicShopId) {
-      fetchAppointments(dynamicShopId, appFilter);
+    if (dynamicId) {
+      fetchAppointments(dynamicId, appFilter);
     }
-  }, [appFilter, dynamicShopId]);
+  }, [appFilter, dynamicId]);
 
   useEffect(() => {
-    if (activeTab === 'hours' && dynamicShopId) {
+    if (activeTab === 'hours' && dynamicId) {
       employees.forEach(emp => fetchBusySlots(emp.id, selectedDate));
     }
-  }, [activeTab, selectedDate, dynamicShopId, appointments]);
+  }, [activeTab, selectedDate, dynamicId, appointments]);
 
   useEffect(() => {
     if (token && userId && role === 'SHOP_OWNER') {
@@ -146,9 +146,9 @@ export default function BarberDashboard() {
   }, [userId]);
 
   const handleAddService = async () => {
-    if (!dynamicShopId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
+    if (!dynamicId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
     try {
-      await API.post(`/api/services/shop/${dynamicShopId}`,
+      await API.post(`/api/services/shop/${dynamicId}`,
         { name: newServiceName, price: parseFloat(newServicePrice), durationInMinutes: 30 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -169,12 +169,12 @@ export default function BarberDashboard() {
   }, [isSidebarOpen]);
 
   const handleAddEmployee = async () => {
-    if (!dynamicShopId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
+    if (!dynamicId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
     const parts = newEmployeeName.trim().split(" ");
     const payload = { firstName: parts[0] || "-", lastName: parts.slice(1).join(" ") || "-" };
 
     try {
-      await API.post(`/api/employees/shop/${dynamicShopId}`, payload,
+      await API.post(`/api/employees/shop/${dynamicId}`, payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showNotification("Personel eklendi!", 'success');
@@ -196,7 +196,7 @@ export default function BarberDashboard() {
     vitrinFiles.forEach((file) => formData.append("vitrinFiles", file));
 
     try {
-      await API.put(`/api/shops/${dynamicShopId}/update-with-image`, formData, {
+      await API.put(`/api/shops/${dynamicId}/update-with-image`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       showNotification("Dükkan bilgileri ve görseller başarıyla güncellendi!", 'success');
@@ -905,8 +905,8 @@ export default function BarberDashboard() {
                         await API.patch(`/api/appointments/${id}/status`, { status }, {
                           headers: { Authorization: `Bearer ${token}` }
                         });
-                        if (dynamicShopId) {
-                          fetchAppointments(dynamicShopId, appFilter);
+                        if (dynamicId) {
+                          fetchAppointments(dynamicId, appFilter);
                         }
                       } catch (err) {
                         console.error('Randevu durumu güncellenemedi:', err);

@@ -20,7 +20,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/register-shop" element={<Navigate to="/register?role=SHOP_OWNER" replace />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/book-appointment/:shopId" element={<BookAppointment />} />
+        <Route path="/book-appointment/:id" element={<BookAppointment />} />
         
         {/* KORUMALI ROTALAR (Sadece giriş yapmış kullanıcılar) */}
         <Route element={<ProtectedRoute />}>

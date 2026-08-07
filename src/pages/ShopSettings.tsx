@@ -9,18 +9,18 @@ export default function ShopSettings() {
   const { notification, showNotification } = useNotification();
 
   useEffect(() => {
-    // Backend'de shopId'yi muhtemelen login olan kullanıcıdan veya URL'den alıyoruz
-    const shopId = localStorage.getItem('shopId'); 
-    API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`)
+    // Backend'de Id'yi muhtemelen login olan kullanıcıdan veya URL'den alıyoruz
+    const id = localStorage.getItem('id'); 
+    API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/details`)
       .then(res => setShop(res.data))
       .finally(() => setLoading(false));
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const shopId = localStorage.getItem('shopId');
+    const id = localStorage.getItem('id');
     try {
-      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/update`, shop);
+      await API.put(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/update`, shop);
       showNotification('Dükkan bilgileri güncellendi!', 'success');
     } catch (error) { showNotification('Güncelleme başarısız.', 'error'); }
   };

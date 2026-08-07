@@ -22,7 +22,7 @@ interface ShopDetails {
 }
 
 export default function BookAppointment() {
-  const { shopId } = useParams<{ shopId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -65,9 +65,9 @@ export default function BookAppointment() {
         const headers = { Authorization: `Bearer ${token}` };
 
         const [empRes, servRes, shopRes] = await Promise.all([
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/employees`, { headers }),
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/services`, { headers }),
-          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${shopId}/details`, { headers })
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/employees`, { headers }),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/services`, { headers }),
+          API.get(`https://randevu-sistemi-dv33.onrender.com/api/shops/${id}/details`, { headers })
         ]);
 
         const shopData = shopRes.data;
@@ -90,7 +90,7 @@ export default function BookAppointment() {
     };
 
     fetchAllData();
-  }, [shopId]);
+  }, [id]);
 
   const allPossibleSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
 
@@ -111,7 +111,7 @@ export default function BookAppointment() {
       setSubmitting(true);
 
       const payload = {
-        shopId: Number(shopId),
+        id: Number(id),
         employeeId: Number(selectedEmployee),
         serviceId: Number(selectedService),
         userId: Number(localStorage.getItem('userId')),
