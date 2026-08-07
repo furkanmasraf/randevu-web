@@ -104,7 +104,7 @@ export default function BarberDashboard() {
         setDynamicId(id);
 
         setShopDetails({
-          shopName: shopRes.data.name || '',
+          shopName: shopRes.data.name || shopRes.data.shopName || '',
           phoneNumber: shopRes.data.phoneNumber || '',
           city: shopRes.data.city || '',
           district: shopRes.data.district || '',
