@@ -8,7 +8,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 interface Employee { id: number; firstName: string; lastName: string; title: string; }
-interface Service { id: number; name: string; price: number; durationMinutes: number; }
+interface Service { id: number; name: string; price: number; durationMinutes?: number; durationInMinutes?: number; }
 interface ShopDetails { 
   id: number; 
   shopName: string; 
@@ -111,6 +111,7 @@ export default function BookAppointment() {
       setSubmitting(true);
 
       const payload = {
+        shopId: Number(id),
         id: Number(id),
         employeeId: Number(selectedEmployee),
         serviceId: Number(selectedService),
@@ -645,7 +646,7 @@ export default function BookAppointment() {
                               <circle cx="12" cy="12" r="10" />
                               <polyline points="12 6 12 12 16 14" />
                             </svg>
-                            {s.durationMinutes} dakika
+                            {s.durationInMinutes || s.durationMinutes || 30} dakika
                           </span>
                         </div>
 
@@ -785,7 +786,7 @@ export default function BookAppointment() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ color: '#8C8276' }}>Süre:</span>
                 <span style={{ fontWeight: 600 }}>
-                  {currentService ? `${currentService.durationMinutes} dk` : '-'}
+                  {currentService ? `${currentService.durationInMinutes || currentService.durationMinutes || 30} dk` : '-'}
                 </span>
               </div>
 
