@@ -93,9 +93,15 @@ export default function BarberDashboard() {
   };
 
   const fetchAllDashboardData = async () => {
+    const activeUserId = userId || localStorage.getItem('userId') || localStorage.getItem('id');
+    if (!activeUserId) {
+      console.error("Kullanıcı kimliği bulunamadı.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const shopRes = await API.get(`/api/shops/owner/${userId}`, {
+      const shopRes = await API.get(`/api/shops/owner/${activeUserId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -153,12 +159,6 @@ export default function BarberDashboard() {
       employees.forEach(emp => fetchBusySlots(emp.id, selectedDate));
     }
   }, [activeTab, selectedDate, dynamicId, appointments]);
-
-  useEffect(() => {
-    if (token && userId && role === 'SHOP_OWNER') {
-      fetchAllDashboardData();
-    }
-  }, [userId]);
 
   const handleAddService = async () => {
     if (!dynamicId) return showNotification("Dükkan bilgisi yüklenemedi!", 'error');
